@@ -482,7 +482,7 @@ namespace GP
 		/// @brief Returns the biggest frame range this event can have
 		public FrameRange GetMaxFrameRange()
 		{
-			FrameRange range = new FrameRange(0, 0);
+			//FrameRange range = new FrameRange(0, 0);
             if (this.mParent == null)
                 return this.frameRange;
             else

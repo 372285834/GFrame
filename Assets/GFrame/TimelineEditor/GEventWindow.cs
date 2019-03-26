@@ -19,8 +19,8 @@ namespace GPEditor
             Inst.Show();
         }
         static GEvent curEvt;
-        static GPEditor.SkillWindow.TreeNode rootNode;
-        public static void Open(SkillWindow.TreeNode _node,GEvent e)
+        static GPEditor.TimelineWindow.TreeNode rootNode;
+        public static void Open(TimelineWindow.TreeNode _node,GEvent e)
         {
             Open();
             rootNode = _node.root;
@@ -34,10 +34,10 @@ namespace GPEditor
                 rName += "*";
             if (GUILayout.Button(rName,GUILayout.MinHeight(30f)))
             {
-                SkillWindow.Save(root);
+                TimelineWindow.Save(root);
             }
             EditorGUILayout.BeginHorizontal();
-            root.name = EditorGUILayout.TextField(root.name);
+           // root.name = EditorGUILayout.TextField(root.name);
             root.UpdateMode = (AnimatorUpdateMode)EditorGUILayout.EnumPopup(root.UpdateMode);
             GUILayout.Label("帧率：", EditorStyles.label);
             root.FrameRate = EditorGUILayout.IntField(root.FrameRate);
@@ -59,7 +59,7 @@ namespace GPEditor
             EditorGUILayout.BeginVertical();
             drawRoot(curEvt.root.lStyle);
             GEventStyle style = curEvt.mStyle;
-            GUILayout.Label(style.Attr.name + "    index:" + curEvt.id);
+            GUILayout.Label(style.Attr.name + "    id:" + curEvt.id);
             FrameRange rang = style.range;
             FrameRange validRange = curEvt.GetMaxFrameRange();
             if (!(style is GTimelineStyle))

@@ -7,16 +7,16 @@ using System;
 using Newtonsoft.Json;
 namespace GPEditor
 {
-    public class SkillWindow : EditorWindow
+    public class TimelineWindow : EditorWindow
     {
-        public static SkillWindow Inst
+        public static TimelineWindow Inst
         {
             get
             {
                 return _Inst;
             }
         }
-        static SkillWindow _Inst;
+        static TimelineWindow _Inst;
         static string Suffix = ".tl";
         static string skillDir = "Assets/Arts/Skills/";
         //List<GTimeline> tList = new List<GTimeline>();
@@ -24,13 +24,13 @@ namespace GPEditor
         static Dictionary<string, GTimelineStyle> allDic = new Dictionary<string, GTimelineStyle>();
         static string[] allStyleNames;
         static int[] allStyleNamesIndexs;
-        List<GTimelineStyle> showList = new List<GTimelineStyle>();
+        //List<GTimelineStyle> showList = new List<GTimelineStyle>();
         [MenuItem("WindowTools/Skill", false, 1)]
         public static void ShowEditor()
         {
             if (_Inst == null)
             {
-                _Inst = EditorWindow.GetWindow<SkillWindow>();
+                _Inst = EditorWindow.GetWindow<TimelineWindow>();
                 _Inst.titleContent = new GUIContent("Timeline");
                 _Inst.minSize = new Vector2(250f, 200f);
             }
@@ -91,7 +91,7 @@ namespace GPEditor
         }
         void UpdateSelectSkill()
         {
-            root = new TreeNode();
+            root = ScriptableObject.CreateInstance<TreeNode>();
             root.name = "root";
             root.Add(allStyleList[curSelectIdx], 0);
             if (root.Length > 0)
@@ -99,8 +99,23 @@ namespace GPEditor
             if (!object.Equals(selectData, null))
                 selectData.isOpen = true;
         }
+        UnityEngine.Object selectObj;
         void Update()
         {
+            if(Selection.objects != null && Selection.objects.Length == 1 && selectObj != Selection.objects[0])
+            {
+                selectObj = Selection.objects[0];
+                string path = AssetDatabase.GetAssetPath(Selection.objects[0]);
+                if(path.EndsWith(".tl"))
+                {
+                    int idx = allStyleList.FindIndex(x => x.name == Selection.objects[0].name);
+                    if(idx > -1)
+                    {
+                        curSelectIdx = idx;
+                        UpdateSelectSkill();
+                    }
+                }
+            }
             Repaint();
         }
         int treeIndex;
@@ -307,7 +322,7 @@ namespace GPEditor
             EditorGUILayout.EndVertical();
         }
         int treeIndex2;
-        private int DrawTreeTimeline(GPEditor.SkillWindow.TreeNode node, int level)
+        private int DrawTreeTimeline(GPEditor.TimelineWindow.TreeNode node, int level)
         {
             if (object.Equals(node, null) || string.IsNullOrEmpty(node.name))
             {

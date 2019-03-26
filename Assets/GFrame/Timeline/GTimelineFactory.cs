@@ -27,7 +27,7 @@ namespace GP
                 {
                     if(attrs.Length > 0)
                     {
-                        GEventAttribute att = attrs[0];
+                        //GEventAttribute att = attrs[0];
                         string tName = t.Name;
                         eventAttrDic[t] = attrs[0];
                         typeDic[tName] = t;
