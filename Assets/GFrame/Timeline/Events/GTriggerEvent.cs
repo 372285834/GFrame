@@ -34,7 +34,7 @@ namespace GP
         {
 
         }
-        protected override void OnDestroy()
+        protected override void OnFinish()
         {
 
         }

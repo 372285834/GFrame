@@ -7,8 +7,8 @@ namespace GP
     [GEvent("Skill/特效", typeof(GEffectEvent))]
     public class GEffectStyle : GEventStyle
     {
+        public string res;
         public Locator locator;
-        public string effRes;
     }
     public class GEffectEvent : GEvent
     {
@@ -38,11 +38,11 @@ namespace GP
             }
         }
 
-        protected override void OnStop()
+        protected override void OnFinish()
         {
 
         }
-        protected override void OnDestroy()
+        protected override void OnStop()
         {
 
         }

@@ -7,7 +7,7 @@ namespace GP
     [GEvent("Skill/导弹", typeof(GMissileEvent))]
     public class GMissileStyle : GTargetStyle
     {
-
+        public string res;
     }
     public class GMissileEvent : GEvent
     {
@@ -41,7 +41,7 @@ namespace GP
         {
 
         }
-        protected override void OnDestroy()
+        protected override void OnFinish()
         {
 
         }

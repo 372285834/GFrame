@@ -43,6 +43,7 @@ namespace GPEditor
             root.FrameRate = EditorGUILayout.IntField(root.FrameRate);
             GUILayout.Label("总帧数:", EditorStyles.label);
             root.End = EditorGUILayout.IntField(root.End);
+            GUILayout.Label("t:" + root.LengthTime + "s", GUILayout.Width(30f));
             EditorGUILayout.EndHorizontal();
         }
         Vector2 mScrollPos = new Vector2(0, 0);
@@ -75,6 +76,7 @@ namespace GPEditor
                 EditorGUILayout.EndHorizontal();
                 EditorGUI.BeginChangeCheck();
                 EditorGUILayout.BeginHorizontal();
+                GUILayout.Label("t:" + curEvt.LengthTime + "s", GUILayout.Width(30f));
                 GUILayout.Space(20f);//EditorGUIUtility.labelWidth
                 GUILayout.Label(validRange.Start.ToString(), GUILayout.Width(30f));
                 float sliderStartFrame = rang.Start;
@@ -104,50 +106,79 @@ namespace GPEditor
 
         void RanderEvent(GEventStyle style)
         {
-            if(style is GTargetStyle)
-            {
-                drawGTargetStyle(style as GTargetStyle);
-            }
             if (style is GActionStyle)
             {
 
             }
             if(style is GEffectStyle)
             {
+                GEffectStyle s = style as GEffectStyle;
+                s.res = EditorGUILayout.TextField("资源名：", s.res);
                 if (style is GEffectSequenceStyle)
                 {
-
+                    GEffectSequenceStyle seq = style as GEffectSequenceStyle;
+                    seq.eType = (eEffectSequenceType)EditorGUILayout.EnumPopup("类型:", seq.eType);
+                    seq.intervals = drawIntArr("间隔", seq.intervals);
                 }
+                s.locator = drawLocator(s.locator, "开始挂点");
             }
             if(style is GMissileStyle)
             {
+                GMissileStyle s = style as GMissileStyle;
+                s.res = EditorGUILayout.TextField("资源名：", s.res);
                 if (style is GMissileSequenceStyle)
                 {
-
+                    GMissileSequenceStyle seq = style as GMissileSequenceStyle;
+                    seq.eType = (eMissileSequenceType)EditorGUILayout.EnumPopup("类型:", seq.eType);
+                    seq.intervals = drawIntArr("间隔", seq.intervals);
                 }
+            }
+            if (style is GTargetStyle)
+            {
+                drawGTargetStyle(style as GTargetStyle);
             }
         }
         Locator drawLocator(Locator l,string name)
         {
            // GUILayout.Space(10f);
-            DrawSeparator(142f);
-            GUILayout.Label(name + "----------------------");
+            DrawSeparator(90f);
+           // GUILayout.Label(name + "----------------------");
+            l.position = EditorGUILayout.Vector3Field(name + "-------偏移：", l.position);
             l.eName = (Locator.eNameType)EditorGUILayout.EnumPopup("挂点名:", l.eName);
             l.type = (Locator.eType)EditorGUILayout.EnumPopup("类型：",l.type);
             l.isFollow = EditorGUILayout.Toggle("跟随：", l.isFollow);
-            l.position = EditorGUILayout.Vector3Field("坐标：",l.position);
-            l.euler = EditorGUILayout.Vector3Field("旋转：",l.euler);
+            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.EndHorizontal();
+            // l.euler = EditorGUILayout.Vector3Field("旋转：",l.euler);
             GUILayout.Space(3f);
             return l;
         }
         void drawGTargetStyle(GTargetStyle s)
         {
-            s.res = EditorGUILayout.TextField("资源名：",s.res);
             s.startLocator = drawLocator(s.startLocator, "开始挂点");
             s.endLocator = drawLocator(s.endLocator, "结束挂点");
         }
 
-
+        int[] drawIntArr(string name,int[] arr)
+        {
+            int[] newArr = arr;
+            int length = arr == null ? 0 : arr.Length;
+            int newLength = EditorGUILayout.IntSlider(name + " Length", length, 0, 20);
+            if (newLength != length)
+            {
+                newArr = new int[newLength];
+                for(int i=0;i< length; i++)
+                {
+                    if (i < newArr.Length)
+                        newArr[i] = arr[i];
+                }
+            }
+            for (int i = 0; i < newLength; i++)
+            {
+                newArr[i] = EditorGUILayout.IntField("  " + i, newArr[i]);
+            }
+            return newArr;
+        }
         static public void DrawSeparator(float h)
         {
             GUILayout.Space(3f);

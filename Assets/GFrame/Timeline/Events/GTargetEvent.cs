@@ -7,11 +7,8 @@ namespace GP
     //[GEvent("Skill/轨道目标", typeof(GTargetEvent))]
     public class GTargetStyle : GEventStyle
     {
-        public string res;
         public Locator startLocator;
         public Locator endLocator;
-        public MTweenEase.EaseType easeType = MTweenEase.EaseType.None;
-        public int curveIndex;
     }
     //public class GTargetEvent : GEvent
     //{

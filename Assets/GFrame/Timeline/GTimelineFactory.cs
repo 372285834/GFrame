@@ -73,15 +73,6 @@ namespace GP
             }
             
         }
-        public static void FixedUpdate()
-        {
-            if (mActiveDic.Count == 0)
-                return;
-            foreach (var tl in mActiveDic.Values)
-            {
-                tl.FixedUpdate();
-            }
-        }
         public static GTimeline GetActiveTimeline(int id)
         {
             GTimeline tl = null;

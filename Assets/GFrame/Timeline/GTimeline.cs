@@ -29,9 +29,17 @@ namespace GP
     public class GTimeline:GEvent
     {
         public GTimelineStyle lStyle { get { return mStyle as GTimelineStyle; } }
-        public List<GSceneObject> targetList = new List<GSceneObject>();
-        public Vector3 position;
-        public float InverseFrameRate { get { return lStyle.InverseFrameRate; } }
+        public Target target = null;
+        float _InverseFrameRate = 0;
+        public float InverseFrameRate
+        {
+            get
+            {
+                if (_InverseFrameRate == 0)
+                    _InverseFrameRate = lStyle.InverseFrameRate;
+                return _InverseFrameRate;
+            }
+        }
         // has it been initialized?
         private bool _isInit = false;
         /// @brief Is the sequence initialized?
@@ -109,7 +117,7 @@ namespace GP
         }
         protected override void OnDestroy()
         {
-            this.targetList.Clear();
+            target = null;
         }
         protected override void OnStop()
         {
@@ -134,19 +142,14 @@ namespace GP
         }
         public void Update()
         {
-            if (lStyle.UpdateMode == AnimatorUpdateMode.AnimatePhysics || !_isPlaying)
-            {
+            if (!_isPlaying)
                 return;
-            }
-            InternalUpdate(lStyle.UpdateMode == AnimatorUpdateMode.Normal ? Time.time : Time.unscaledTime);
-        }
-        public void FixedUpdate()
-        {
-            if (lStyle.UpdateMode != AnimatorUpdateMode.AnimatePhysics || !_isPlaying)
-            {
-                return;
-            }
-            InternalUpdate(Time.fixedTime);
+            float t = Time.time;
+            if (lStyle.UpdateMode == AnimatorUpdateMode.UnscaledTime)
+                t = Time.unscaledTime;
+            else if (lStyle.UpdateMode == AnimatorUpdateMode.AnimatePhysics)
+                t = Time.fixedTime;
+            InternalUpdate(t);
         }
         protected virtual void InternalUpdate(float time)
         {

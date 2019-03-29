@@ -1,3 +1,11 @@
 /.vs
 /Library
 /obj
+/Temp
+/Flux.CSharp.Editor.csproj
+/Flux.v12.suo
+/Assembly-CSharp.csproj
+/Assembly-CSharp-Editor.csproj
+/Flux.CSharp.csproj
+/GFrame.sln
+/Logs

@@ -8,10 +8,9 @@ namespace GP
     [Serializable]
     public class GActionStyle : GEventStyle
     {
-        public bool isSelf = true;
         public string res;
-        public bool isLoop = false;
-        public int loopCount = 0;
+        public bool isSelf = true;
+        public float speed = 1f;
     }
     public class GActionEvent : GEvent
     {
@@ -32,7 +31,7 @@ namespace GP
         {
 
         }
-        protected override void OnDestroy()
+        protected override void OnFinish()
         {
 
         }

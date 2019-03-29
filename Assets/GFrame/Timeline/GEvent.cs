@@ -191,11 +191,11 @@ namespace GP
 
         #region virtual Function
         protected virtual void OnInit() { }
-        protected virtual void OnDestroy() { }
+        protected virtual void OnDestroy() { }// timeline 销毁
         protected virtual void OnTrigger(int framesSinceTrigger, float timeSinceTrigger) { }
         protected virtual void OnUpdateEvent(int framesSinceTrigger, float timeSinceTrigger){}
-        protected virtual void OnFinish() { }
-        protected virtual void OnStop() { }
+        protected virtual void OnFinish() { } // event完成
+        protected virtual void OnStop() { } //timeline 完成
         protected virtual void OnResume() { }
         protected virtual void OnPause() { }
         #endregion
@@ -278,6 +278,8 @@ namespace GP
 		}
         public void UpdateEvent( int framesSinceTrigger, float timeSinceTrigger )
 		{
+            if (HasFinished)
+                return;
             mTimeSinceTrigger = timeSinceTrigger;
 #if UNITY_EDITOR
 			PreEvent();

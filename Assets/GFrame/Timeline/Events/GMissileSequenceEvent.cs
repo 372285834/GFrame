@@ -15,7 +15,8 @@ namespace GP
     public class GMissileSequenceStyle : GMissileStyle
     {
         public eMissileSequenceType eType = eMissileSequenceType.Order;
-        public float[] intervals;
+        public int[] intervals;
+        public int duration;
     }
     public class GMissileSequenceEvent : GEvent
     {
@@ -34,7 +35,7 @@ namespace GP
         {
 
         }
-        protected override void OnDestroy()
+        protected override void OnFinish()
         {
 
         }

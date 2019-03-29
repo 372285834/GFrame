@@ -14,7 +14,7 @@ namespace GP
     public class GEffectSequenceStyle : GEffectStyle
     {
         public eEffectSequenceType eType = eEffectSequenceType.Order;
-        public float[] intervals;
+        public int[] intervals;
     }
     public class GEffectSequenceEvent : GEvent
     {
@@ -48,7 +48,7 @@ namespace GP
         {
 
         }
-        protected override void OnDestroy()
+        protected override void OnFinish()
         {
 
         }
