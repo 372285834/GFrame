@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-namespace GP
+namespace highlight
 {
     public static class ListPool<T>
     {

@@ -1,6 +1,6 @@
 ﻿using System;
 using UnityEngine;
-namespace GP
+namespace highlight
 {
     [Serializable]
     /**

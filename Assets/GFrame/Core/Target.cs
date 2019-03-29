@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 
-namespace GP
+namespace highlight
 {
 
     using UnityEngine;
-    using ObjectList = List<GSceneObject>;
+    using ObjectList = List<SceneObject>;
     public enum TargetType
     {
         TT_None,
@@ -17,7 +17,7 @@ namespace GP
 	{
         protected TargetType mType;
         protected Vector3 mPosition;
-        protected GSceneObject obj;
+        protected SceneObject obj;
         protected ObjectList mObjects;
 
         public Target(TargetType type)
@@ -51,11 +51,11 @@ namespace GP
         {
             mPosition = pos;
         }
-        public void setObj(GSceneObject _obj)
+        public void setObj(SceneObject _obj)
         {
             obj = _obj;
         }
-        public GSceneObject getObj()
+        public SceneObject getObj()
         {
             return obj;
         }

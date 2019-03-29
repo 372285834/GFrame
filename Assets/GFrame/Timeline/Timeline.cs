@@ -2,33 +2,42 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-namespace GP
+
+namespace highlight.timeline
 {
-    [GEvent("Timeline", typeof(GTimeline))]
-    public class GTimelineStyle : GEventStyle
+    [Time("Timeline", typeof(Timeline))]
+    public class TimelineStyle : TimeStyle
     {
         public string name;
         public int FrameRate = DEFAULT_FRAMES_PER_SECOND;
-        public AnimatorUpdateMode UpdateMode = AnimatorUpdateMode.Normal;
         public const int DEFAULT_FRAMES_PER_SECOND = 60;
         public const int DEFAULT_LENGTH = 2;
         [JsonIgnore]
         public float InverseFrameRate { get { return 1f / FrameRate; } }
         [JsonIgnore]
         public float LengthTime { get { return (float)Length / FrameRate; } }
-        public static GTimelineStyle CreatDefault(string name)
+        public static TimelineStyle CreatDefault(string name)
         {
-            GTimelineStyle creatNew = new GTimelineStyle();
+            TimelineStyle creatNew = new TimelineStyle();
             creatNew.name = name;
-            creatNew.range = new FrameRange(0, GTimelineStyle.DEFAULT_FRAMES_PER_SECOND * GTimelineStyle.DEFAULT_LENGTH);
+            creatNew.Range = new FrameRange(0, TimelineStyle.DEFAULT_FRAMES_PER_SECOND * TimelineStyle.DEFAULT_LENGTH);
             return creatNew;
         }
+        [JsonIgnore]
+        public static ObjectPool<Timeline> linePool = new ObjectPool<Timeline>();
+        public override TimeObject getObj()
+        {
+            Timeline obj = linePool.Get();
+            return obj;
+        }
+        public override void release(TimeObject obj)
+        {
+            linePool.Release(obj as Timeline);
+        }
     }
-    public class GTimeline:GEvent
+    public class Timeline : TimeObject
     {
-        public GTimelineStyle lStyle { get { return mStyle as GTimelineStyle; } }
+        public TimelineStyle style { get { return mStyle as TimelineStyle; } }
         public Target target = null;
         float _InverseFrameRate = 0;
         public float InverseFrameRate
@@ -36,7 +45,7 @@ namespace GP
             get
             {
                 if (_InverseFrameRate == 0)
-                    _InverseFrameRate = lStyle.InverseFrameRate;
+                    _InverseFrameRate = style.InverseFrameRate;
                 return _InverseFrameRate;
             }
         }
@@ -64,26 +73,19 @@ namespace GP
 
         /// @brief Is the sequence stopped?
         public bool IsStopped { get { return _currentFrame < 0; } }
-        public void SetCurrentFrameEditor(int frame)
-        {
-#if UNITY_EDITOR
-            _isPlayingForward = frame >= _currentFrame;
-            _currentFrame = Mathf.Clamp(frame, 0, lStyle.Length);
-#endif
-        }
         public void SetCurrentTime(float time)
         {
-            SetCurrentFrame(Mathf.RoundToInt(time * lStyle.FrameRate));
+            SetCurrentFrame(RoundToInt(time * style.FrameRate));
         }
         public int GetCurrentFrame()
         {
             return _currentFrame;
         }
-        public void Play(float startTime)
+        public void Play(float curTime, float startTime = 0f)
         {
-            Play(Mathf.RoundToInt(startTime * lStyle.FrameRate));
+            Play(curTime, RoundToInt(startTime * style.FrameRate));
         }
-        public void Play(int startFrame)
+        public void Play(float curTime, int startFrame=0)
         {
             if (!_isInit || _isPlaying)
                 return;
@@ -91,75 +93,54 @@ namespace GP
             if (!IsStopped)
                 Resume();
             _isPlaying = true;
-
-            switch (lStyle.UpdateMode)
-            {
-                case AnimatorUpdateMode.Normal:
-                    _lastUpdateTime = Time.time;
-                    break;
-                case AnimatorUpdateMode.AnimatePhysics:
-                    _lastUpdateTime = Time.fixedTime;
-                    break;
-                case AnimatorUpdateMode.UnscaledTime:
-                    _lastUpdateTime = Time.unscaledTime;
-                    break;
-                default:
-                    Debug.LogError("Unsupported Update Mode");
-                    _lastUpdateTime = Time.time;
-                    break;
-            }
-
+            _lastUpdateTime = curTime;
             SetCurrentFrame(startFrame);
         }
         protected override void OnInit()
         {
             _isInit = true;
+            base.OnInit();
         }
         protected override void OnDestroy()
         {
             target = null;
+            base.OnDestroy();
         }
         protected override void OnStop()
         {
-             _isInit = false;
+            _isInit = false;
             if (IsStopped)
                 return;
             _isPlaying = false;
             _isPlayingForward = true;
             _currentFrame = -1;
+            base.OnStop();
         }
         protected override void OnPause()
         {
             if (!_isPlaying)
                 return;
             _isPlaying = false;
+            base.OnPause();
         }
         protected override void OnResume()
         {
             if (_isPlaying)
                 return;
             _isPlaying = true;
+            base.OnResume();
         }
-        public void Update()
+        public void Update(float time)
         {
             if (!_isPlaying)
                 return;
-            float t = Time.time;
-            if (lStyle.UpdateMode == AnimatorUpdateMode.UnscaledTime)
-                t = Time.unscaledTime;
-            else if (lStyle.UpdateMode == AnimatorUpdateMode.AnimatePhysics)
-                t = Time.fixedTime;
-            InternalUpdate(t);
-        }
-        protected virtual void InternalUpdate(float time)
-        {
             float delta = time - _lastUpdateTime;
             float timePerFrame = InverseFrameRate;
             if (delta >= timePerFrame)
             {
-                int numFrames = Mathf.RoundToInt(delta / timePerFrame);
+                int numFrames = RoundToInt(delta / timePerFrame);
                 SetCurrentFrame(_currentFrame + numFrames);
-                _lastUpdateTime = time - (delta - (timePerFrame * numFrames));
+                _lastUpdateTime += timePerFrame * numFrames;
             }
         }
         /// @brief Sets current frame.
@@ -167,17 +148,36 @@ namespace GP
         /// @sa Length, GetCurrentFrame
         public void SetCurrentFrame(int frame)
         {
-            _currentFrame = Mathf.Clamp(frame, 0, lStyle.Length);
+            _currentFrame = Clamp(frame, 0, style.Length);
 
             _isPlayingForward = _currentFrame >= frame;
 
             float currentTime = _currentFrame * InverseFrameRate;
             UpdateEvent(_currentFrame, currentTime);
 
-            if (_currentFrame == lStyle.Length)
+            if (_currentFrame == style.Length)
             {
                 Stop();
             }
+        }
+        public void SetCurrentFrameEditor(int frame)
+        {
+#if UNITY_EDITOR
+            _isPlayingForward = frame >= _currentFrame;
+            _currentFrame = Clamp(frame, 0, style.Length);
+#endif
+        }
+        int RoundToInt(float f)
+        {
+            return (int)Math.Floor(f + 0.5f);
+        }
+        int Clamp(int c,int a,int b)
+        {
+            if (c < a)
+                return a;
+            if (c > b)
+                return b;
+            return a;
         }
     }
 }
