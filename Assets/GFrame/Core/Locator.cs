@@ -9,30 +9,29 @@ namespace highlight
     {
         public enum eType
         {
-            LT_MYSELF,
+            LT_OWNER,
             LT_TARGET,
+            LT_TARGET_POS,
             LT_SCENE,
             LT_PARENT,
-            LT_UI,
-            LT_None
+            LT_PARENT_POS,
+            //LT_UI,
+            //LT_None
         }
         public enum eNameType
         {
-            root,
+            ROOT,
         }
         public eType type;
         public eNameType eName;
         //[JsonIgnore]
         public Vector3 position;
-       // [JsonIgnore]
-        public Vector3 euler;
         public bool isFollow;
         public Locator(eType t, eNameType eN)
         {
             type = t;
             eName = eN;
             position = Vector3.zero;
-            euler = Vector3.zero;
             isFollow = true;
         }
         public const string Root = "l_root";
@@ -43,24 +42,13 @@ namespace highlight
         public const string Carry = "l_carry";
         public const string Back = "l_back";
         public const string Ride = "l_ride0";
-
-        public object GetLocator()
+        public string parentName
         {
-            switch (this.type)
+            get
             {
-                case Locator.eType.LT_MYSELF:
-
-                    break;
-                case Locator.eType.LT_TARGET:
-
-                    break;
-                case Locator.eType.LT_SCENE:
-
-                    break;
-                case Locator.eType.LT_UI:
-                    break;
+                return eName.ToString();
             }
-            return null;
         }
+
     }
 }

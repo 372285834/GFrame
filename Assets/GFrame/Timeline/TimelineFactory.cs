@@ -1,10 +1,9 @@
-﻿using System;
+﻿using highlight.timeline;
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Text;
-using UnityEngine;
-using highlight;
-namespace highlight.timeline
+using System.Reflection;
+namespace highlight
 {
     public static class TimelineFactory
     {
@@ -12,9 +11,7 @@ namespace highlight.timeline
         private readonly static Dictionary<int, Timeline> mActiveDic = new Dictionary<int, Timeline>();
 
         private readonly static Dictionary<string, Type> typeDic = new Dictionary<string, Type>();
-        public readonly static Dictionary<Type, TimeSystemAttribute> systemAttrDic = new Dictionary<Type, TimeSystemAttribute>();
-
-        public readonly static Dictionary<TimeFlag, TimeSystem> systemDic = new Dictionary<TimeFlag, TimeSystem>();
+        //public readonly static Dictionary<ActionFlag, ActionAttribute> actionAttrDic = new Dictionary<ActionFlag, ActionAttribute>();
         public static void Init()
         {
             if (typeDic.Count > 0)
@@ -27,29 +24,35 @@ namespace highlight.timeline
                 {
                     //GEventAttribute att = attrs[0];
                     string tName = t.Name;
-                    TimeComponent.compAttrDic[t] = attrs[0];
+                    ComponentStyle.compAttrDic[t] = attrs[0];
                     typeDic[tName] = t;
-                }
-                TimeSystemAttribute[] sysAttrs = t.GetCustomAttributes(typeof(TimeSystemAttribute), true) as TimeSystemAttribute[];
-                if (sysAttrs != null && sysAttrs.Length > 0)
-                {
-                    TimeSystemAttribute att = sysAttrs[0];
-                    systemDic[att.eFlag] = Activator.CreateInstance(t) as TimeSystem;
-                    TimeSystem.systemAttrDic[t] = att;
-                    typeDic[t.Name] = t;
                 }
 
             }
+            //ActionFlag acFlag = ActionFlag.Node;
+            //Type et = typeof(ActionFlag);
+            //FieldInfo[] fields = et.GetFields();
+            //foreach ( FieldInfo fi in fields )
+            //{
+            //    ActionFlag flag = (ActionFlag)fi.GetValue(acFlag);
+            //    ActionAttribute[] attrs = fi.GetCustomAttributes(typeof(ActionAttribute), true) as ActionAttribute[];
+            //    if (attrs != null && attrs.Length > 0)
+            //    {
+            //        ActionAttribute att = attrs[0];
+            //        actionAttrDic[flag] = att;
+            //    }
+            //}
+            
         }
         static List<Timeline> releaseList = new List<Timeline>();
         public static bool AutoRelease = true;
-        public static void Update()
+        public static void Update(float time)
         {
             if (mActiveDic.Count == 0)
                 return;
             foreach (var tl in mActiveDic.Values)
             {
-                tl.Update(Time.realtimeSinceStartup);
+                tl.Update(time);
                 if (tl.IsStopped && AutoRelease)
                     releaseList.Add(tl);
             }

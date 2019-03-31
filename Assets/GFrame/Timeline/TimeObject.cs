@@ -1,49 +1,82 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace highlight.timeline
 {
+    public class TimeStyle
+    {
+        public int Start = 0;
+        public int End = 0;
+        //[NonSerialized]
+        public List<TimeStyle> Childs = new List<TimeStyle>();
+        public List<ComponentStyle> Components = new List<ComponentStyle>();
+        public List<ActionStyle> Actions = new List<ActionStyle>();
+        // [JsonIgnore]
+        public int Length { set { End = Start + value; } get { return End - Start; } }
+        // [JsonIgnore]
+        public FrameRange Range
+        {
+            get { return new FrameRange(Start, End); }
+            set { Start = value.Start; End = value.End; }
+        }
+        public object Clone()
+        {
+            return this.MemberwiseClone();
+        }
+
+        public static ObjectPool<TimeObject> objPool = new ObjectPool<TimeObject>();
+        public virtual TimeObject getObj()
+        {
+            TimeObject obj = objPool.Get();
+            return obj;
+        }
+        public virtual void release(TimeObject obj)
+        {
+            objPool.Release(obj);
+        }
+    }
     public class TimeObject
     {
         public FrameRange frameRange { get; private set; }
         public Timeline root { get; private set; }
         public bool triggerOnSkip { get { return true; } }
 
-        /// @brief Range of the event.
-        public TimeStyle mStyle { get; private set; }
+        public TimeStyle timeStyle { get; private set; }
+        public ResData resData { get; private set; }
         public int id;
-        public int owerId { get; private set; }
-
-        // has this event called Trigger already?
+        public bool activeSelf { get; private set; }
+        public void SetActive(bool v)
+        {
+            activeSelf = v;
+            if (this.mFrameSinceTrigger > 0)
+            {
+                this.update(this.mFrameSinceTrigger);
+            }
+        }
         private bool _hasTriggered = false;
-        /// @brief Has Trigger been called already?
         public bool HasTriggered { get { return _hasTriggered; } }
 
-        // has this event called Finish already?
         private bool _hasFinished = false;
-        /// @brief Has Finish been called already?
         public bool HasFinished { get { return _hasFinished; } }
+        public float progress { get; private set; }
 
-        /// @brief At which frame will the event trigger, basically the start of it's range.
-        public int TriggerFrame { get { return mStyle.Start; } }
-        /// @brief At which time the event triggers.
-        /// @note Value isn't cached.
-        public float TriggerTime { get { return mStyle.Start * root.InverseFrameRate; } }
-        private float mTimeSinceTrigger;
-        public float progress { get { return mTimeSinceTrigger / LengthTime; } }
-        public TimeObject mParent { get; private set; }
-        public bool IsRoot { get { return mParent == null; } }
-        /// @brief Get the tracks inside this timeline
+        private int mFrameSinceTrigger;
+        public int frameSinceTrigger { get { return mFrameSinceTrigger; } }
+        public float timeSinceTrigger { get { return mFrameSinceTrigger * root.InverseFrameRate; } }
+        public TimeObject parent { get; private set; }
+        public bool IsRoot { get { return parent == null; } }
         protected List<TimeObject> _childs = new List<TimeObject>();
-        public List<TimeObject> GetChilds() { return _childs; }
-        public List<TimeLogic> _components = new List<TimeLogic>();
-        public List<TimeLogic> GetComponents { get { return _components; } }
-        public TimeSystem system
+        public List<TimeObject> Childs { get { return _childs; } }
+        List<ComponentData> _components = new List<ComponentData>();
+        public List<ComponentData> GetComponents { get { return _components; } }
+        List<TimeAction> _actions = new List<TimeAction>();
+        public List<TimeAction> Actions { get { return _actions; } }
+        public ComponentData GetComponent(int idx)
         {
-            get
-            {
-                return TimeSystem.Get(this.mStyle.eFlag);
-            }
+            if (idx < 0 || idx >= _components.Count)
+                return null;
+            return _components[idx];
         }
         public static TimeObject Create(Timeline root, TimeStyle data, TimeObject parent)
         {
@@ -52,14 +85,23 @@ namespace highlight.timeline
                 return null;
             }
             TimeObject obj = data.getObj();
-            obj.mParent = parent;
+            obj.parent = parent;
             obj.root = root;
-            obj.mStyle = data;
+            obj.timeStyle = data;
             obj.frameRange = data.Range;
             for (int i = 0; i < data.Components.Count; i++)
             {
-                TimeLogic logic = TimeLogic.Get(data.Components[i], obj);
-                obj._components.Add(logic);
+                ComponentData comp = ComponentData.Get(data.Components[i], obj);
+                if (comp is ResData)
+                {
+                    obj.resData = comp as ResData;
+                }
+                obj._components.Add(comp);
+            }
+            for (int i = 0; i < data.Actions.Count;i++ )
+            {
+                TimeAction action = TimeAction.Get(data.Actions[i], obj) as TimeAction;
+                obj._actions.Add(action);
             }
             for (int i = 0; i < data.Childs.Count; i++)
             {
@@ -71,13 +113,13 @@ namespace highlight.timeline
         }
         public virtual void OnStyleChange()
         {
-            this.frameRange = this.mStyle.Range;
+            this.frameRange = this.timeStyle.Range;
         }
         public TimeObject AddChild(TimeStyle data)
         {
-            if (mStyle == null || data == null)
+            if (timeStyle == null || data == null)
                 return null;
-            mStyle.Childs.Add(data);
+            timeStyle.Childs.Add(data);
             TimeObject evt = TimeObject.Create(this.root, data, this);
             int id = _childs.Count;
             _childs.Add(evt);
@@ -91,7 +133,7 @@ namespace highlight.timeline
         }
         public TimeObject GetChild(TimeStyle s)
         {
-            if (this.mStyle == s)
+            if (this.timeStyle == s)
                 return this;
             for (int i = 0; i < _childs.Count; i++)
             {
@@ -101,14 +143,13 @@ namespace highlight.timeline
             }
             return null;
         }
-        /// @brief Returns event on position \e index, they are ordered left to right.
         public void RemoveChild(TimeObject evt)
         {
-            if (this.mStyle == null || evt == null)
+            if (this.timeStyle == null || evt == null)
                 return;
             if (_childs.Remove(evt))
             {
-                this.mStyle.Childs.Remove(evt.mStyle);
+                this.timeStyle.Childs.Remove(evt.timeStyle);
                 evt.Destroy();
                 UpdateChildIds();
             }
@@ -127,27 +168,24 @@ namespace highlight.timeline
         {
             _hasTriggered = false;
             _hasFinished = false;
-            mTimeSinceTrigger = 0f;
+            setProgress(0);
+            OnInit();
             for (int i = 0; i < _childs.Count; i++)
             {
                 _childs[i].Init();
             }
-            OnInit();
         }
         public void Destroy()
         {
-            if (mStyle == null)
+            if (timeStyle == null)
                 return;
             for (int i = 0; i != _childs.Count; ++i)
                 _childs[i].Destroy();
             OnDestroy();
-            for (int i = 0; i < _components.Count; i++)
-                TimeLogic.Release(_components[i]);
-            _components.Clear();
-            this.mStyle.release(this);
-            this.mStyle = null;
+            this.timeStyle.release(this);
+            this.timeStyle = null;
+            this.resData = null;
             this.root = null;
-            this.owerId = -1;
             _childs.Clear();
         }
 
@@ -185,9 +223,9 @@ namespace highlight.timeline
 
         public void Stop()
         {
-            _hasTriggered = false;
-            _hasFinished = false;
-            mTimeSinceTrigger = 0f;
+            //_hasTriggered = true;
+            _hasFinished = true;
+            setProgress(0);
 #if UNITY_EDITOR
             PreEvent();
 #endif
@@ -202,21 +240,26 @@ namespace highlight.timeline
             PostEvent();
 #endif
         }
-        public void UpdateEvent(int framesSinceTrigger, float timeSinceTrigger)
+        void setProgress(int framesSinceTrigger)
         {
-            if (HasFinished)
+            mFrameSinceTrigger = framesSinceTrigger;
+            progress = (float)mFrameSinceTrigger / this.Length;
+        }
+        protected void update(int frame)
+        {
+            setProgress(frame);
+            if (!activeSelf || HasFinished)
                 return;
-            mTimeSinceTrigger = timeSinceTrigger;
 #if UNITY_EDITOR
             PreEvent();
 #endif
             if (!_hasTriggered)
             {
-                Trigger(framesSinceTrigger, timeSinceTrigger);
+                Trigger();
             }
-            UpdateChilds(framesSinceTrigger, timeSinceTrigger);
-            OnUpdateEvent(framesSinceTrigger, timeSinceTrigger);
-            if (framesSinceTrigger == Length)
+            OnUpdate();
+            UpdateChilds(frame);
+            if (frame == Length)
             {
                 Finish();
             }
@@ -224,7 +267,7 @@ namespace highlight.timeline
             PostEvent();
 #endif
         }
-        public virtual void UpdateChilds(int frame, float time)
+        public virtual void UpdateChilds(int frame)
         {
             int limit = _childs.Count;
             int increment = 1;
@@ -241,22 +284,22 @@ namespace highlight.timeline
                 }
                 else if (frame >= _childs[i].Start && frame <= _childs[i].End)
                 {
-                    _childs[i].UpdateEvent(frame - _childs[i].Start, time - _childs[i].StartTime);
+                    _childs[i].update(frame - _childs[i].Start);
                 }
                 else //if( frame > _events[_currentEvent].End ) // is it finished
                 {
                     if (!_childs[i].HasFinished && (_childs[i].HasTriggered || _childs[i].triggerOnSkip))
                     {
-                        _childs[i].UpdateEvent(_childs[i].Length, _childs[i].LengthTime);
+                        _childs[i].update(_childs[i].Length);
                     }
                 }
             }
         }
-        public void Trigger(int framesSinceTrigger, float timeSinceTrigger)
+        public void Trigger()
         {
             _hasTriggered = true;
 
-            OnTrigger(framesSinceTrigger, timeSinceTrigger);
+            OnTrigger();
         }
         public void Finish()
         {
@@ -271,25 +314,22 @@ namespace highlight.timeline
         }
         #region editor
 #if UNITY_EDITOR
-        /**
-		 * @brief UpdateEvent but to only be called by the flux editor tools, should not be called at runtime.
-		 */
-        public void UpdateEventEditor(int framesSinceTrigger, float timeSinceTrigger)
+        public void UpdateEditor(int frame)
         {
-            mTimeSinceTrigger = timeSinceTrigger;
+            setProgress(frame);
             PreEvent();
 
             if (!_hasTriggered)
-                Trigger(framesSinceTrigger, timeSinceTrigger);
+                Trigger();
 
-            OnUpdateEventEditor(framesSinceTrigger, timeSinceTrigger);
-            UpdateChildsEditor(framesSinceTrigger, timeSinceTrigger);
-            if (framesSinceTrigger == Length)
+            OnUpdateEditor();
+            UpdateChildsEditor(frame);
+            if (frame == Length)
                 Finish();
 
             PostEvent();
         }
-        public virtual void UpdateChildsEditor(int frame, float time)
+        public virtual void UpdateChildsEditor(int frame)
         {
             int limit = _childs.Count;
 
@@ -306,9 +346,7 @@ namespace highlight.timeline
 
             for (int i = 0; i != limit; i += increment)
             {
-#if FLUX_PROFILER
-				Profiler.BeginSample("Event: " + i + " " + _events[i].name );
-#endif
+				//Profiler.BeginSample("Event: " + i + " " + _events[i].name );
                 if (frame < _childs[i].Start)
                 {
                     if (_childs[i].HasTriggered)
@@ -320,22 +358,20 @@ namespace highlight.timeline
                     if (_childs[i].HasFinished)
                         _childs[i].Stop();
 
-                    _childs[i].UpdateEventEditor(frame - _childs[i].Start, time - _childs[i].StartTime);
+                    _childs[i].UpdateEditor(frame - _childs[i].Start);
                 }
                 else //if( currentFrame > _events[i].End )
                 {
                     if (!_childs[i].HasFinished)
-                        _childs[i].UpdateEventEditor(_childs[i].Length, _childs[i].LengthTime);
+                        _childs[i].UpdateEditor(_childs[i].Length);
 
                 }
-#if FLUX_PROFILER
-				Profiler.EndSample();
-#endif
+				//Profiler.EndSample();
             }
         }
-        protected virtual void OnUpdateEventEditor(int framesSinceTrigger, float timeSinceTrigger)
+        protected virtual void OnUpdateEditor()
         {
-            OnUpdateEvent(framesSinceTrigger, timeSinceTrigger);
+            OnUpdate();
         }
         protected virtual void PreEvent()
         {
@@ -347,10 +383,9 @@ namespace highlight.timeline
         }
 #endif
         #endregion
-        /// @brief Returns \e true if it is the last event of the track it belongs to.
 		public bool IsLastEvent()
         {
-            return id == root.GetChilds().Count - 1;
+            return id == root.Childs.Count - 1;
         }
         public int Start
         {
@@ -370,29 +405,18 @@ namespace highlight.timeline
         {
             get { return frameRange.Start * root.InverseFrameRate; }
         }
-
-        /// @brief What this the event ends.
-        /// @note This value isn't cached.
         public float EndTime
         {
-            get { return mStyle.End * root.InverseFrameRate; }
+            get { return frameRange.End * root.InverseFrameRate; }
         }
-
-        /// @brief Length of the event in seconds.
-        /// @note This value isn't cached.
         public float LengthTime
         {
-            get { return mStyle.Length * root.InverseFrameRate; }
+            get { return frameRange.Length * root.InverseFrameRate; }
         }
-
-        /// @brief What's the minimum length this event can have?
-        /// @warning Events cannot be smaller than 1 frame.
         public virtual int GetMinLength()
         {
             return 1;
         }
-
-        /// @brief What's the maximum length this event can have?
         public virtual int GetMaxLength()
         {
             return int.MaxValue;
@@ -401,25 +425,19 @@ namespace highlight.timeline
         {
             return _childs.Count == 0;
         }
-        /// @brief Does the Event collides the \e e?
         public bool Collides(TimeObject e)
         {
             return frameRange.Collides(e.frameRange);
         }
 
-        /// @brief Returns the biggest frame range this event can have
         public FrameRange GetMaxFrameRange()
         {
             //FrameRange range = new FrameRange(0, 0);
-            if (this.mParent == null)
+            if (this.parent == null)
                 return this.frameRange;
             else
-                return this.mParent.frameRange;
+                return this.parent.frameRange;
         }
-
-        /// @brief Compares events based on their start frame, basically used to order them.
-        /// @param e1 Event
-        /// @param e2 Event
         public static int Compare(TimeObject e1, TimeObject e2)
         {
             return e1.Start.CompareTo(e2.Start);
@@ -433,52 +451,67 @@ namespace highlight.timeline
                 _components[i].index = i;
                 _components[i].OnInit();
             }
-            system.OnInit(this);
+            for (int i = 0; i < _actions.Count; i++)
+            {
+                _actions[i].index = i;
+                _actions[i].OnInit();
+            }
         }
         // timeline 销毁
         protected virtual void OnDestroy()
         {
+            for (int i = 0; i < _actions.Count; i++)
+                _actions[i].OnDestroy();
             for (int i = 0; i < _components.Count; i++)
+            {
+                ComponentData.Release(_components[i]);
                 _components[i].OnDestroy();
-            system.OnDestroy(this);
+            }
+            _components.Clear();
         }
-        protected virtual void OnTrigger(int framesSinceTrigger, float timeSinceTrigger)
+        protected virtual void OnTrigger()
         {
             for (int i = 0; i < _components.Count; i++)
-                _components[i].OnTrigger(framesSinceTrigger, timeSinceTrigger);
-            system.OnTrigger(this, framesSinceTrigger, timeSinceTrigger);
+                _components[i].OnTrigger();
+            for (int i = 0; i < _actions.Count; i++)
+                _actions[i].OnTrigger();
         }
-        protected virtual void OnUpdateEvent(int framesSinceTrigger, float timeSinceTrigger)
+        protected virtual void OnUpdate()
         {
-            for (int i = 0; i < _components.Count; i++)
-                _components[i].OnUpdateEvent(framesSinceTrigger, timeSinceTrigger);
-            system.OnUpdateEvent(this, framesSinceTrigger, timeSinceTrigger);
+            //for (int i = 0; i < _components.Count; i++)
+            //    _components[i].OnUpdate();
+            for (int i = 0; i < _actions.Count; i++)
+                _actions[i].OnUpdate();
         }
         // event完成
         protected virtual void OnFinish()
         {
             for (int i = 0; i < _components.Count; i++)
                 _components[i].OnFinish();
-            system.OnFinish(this);
+            for (int i = 0; i < _actions.Count; i++)
+                _actions[i].OnFinish();
         }
         //timeline 完成
         protected virtual void OnStop()
         {
             for (int i = 0; i < _components.Count; i++)
                 _components[i].OnStop();
-            system.OnStop(this);
+            for (int i = 0; i < _actions.Count; i++)
+                _actions[i].OnStop();
         } 
         protected virtual void OnResume()
         {
             for (int i = 0; i < _components.Count; i++)
                 _components[i].OnResume();
-            system.OnResume(this);
+            for (int i = 0; i < _actions.Count; i++)
+                _actions[i].OnResume();
         }
         protected virtual void OnPause()
         {
             for (int i = 0; i < _components.Count; i++)
                 _components[i].OnPause();
-            system.OnPause(this);
+            for (int i = 0; i < _actions.Count; i++)
+                _actions[i].OnPause();
         }
         #endregion
     }

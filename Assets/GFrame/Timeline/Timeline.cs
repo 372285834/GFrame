@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -12,9 +11,7 @@ namespace highlight.timeline
         public int FrameRate = DEFAULT_FRAMES_PER_SECOND;
         public const int DEFAULT_FRAMES_PER_SECOND = 60;
         public const int DEFAULT_LENGTH = 2;
-        [JsonIgnore]
         public float InverseFrameRate { get { return 1f / FrameRate; } }
-        [JsonIgnore]
         public float LengthTime { get { return (float)Length / FrameRate; } }
         public static TimelineStyle CreatDefault(string name)
         {
@@ -23,7 +20,6 @@ namespace highlight.timeline
             creatNew.Range = new FrameRange(0, TimelineStyle.DEFAULT_FRAMES_PER_SECOND * TimelineStyle.DEFAULT_LENGTH);
             return creatNew;
         }
-        [JsonIgnore]
         public static ObjectPool<Timeline> linePool = new ObjectPool<Timeline>();
         public override TimeObject getObj()
         {
@@ -37,15 +33,16 @@ namespace highlight.timeline
     }
     public class Timeline : TimeObject
     {
-        public TimelineStyle style { get { return mStyle as TimelineStyle; } }
+        public TimelineStyle lStyle { get { return lStyle as TimelineStyle; } }
         public Target target = null;
+        public SceneObject owner = null;
         float _InverseFrameRate = 0;
         public float InverseFrameRate
         {
             get
             {
                 if (_InverseFrameRate == 0)
-                    _InverseFrameRate = style.InverseFrameRate;
+                    _InverseFrameRate = lStyle.InverseFrameRate;
                 return _InverseFrameRate;
             }
         }
@@ -75,7 +72,7 @@ namespace highlight.timeline
         public bool IsStopped { get { return _currentFrame < 0; } }
         public void SetCurrentTime(float time)
         {
-            SetCurrentFrame(RoundToInt(time * style.FrameRate));
+            SetCurrentFrame(RoundToInt(time * lStyle.FrameRate));
         }
         public int GetCurrentFrame()
         {
@@ -83,7 +80,7 @@ namespace highlight.timeline
         }
         public void Play(float curTime, float startTime = 0f)
         {
-            Play(curTime, RoundToInt(startTime * style.FrameRate));
+            Play(curTime, RoundToInt(startTime * lStyle.FrameRate));
         }
         public void Play(float curTime, int startFrame=0)
         {
@@ -103,8 +100,9 @@ namespace highlight.timeline
         }
         protected override void OnDestroy()
         {
-            target = null;
             base.OnDestroy();
+            owner = null;
+            target = null;
         }
         protected override void OnStop()
         {
@@ -148,14 +146,14 @@ namespace highlight.timeline
         /// @sa Length, GetCurrentFrame
         public void SetCurrentFrame(int frame)
         {
-            _currentFrame = Clamp(frame, 0, style.Length);
+            _currentFrame = Clamp(frame, 0, lStyle.Length);
 
             _isPlayingForward = _currentFrame >= frame;
 
             float currentTime = _currentFrame * InverseFrameRate;
-            UpdateEvent(_currentFrame, currentTime);
+            update(_currentFrame);
 
-            if (_currentFrame == style.Length)
+            if (_currentFrame == lStyle.Length)
             {
                 Stop();
             }
@@ -164,7 +162,7 @@ namespace highlight.timeline
         {
 #if UNITY_EDITOR
             _isPlayingForward = frame >= _currentFrame;
-            _currentFrame = Clamp(frame, 0, style.Length);
+            _currentFrame = Clamp(frame, 0, lStyle.Length);
 #endif
         }
         int RoundToInt(float f)
