@@ -134,6 +134,13 @@ namespace highlight
             cur.End = Mathf.Clamp(cur.End, cur.Start, clampV.End);
             return cur;
         }
+        public static FrameRange Resize(int x,int y, FrameRange clampV)
+        {
+            FrameRange cur = new FrameRange(x,y);
+            cur.Start = Mathf.Clamp(cur.Start, clampV.Start, clampV.End);
+            cur.End = Mathf.Clamp(cur.End, cur.Start, clampV.End);
+            return cur;
+        }
     }
 
     /// @brief Types of range overlap

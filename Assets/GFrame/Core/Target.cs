@@ -1,75 +1,36 @@
 ﻿using System.Collections.Generic;
-
+using UnityEngine;
 namespace highlight
 {
-
-    using UnityEngine;
-    using ObjectList = List<SceneObject>;
-    public enum TargetType
-    {
-        TT_None,
-        TT_Point,
-        TT_Object,
-        TT_ObjectList,
-    }
-
 	public class Target
 	{
-        protected TargetType mType;
-        protected Vector3 mPosition;
-        protected SceneObject obj;
-        protected ObjectList mObjects;
-
-        public Target(TargetType type)
+        protected List<SceneObject> mObjects;
+        protected List<Vector3> mPositions;
+        public Target()
         {
-            mType = type;
-            mPosition = Vector3.zero;
+            mObjects = new List<SceneObject>();
+            mPositions = new List<Vector3>();
         }
-
-        public TargetType getType() { return mType; }
-
-        public Vector3 getPosition()
+        public Vector3 getPos(int idx = 0)
         {
-            Vector3 pos = Vector3.zero;
-            switch (mType)
-            {
-                case TargetType.TT_Point:
-                    pos = mPosition;
-                    break;
-                case TargetType.TT_Object:
-                    if (obj != null)
-                        pos = obj.getPosition();
-                    break;
-                case TargetType.TT_ObjectList:
-                    if (mObjects != null && mObjects.Count > 0)
-                        pos = mObjects[0].getPosition();
-                    break;
-            }
-            return pos;
+            return mPositions[idx];
         }
-        public void setPosition(Vector3 pos)
+        public SceneObject getObj(int idx = 0)
         {
-            mPosition = pos;
+            return mObjects[idx];
         }
-        public void setObj(SceneObject _obj)
+        public void addPosition(Vector3 pos)
         {
-            obj = _obj;
+            mPositions.Add(pos);
         }
-        public SceneObject getObj()
+        public void addObj(SceneObject obj)
         {
-            return obj;
-        }
-        public ObjectList getObjectList()
-        {
-            return mObjects;
-        }
-        public void setObjectList(ObjectList list)
-        {
-            mObjects = list;
+            mObjects.Add(obj);
         }
         public void Clear()
         {
-
+            mPositions.Clear();
+            mObjects.Clear();
         }
 
     }

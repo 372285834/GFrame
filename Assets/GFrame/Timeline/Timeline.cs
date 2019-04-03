@@ -4,14 +4,12 @@ using System.Collections.Generic;
 
 namespace highlight.timeline
 {
-    [Time("Timeline", typeof(Timeline))]
+   // [Time("Timeline", typeof(Timeline))]
     public class TimelineStyle : TimeStyle
     {
-        public string name;
         public int FrameRate = DEFAULT_FRAMES_PER_SECOND;
         public const int DEFAULT_FRAMES_PER_SECOND = 60;
         public const int DEFAULT_LENGTH = 2;
-        public float InverseFrameRate { get { return 1f / FrameRate; } }
         public float LengthTime { get { return (float)Length / FrameRate; } }
         public static TimelineStyle CreatDefault(string name)
         {
@@ -21,29 +19,28 @@ namespace highlight.timeline
             return creatNew;
         }
         public static ObjectPool<Timeline> linePool = new ObjectPool<Timeline>();
-        public override TimeObject getObj()
+        public Timeline Creat()
         {
-            Timeline obj = linePool.Get();
-            return obj;
+            Timeline root = linePool.Get();
+            TimeObject.Create(root, this, null);
+            return root;
         }
         public override void release(TimeObject obj)
         {
-            linePool.Release(obj as Timeline);
+            Timeline tl = obj as Timeline;
+            linePool.Release(tl);
         }
     }
     public class Timeline : TimeObject
     {
-        public TimelineStyle lStyle { get { return lStyle as TimelineStyle; } }
-        public Target target = null;
+        public TimelineStyle lStyle { get { return timeStyle as TimelineStyle; } }
+        public Target target = new Target();
         public SceneObject owner = null;
-        float _InverseFrameRate = 0;
-        public float InverseFrameRate
+        public float FrameRate
         {
             get
             {
-                if (_InverseFrameRate == 0)
-                    _InverseFrameRate = lStyle.InverseFrameRate;
-                return _InverseFrameRate;
+                return lStyle.FrameRate;
             }
         }
         // has it been initialized?
@@ -102,7 +99,7 @@ namespace highlight.timeline
         {
             base.OnDestroy();
             owner = null;
-            target = null;
+            target.Clear();
         }
         protected override void OnStop()
         {
@@ -133,10 +130,10 @@ namespace highlight.timeline
             if (!_isPlaying)
                 return;
             float delta = time - _lastUpdateTime;
-            float timePerFrame = InverseFrameRate;
+            float timePerFrame = 1/FrameRate;
             if (delta >= timePerFrame)
             {
-                int numFrames = RoundToInt(delta / timePerFrame);
+                int numFrames = RoundToInt(delta * FrameRate);
                 SetCurrentFrame(_currentFrame + numFrames);
                 _lastUpdateTime += timePerFrame * numFrames;
             }
@@ -150,8 +147,7 @@ namespace highlight.timeline
 
             _isPlayingForward = _currentFrame >= frame;
 
-            float currentTime = _currentFrame * InverseFrameRate;
-            update(_currentFrame);
+            UpdateFrame(_currentFrame);
 
             if (_currentFrame == lStyle.Length)
             {

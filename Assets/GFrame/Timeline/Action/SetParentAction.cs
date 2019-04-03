@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace highlight
 {
-    [Action("行为/跟随", typeof(FollowAction))]
-    public class FollowAction : TimeAction
+    [Action("行为/设置父节点", typeof(SetParentAction))]
+    public class SetParentAction : TimeAction
     {
         [Desc("目标挂点")]
         public LocatorData target;
@@ -15,9 +15,12 @@ namespace highlight
         {
 
         }
+        public override void OnTrigger()
+        {
+            this.prefabData.SetParent(this.target.target);
+        }
         public override void OnUpdate()
         {
-            this.prefabData.SetPos(this.target.position);
         }
         public override void OnDestroy()
         {

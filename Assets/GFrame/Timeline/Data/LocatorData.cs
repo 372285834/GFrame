@@ -2,17 +2,34 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 namespace highlight
 {
     [Time("数据/挂点", typeof(LocatorData))]
     public class LocatorStyle : ComponentStyle
     {
+        public int index;
         public Locator locator;
+#if UNITY_EDITOR
+        public override void OnInspectorGUI()
+        {
+            Locator l = this.locator;//, string name
+            // GUILayout.Space(10f);
+            this.index = EditorGUILayout.IntField("目标index:", this.index);
+            l.isFollow = EditorGUILayout.Toggle("是否跟随：", l.isFollow);
+            l.type = (Locator.eType)EditorGUILayout.EnumPopup("类型：", l.type);
+            l.eName = (Locator.eNameType)EditorGUILayout.EnumPopup("挂点名:", l.eName);
+            l.position = EditorGUILayout.Vector3Field("偏移：", l.position);
+            this.locator = l;
+        }
+#endif
     }
-    public class LocatorData : ComponentData, IPosition
+    public class LocatorData : ComponentData
     {
         public Locator locator { get { return (this.style as LocatorStyle).locator; } }
-        public Vector3 getPosition
+        public Vector3 position
         {
             get
             {
@@ -22,7 +39,7 @@ namespace highlight
             }
         }
         Vector3 pos;
-        Transform target = null;
+        public Transform target { get; private set; }
         public override void OnInit()
         {
             
@@ -38,10 +55,10 @@ namespace highlight
                     targetObj = this.root.owner;
                     break;
                 case Locator.eType.LT_TARGET:
-                    targetObj = this.root.target.getObj();
+                    targetObj = this.root.target.getObj(index);
                     break;
                 case Locator.eType.LT_TARGET_POS:
-                    pos = this.root.target.getPosition();
+                    pos = this.root.target.getPos(index);
                     break;
                 case Locator.eType.LT_SCENE:
                     pos = locator.position;

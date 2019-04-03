@@ -27,7 +27,14 @@ namespace highlight
                     ComponentStyle.compAttrDic[t] = attrs[0];
                     typeDic[tName] = t;
                 }
-
+                ActionAttribute[] actionAttrs = t.GetCustomAttributes(typeof(ActionAttribute), true) as ActionAttribute[];
+                if (actionAttrs != null && actionAttrs.Length > 0)
+                {
+                    //GEventAttribute att = attrs[0];
+                    string tName = t.Name;
+                    ActionStyle.actionAttrDic[t] = actionAttrs[0];
+                    typeDic[tName] = t;
+                }
             }
             //ActionFlag acFlag = ActionFlag.Node;
             //Type et = typeof(ActionFlag);
@@ -42,7 +49,6 @@ namespace highlight
             //        actionAttrDic[flag] = att;
             //    }
             //}
-            
         }
         static List<Timeline> releaseList = new List<Timeline>();
         public static bool AutoRelease = true;
@@ -76,10 +82,10 @@ namespace highlight
         {
             if (style == null)
                 return null;
-            Timeline tl = TimeObject.Create(style.getObj() as Timeline, style, null) as Timeline;
+            Timeline tl = style.Creat();
             tl.Init();
             int id = (int)mIdGenerator.generateNewId();
-            tl.id = id;
+            tl.SetId(id);
             mActiveDic.Add(id, tl);
             return tl;
         }

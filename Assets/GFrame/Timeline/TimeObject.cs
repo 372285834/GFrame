@@ -1,29 +1,34 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace highlight.timeline
 {
-    public class TimeStyle
+    public class TimeStyle : Object
     {
-        public int Start = 0;
-        public int End = 0;
+        public string name = "node";
+        public int x = 0;
+        public int y = 0;
         //[NonSerialized]
-        public List<TimeStyle> Childs = new List<TimeStyle>();
-        public List<ComponentStyle> Components = new List<ComponentStyle>();
-        public List<ActionStyle> Actions = new List<ActionStyle>();
+        public TimeStyle[] Childs = new TimeStyle[0];
+        public ComponentStyle[] Components = new ComponentStyle[0];
+        public ActionStyle[] Actions = new ActionStyle[0];
         // [JsonIgnore]
-        public int Length { set { End = Start + value; } get { return End - Start; } }
+        public int Length { set { y = x + value; } get { return y - x; } }
         // [JsonIgnore]
         public FrameRange Range
         {
-            get { return new FrameRange(Start, End); }
-            set { Start = value.Start; End = value.End; }
+            get { return new FrameRange(x, y); }
+            set { x = value.Start; y = value.End; }
         }
-        public object Clone()
-        {
-            return this.MemberwiseClone();
-        }
+
+        //public object Clone(bool deep = true)
+        //{
+        //    if (deep)
+        //        return Object.DeepCopyWithReflection<TimeStyle>(this);
+        //    return this.MemberwiseClone();
+        //}
 
         public static ObjectPool<TimeObject> objPool = new ObjectPool<TimeObject>();
         public virtual TimeObject getObj()
@@ -36,22 +41,22 @@ namespace highlight.timeline
             objPool.Release(obj);
         }
     }
-    public class TimeObject
+    public class TimeObject : Object
     {
+        public int index = 0;
         public FrameRange frameRange { get; private set; }
         public Timeline root { get; private set; }
         public bool triggerOnSkip { get { return true; } }
 
         public TimeStyle timeStyle { get; private set; }
         public ResData resData { get; private set; }
-        public int id;
         public bool activeSelf { get; private set; }
         public void SetActive(bool v)
         {
             activeSelf = v;
             if (this.mFrameSinceTrigger > 0)
             {
-                this.update(this.mFrameSinceTrigger);
+                this.UpdateFrame(this.mFrameSinceTrigger);
             }
         }
         private bool _hasTriggered = false;
@@ -63,7 +68,7 @@ namespace highlight.timeline
 
         private int mFrameSinceTrigger;
         public int frameSinceTrigger { get { return mFrameSinceTrigger; } }
-        public float timeSinceTrigger { get { return mFrameSinceTrigger * root.InverseFrameRate; } }
+        public float timeSinceTrigger { get { return mFrameSinceTrigger / root.FrameRate; } }
         public TimeObject parent { get; private set; }
         public bool IsRoot { get { return parent == null; } }
         protected List<TimeObject> _childs = new List<TimeObject>();
@@ -81,32 +86,36 @@ namespace highlight.timeline
         public static TimeObject Create(Timeline root, TimeStyle data, TimeObject parent)
         {
             if (root == null)
-            {
                 return null;
-            }
-            TimeObject obj = data.getObj();
+            TimeObject obj = null;
+            if (parent == null)
+                obj = root;
+            else
+                obj = data.getObj();
             obj.parent = parent;
             obj.root = root;
             obj.timeStyle = data;
             obj.frameRange = data.Range;
-            for (int i = 0; i < data.Components.Count; i++)
+            for (int i = 0; i < data.Components.Length; i++)
             {
                 ComponentData comp = ComponentData.Get(data.Components[i], obj);
-                if (comp is ResData)
-                {
-                    obj.resData = comp as ResData;
-                }
+                comp.index = i;
                 obj._components.Add(comp);
+                if (comp is ResData)
+                    obj.resData = comp as ResData;
             }
-            for (int i = 0; i < data.Actions.Count;i++ )
+            for (int i = 0; i < data.Actions.Length; i++)
             {
-                TimeAction action = TimeAction.Get(data.Actions[i], obj) as TimeAction;
+                ActionStyle style = data.Actions[i];
+                TimeAction action = TimeAction.Get(style, obj) as TimeAction;
+                action.index = i;
                 obj._actions.Add(action);
+                action.SetData(obj._components);
             }
-            for (int i = 0; i < data.Childs.Count; i++)
+            for (int i = 0; i < data.Childs.Length; i++)
             {
                 TimeObject child = TimeObject.Create(root, data.Childs[i], obj);
-                child.id = i;
+                child.index = i;
                 obj._childs.Add(child);
             }
             return obj;
@@ -114,18 +123,6 @@ namespace highlight.timeline
         public virtual void OnStyleChange()
         {
             this.frameRange = this.timeStyle.Range;
-        }
-        public TimeObject AddChild(TimeStyle data)
-        {
-            if (timeStyle == null || data == null)
-                return null;
-            timeStyle.Childs.Add(data);
-            TimeObject evt = TimeObject.Create(this.root, data, this);
-            int id = _childs.Count;
-            _childs.Add(evt);
-            evt.id = id;
-            evt.Init();
-            return evt;
         }
         public TimeObject GetChild(int index)
         {
@@ -143,25 +140,121 @@ namespace highlight.timeline
             }
             return null;
         }
+        public TimeObject AddChild(TimeStyle data)
+        {
+            if (timeStyle == null || data == null)
+                return null;
+            AddArray<TimeStyle>(ref timeStyle.Childs, data);
+            //timeStyle.Childs.Add(data);
+            TimeObject evt = TimeObject.Create(this.root, data, this);
+            evt.index = _childs.Count;
+            _childs.Add(evt);
+            evt.Init();
+            return evt;
+        }
         public void RemoveChild(TimeObject evt)
         {
             if (this.timeStyle == null || evt == null)
                 return;
+            evt.Destroy();
             if (_childs.Remove(evt))
             {
-                this.timeStyle.Childs.Remove(evt.timeStyle);
-                evt.Destroy();
+                RemoveArray<TimeStyle>(ref timeStyle.Childs, evt.timeStyle);
                 UpdateChildIds();
             }
+        }
+        public void SetChildIndex(TimeObject obj, int idx)
+        {
+            this._childs.Remove(obj);
+            ArrayMove<TimeStyle>(ref this.timeStyle.Childs, obj.index, idx);
+           // idx = idx > obj.index ? idx - 1 : idx;
+            this._childs.Insert(idx, obj);
+            UpdateChildIds();
+        }
+        public void AddComponent(ComponentStyle style)
+        {
+            AddArray<ComponentStyle>(ref this.timeStyle.Components, style);
+            ComponentData comp = ComponentData.Get(style, this);
+
+            this._components.Add(comp);
+            comp.index = this._components.Count - 1;
+            if (comp is ResData)
+                this.resData = comp as ResData;
+        }
+        public void RemoveComponent(ComponentData data)
+        {
+            data.OnDestroy();
+            RemoveArray<ComponentStyle>(ref this.timeStyle.Components, data.style);
+            this._components.Remove(data);
+            for(int i=0;i<this.timeStyle.Actions.Length;i++)
+            {
+                int[] indexs = timeStyle.Actions[i].Indexs;
+                for(int j=0;j<indexs.Length;j++)
+                {
+                    if (indexs[j] == data.index)
+                        indexs[j] = -1;
+                }
+            }
+            Rebuild();
+        }
+        public void SetComponentIndex(ComponentData data, int idx)
+        {
+            this._components.Remove(data);
+            ArrayMove<ComponentStyle>(ref this.timeStyle.Components, data.index, idx);
+         //   idx = idx > data.index ? idx - 1 : idx;
+            this._components.Insert(idx, data);
+            for (int k = 0; k < this.timeStyle.Actions.Length; k++)
+            {
+                int[] indexs = timeStyle.Actions[k].Indexs;
+                for (int j = 0; j < indexs.Length; j++)
+                {
+                    for (int i = 0; i < _components.Count; i++)
+                    {
+                        if (indexs[j] == _components[i].index)
+                        {
+                            indexs[j] = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            Rebuild();
+        }
+        public void AddAction(ActionStyle actionStyle)
+        {
+            AddArray<ActionStyle>(ref this.timeStyle.Actions, actionStyle);
+            TimeAction action = TimeAction.Get(actionStyle, this) as TimeAction;
+            this._actions.Add(action);
+            action.index = this._actions.Count - 1;
+            action.SetData(this._components);
+        }
+        public void RemoveAction(TimeAction action)
+        {
+            action.OnDestroy();
+            RemoveArray<ActionStyle>(ref this.timeStyle.Actions, action.style);
+            this._actions.Remove(action);
+            Rebuild();
+        }
+        public void SetActionIndex(TimeAction action, int idx)
+        {
+            this._actions.Remove(action);
+            ArrayMove<ActionStyle>(ref this.timeStyle.Actions, action.index, idx);
+         //   idx = idx > action.index ? idx - 1 : idx;
+            this._actions.Insert(idx, action);
+            Rebuild();
         }
         public void Rebuild()
         {
             UpdateChildIds();
+            for (int i = 0; i < _components.Count; i++)
+                _components[i].index = i;
+            for (int i = 0; i < _actions.Count; i++)
+                _actions[i].index = i;
         }
         private void UpdateChildIds()
         {
-            for (int i = 0; i != _childs.Count; ++i)
-                _childs[i].id = i;
+            for (int i = 0; i < _childs.Count; ++i)
+                _childs[i].SetId(i);
         }
 
         public void Init()
@@ -245,7 +338,7 @@ namespace highlight.timeline
             mFrameSinceTrigger = framesSinceTrigger;
             progress = (float)mFrameSinceTrigger / this.Length;
         }
-        protected void update(int frame)
+        protected void UpdateFrame(int frame)
         {
             setProgress(frame);
             if (!activeSelf || HasFinished)
@@ -284,13 +377,13 @@ namespace highlight.timeline
                 }
                 else if (frame >= _childs[i].Start && frame <= _childs[i].End)
                 {
-                    _childs[i].update(frame - _childs[i].Start);
+                    _childs[i].UpdateFrame(frame - _childs[i].Start);
                 }
                 else //if( frame > _events[_currentEvent].End ) // is it finished
                 {
                     if (!_childs[i].HasFinished && (_childs[i].HasTriggered || _childs[i].triggerOnSkip))
                     {
-                        _childs[i].update(_childs[i].Length);
+                        _childs[i].UpdateFrame(_childs[i].Length);
                     }
                 }
             }
@@ -346,7 +439,7 @@ namespace highlight.timeline
 
             for (int i = 0; i != limit; i += increment)
             {
-				//Profiler.BeginSample("Event: " + i + " " + _events[i].name );
+                //Profiler.BeginSample("Event: " + i + " " + _events[i].name );
                 if (frame < _childs[i].Start)
                 {
                     if (_childs[i].HasTriggered)
@@ -366,7 +459,7 @@ namespace highlight.timeline
                         _childs[i].UpdateEditor(_childs[i].Length);
 
                 }
-				//Profiler.EndSample();
+                //Profiler.EndSample();
             }
         }
         protected virtual void OnUpdateEditor()
@@ -383,9 +476,9 @@ namespace highlight.timeline
         }
 #endif
         #endregion
-		public bool IsLastEvent()
+        public bool IsLastEvent()
         {
-            return id == root.Childs.Count - 1;
+            return index == root.Childs.Count - 1;
         }
         public int Start
         {
@@ -403,15 +496,15 @@ namespace highlight.timeline
         }
         public float StartTime
         {
-            get { return frameRange.Start * root.InverseFrameRate; }
+            get { return frameRange.Start / root.FrameRate; }
         }
         public float EndTime
         {
-            get { return frameRange.End * root.InverseFrameRate; }
+            get { return frameRange.End / root.FrameRate; }
         }
         public float LengthTime
         {
-            get { return frameRange.Length * root.InverseFrameRate; }
+            get { return frameRange.Length / root.FrameRate; }
         }
         public virtual int GetMinLength()
         {
@@ -448,12 +541,10 @@ namespace highlight.timeline
         {
             for (int i = 0; i < _components.Count; i++)
             {
-                _components[i].index = i;
                 _components[i].OnInit();
             }
             for (int i = 0; i < _actions.Count; i++)
             {
-                _actions[i].index = i;
                 _actions[i].OnInit();
             }
         }
@@ -498,7 +589,7 @@ namespace highlight.timeline
                 _components[i].OnStop();
             for (int i = 0; i < _actions.Count; i++)
                 _actions[i].OnStop();
-        } 
+        }
         protected virtual void OnResume()
         {
             for (int i = 0; i < _components.Count; i++)
@@ -514,5 +605,94 @@ namespace highlight.timeline
                 _actions[i].OnPause();
         }
         #endregion
+
+
+        public static void AddArray<T>(ref T[] array, T t) where T : Object
+        {
+            int count = array.Length;
+            Array.Resize<T>(ref array, count + 1);
+            array[count] = t;
+        }
+        //public static int FindIndex<T>(T[] array, Predicate<T> match);
+        public static int RemoveArray<T>(ref T[] array, T t) where T : Object
+        {
+            //  int idx = Array.FindIndex<T>(array, x => x == t);
+            //  if (idx > -1)
+            //  {
+            int idx = -1;
+            int count = array.Length;
+            T[] arr = new T[count - 1];
+            int num = 0;
+            for (int i = 0; i < count; i++)
+            {
+                if (array[i] == t)
+                {
+                    idx = i;
+                    continue;
+                }
+                arr[num] = array[i];
+                num++;
+            }
+            array = arr;
+            return idx;
+            //   }
+            //  return array;
+        }
+        /// <summary>
+        /// 将数组的某一索引位置的元素移动到指定索引位置
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="array"></param>
+        /// <param name="fromIndex">要移动的元素所在的索引位</param>
+        /// <param name="toIndex">要移动到的索引位</param>
+        public static void ArrayMove<T>(ref T[] array, int fromIndex, int toIndex)
+        {
+            if (fromIndex > array.Length - 1 || toIndex > array.Length - 1 || fromIndex == toIndex) return;
+
+            T[] tempArray = new T[array.Length];
+            if (fromIndex > toIndex)
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    if (i == toIndex)
+                    {
+                        tempArray[i] = array[fromIndex];
+                    }
+                    else
+                    {
+                        if (i > fromIndex || i < toIndex)
+                        {
+                            tempArray[i] = array[i];
+                        }
+                        else
+                        {
+                            tempArray[i] = array[i - 1];
+                        }
+                    }
+                }
+            }
+            else if (fromIndex < toIndex)
+            {
+                for (int i = 0; i < array.Length; i++)
+                {
+                    if (i == toIndex)
+                    {
+                        tempArray[i] = array[fromIndex];
+                    }
+                    else
+                    {
+                        if (i < fromIndex || i > toIndex)
+                        {
+                            tempArray[i] = array[i];
+                        }
+                        else
+                        {
+                            tempArray[i] = array[i + 1];
+                        }
+                    }
+                }
+            }
+            array = tempArray;
+        }
     }
 }

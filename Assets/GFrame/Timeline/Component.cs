@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 
 namespace highlight
 {
@@ -23,19 +24,42 @@ namespace highlight
                 this.name = name.Substring(name.LastIndexOf("/") + 1);
             capacity = _capacity;
             this.dataType = dType;
-            if (this.dataType == null)
-                this.dataType = typeof(ComponentData);
         }
     }
-
-    public abstract class ComponentStyle
+    public abstract class Component : Object
+    {
+        public int index;
+        public PrefabData prefabData { get { return timeObject.resData as PrefabData; } }
+        public AnimatorData animatorData { get { return timeObject.resData as AnimatorData; } }
+        public TimeObject timeObject { protected set; get; }
+        public Timeline root { get { return this.timeObject.root; } }
+        public SceneObject owner { get { return this.root.owner; } }
+        public TimeStyle timeStyle
+        {
+            get
+            {
+                return this.timeObject.timeStyle;
+            }
+        }
+        public List<ComponentData> GetComponents { get { return timeObject.GetComponents; } }
+        #region virtual Function
+        public virtual void OnInit() { }
+        public virtual void OnDestroy() { }// timeline 销毁
+        public virtual void OnTrigger() { }
+        public virtual void OnFinish() { } // event完成
+        public virtual void OnStop() { } //timeline 完成
+        public virtual void OnResume() { }
+        public virtual void OnPause() { }
+        #endregion
+    }
+    public abstract class ComponentStyle : Object
     {
         // [JsonIgnore]
         public string TypeName
         {
             get
             {
-                return this.GetType().Name;
+                return this.GetType().FullName;
             }
         }
         public object Clone()
@@ -44,7 +68,7 @@ namespace highlight
         }
 
         public readonly static Dictionary<Type, TimeAttribute> compAttrDic = new Dictionary<Type, TimeAttribute>();
-        private TimeAttribute mAttr;
+        protected TimeAttribute mAttr;
         // [JsonIgnore]
         public TimeAttribute Attr
         {
@@ -67,46 +91,27 @@ namespace highlight
                 return mAttr;
             }
         }
-
-    }
-    public class ComponentData
-    {
-        public int index;
-        public TimeObject timeObject { private set; get; }
-        public Timeline root { get { return this.timeObject.root; } }
-        public SceneObject owner { get { return this.root.owner; } }
-        public PrefabData prefabData { get { return timeObject.resData as PrefabData; } }
-        public AnimatorData animatorData { get { return timeObject.resData as AnimatorData; } }
-        public TimeStyle timeStyle
+#if UNITY_EDITOR
+        public virtual void OnInspectorGUI()
         {
-            get
-            {
-                return this.timeObject.timeStyle;
-            }
+
         }
-        public List<ComponentData> GetComponents { get { return timeObject.GetComponents; } }
+#endif
+    }
+    public class ComponentData : Component
+    {
         public ComponentStyle style { private set; get; }
-        #region virtual Function
-        public virtual void OnInit() { }
-        public virtual void OnDestroy() { }// timeline 销毁
-        public virtual void OnTrigger() { }
-        public virtual void OnFinish() { } // event完成
-        public virtual void OnStop() { } //timeline 完成
-        public virtual void OnResume() { }
-        public virtual void OnPause() { }
-        #endregion
 
-
-        private readonly static Dictionary<string, ObjectPool> logicPoolDic = new Dictionary<string, ObjectPool>();
+        private readonly static Dictionary<string, ObjectPool> CompPoolDic = new Dictionary<string, ObjectPool>();
 
         public static ComponentData Get(ComponentStyle comp, TimeObject t)
         {
             if (comp == null)
                 return null;
-            ComponentData logic = getPool(comp).Get(comp.Attr.dataType) as ComponentData;
-            logic.timeObject = t;
-            logic.style = comp;
-            return logic;
+            ComponentData data = getPool(comp).Get(comp.Attr.dataType) as ComponentData;
+            data.timeObject = t;
+            data.style = comp;
+            return data;
         }
         public static void Release(ComponentData logic)
         {
@@ -119,11 +124,11 @@ namespace highlight
         static ObjectPool getPool(ComponentStyle data)
         {
             ObjectPool pool = null;
-            logicPoolDic.TryGetValue(data.TypeName, out pool);
+            CompPoolDic.TryGetValue(data.TypeName, out pool);
             if (pool == null)
             {
                 pool = new ObjectPool();
-                logicPoolDic[data.TypeName] = pool;
+                CompPoolDic[data.TypeName] = pool;
             }
             return pool;
         }
