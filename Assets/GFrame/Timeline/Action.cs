@@ -107,6 +107,11 @@ namespace highlight
         public ActionStyle style { private set; get; }
         #region virtual Function
         public virtual void OnUpdate() { }
+
+        public virtual void OnFinish() { } // event完成
+        public virtual void OnStop() { } //timeline 完成
+        public virtual void OnResume() { }
+        public virtual void OnPause() { }
         #endregion
 
 
@@ -161,6 +166,17 @@ namespace highlight
                         continue;
                     ComponentData comp = comps[idx];
                     infos[j].SetValue(this, comp);
+                }
+            }
+        }
+        public override void OnDestroy()
+        {
+            FieldInfo[] infos = this.style.Attr.Infos;
+            if (infos != null && infos.Length > 0)
+            {
+                for (int j = 0; j < infos.Length; j++)
+                {
+                    infos[j].SetValue(this, null);
                 }
             }
         }

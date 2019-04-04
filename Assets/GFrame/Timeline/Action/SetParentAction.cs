@@ -11,20 +11,13 @@ namespace highlight
         [Desc("目标挂点")]
         public LocatorData target;
 
-        public override void OnInit()
-        {
-
-        }
         public override void OnTrigger()
         {
-            this.prefabData.SetParent(this.target.target);
+            this.res.obj.SetParent(this.target.target);
+            this.res.obj.SetLocalPos(this.target.loStyle.off);
         }
         public override void OnUpdate()
         {
-        }
-        public override void OnDestroy()
-        {
-            this.target = null;
         }
     }
 }

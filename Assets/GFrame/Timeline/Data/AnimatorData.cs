@@ -6,8 +6,8 @@ using UnityEditor;
 #endif
 namespace highlight
 {
-    [Time("数据/动作", typeof(EffectData))]
-    public class AnimatorStyle : ResStyle
+    [Time("数据/动画", typeof(AnimatorData))]
+    public class AnimatorStyle : ComponentStyle
     {
         public string clip;
         public bool isSelf = true;
@@ -24,7 +24,7 @@ namespace highlight
         }
 #endif
     }
-    public class AnimatorData : ResData
+    public class AnimatorData : ComponentData
     {
         public Animator animator;
         public override void OnInit()
@@ -38,10 +38,8 @@ namespace highlight
                 animator = this.owner.animator;
             else
                 animator = this.root.target.getObj().animator;
-            animator.speed = style.speed;
-            animator.CrossFadeInFixedTime(style.clip, style.duration);
         }
-        public override void OnFinish()
+        public override void OnDestroy()
         {
             animator = null;
         }

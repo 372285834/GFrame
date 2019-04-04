@@ -5,13 +5,13 @@
   "y": 120,
   "Childs": [
     {
-      "name": "effect",
-      "x": 14,
+      "name": "bullet",
+      "x": 9,
       "y": 120,
       "Childs": [
         {
-          "name": "node",
-          "x": 58,
+          "name": "node1",
+          "x": 17,
           "y": 120,
           "Childs": [],
           "Components": [],
@@ -20,20 +20,21 @@
       ],
       "Components": [
         {
-          "$type": "highlight.EffectStyle, Assembly-CSharp"
+          "$type": "highlight.ResStyle, Assembly-CSharp",
+          "eType": 0
         },
         {
           "$type": "highlight.LocatorStyle, Assembly-CSharp",
           "index": 0,
           "locator": {
             "type": 0,
-            "eName": 0,
-            "position": {
-              "x": 0.0,
-              "y": 0.0,
-              "z": 0.0
-            },
-            "isFollow": false
+            "eName": 0
+          },
+          "isFollow": false,
+          "off": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
           }
         },
         {
@@ -41,13 +42,13 @@
           "index": 0,
           "locator": {
             "type": 0,
-            "eName": 0,
-            "position": {
-              "x": 0.0,
-              "y": 0.0,
-              "z": 0.0
-            },
-            "isFollow": false
+            "eName": 0
+          },
+          "isFollow": false,
+          "off": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
           }
         },
         {
@@ -65,6 +66,60 @@
           ]
         }
       ]
+    },
+    {
+      "name": "effect",
+      "x": 0,
+      "y": 120,
+      "Childs": [],
+      "Components": [
+        {
+          "$type": "highlight.ResStyle, Assembly-CSharp",
+          "eType": 0
+        },
+        {
+          "$type": "highlight.LocatorStyle, Assembly-CSharp",
+          "index": 0,
+          "locator": {
+            "type": 0,
+            "eName": 0
+          },
+          "isFollow": false,
+          "off": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          }
+        }
+      ],
+      "Actions": [
+        {
+          "name": "highlight.SetPosAction",
+          "Indexs": [
+            1
+          ]
+        }
+      ]
+    },
+    {
+      "name": "clip",
+      "x": 0,
+      "y": 120,
+      "Childs": [],
+      "Components": [
+        {
+          "$type": "highlight.ResStyle, Assembly-CSharp",
+          "eType": 1
+        },
+        {
+          "$type": "highlight.AnimatorStyle, Assembly-CSharp",
+          "isSelf": true,
+          "speed": 1.0,
+          "duration": 0.1,
+          "eType": 0
+        }
+      ],
+      "Actions": []
     }
   ],
   "Components": [],

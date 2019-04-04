@@ -12,7 +12,7 @@ namespace highlight
         public static TimelineNode Creat(TimelineStyle _style)
         {
             GameObject go = new GameObject(_style.name);
-            go.hideFlags = HideFlags.DontSave;
+            //go.hideFlags = HideFlags.DontSave;
             TimelineNode node = go.AddComponent<TimelineNode>();
             node.obj = _style.Creat();
             node.parent = null;
@@ -21,6 +21,5 @@ namespace highlight
             return node;
         }
         public bool isChange = false;
-
     }
 }

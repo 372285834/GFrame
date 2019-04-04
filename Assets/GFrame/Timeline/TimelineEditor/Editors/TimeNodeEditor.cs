@@ -14,6 +14,7 @@ namespace highlight
         private const string FRAMERANGE_START_FIELD_ID = "FrameRange.Start";
         TimeNode mScript;
         TimeStyle style;
+        TimeObject obj;
         List<Type> list = new List<Type>();
         List<string> strList = new List<string>();
         public static bool showData = true;
@@ -22,22 +23,27 @@ namespace highlight
         {
             mScript = target as TimeNode;
             style = mScript.style;
-            if (style == null)
+            obj = mScript.obj;
+            if (obj == null || style == null)
             {
-                TimeWindow.ShowEditor();
-                Transform t = this.mScript.transform.parent == null ? this.mScript.transform : this.mScript.transform.root;
-                GameObject.DestroyImmediate(t.gameObject);
+           //     TimeWindow.ShowEditor();
+               // Transform t = this.mScript.transform.parent == null ? this.mScript.transform : this.mScript.transform.root;
+              //  GameObject.DestroyImmediate(t.gameObject);
                 return;
+            }
+            if (mScript.Depth != obj.Depth || mScript.index != obj.index)
+            {
+                Debug.LogError(string.Format("位置错误：Depth【{0},{1}】, index【{2},{3}】", mScript.Depth, obj.Depth, mScript.index, obj.index));
             }
             GUILayout.BeginVertical();
             ShowMenu();
             drawRang();
-
-            if (GUILayout.Button("数据"))
+            string arr2 = showData ? "Hide" : "Show";
+            List<ComponentData> comps = mScript.obj.GetComponents;
+            if (GUILayout.Button("数据(" + comps.Count + ")" + arr2))
                 showData = !showData;
             if (showData)
             {
-                List<ComponentData> comps = mScript.obj.GetComponents;
                 for (int i = 0; i < comps.Count; i++)
                 {
                     drawTitle(comps[i].style.Attr.name, comps[i], comps.Count - 1);
@@ -57,12 +63,13 @@ namespace highlight
             GUILayout.Space(10f);
             // DrawSeparator(2);
             // GUILayout.Space(5f);
-            if (GUILayout.Button("行为"))
+            List<TimeAction> Actions = mScript.obj.Actions;
+            string arr = showAction ? "Hide" : "Show";
+            if (GUILayout.Button("行为(" + Actions.Count + ")" + arr))
                 showAction = !showAction;
             //showAction = EditorGUILayout.Foldout(showAction, "行为", false);
             if (showAction)
             {
-                List<TimeAction> Actions = mScript.obj.Actions;
                 for (int i = 0; i < Actions.Count; i++)
                 {
                     drawTitle(Actions[i].style.Attr.name, Actions[i], Actions.Count - 1);
@@ -88,6 +95,10 @@ namespace highlight
                 Dictionary<Type, TimeAttribute> compAttrDic = ComponentStyle.compAttrDic;
                 foreach (KeyValuePair<Type, TimeAttribute> kv in compAttrDic)
                 {
+                    if(obj.resData != null && kv.Key == typeof(ResStyle))
+                    {
+                        continue;
+                    }
                     menu.AddItem(new GUIContent(kv.Value.menu), false, excMenuComponent, kv);
                 }
                 Dictionary<Type, ActionAttribute> actionAttrDic = ActionStyle.actionAttrDic;

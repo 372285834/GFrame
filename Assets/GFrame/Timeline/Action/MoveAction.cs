@@ -14,20 +14,14 @@ namespace highlight
         [Desc("运动轨迹")]
         public TrailData eva;
 
-        public override void OnInit()
+        public override void OnTrigger()
         {
 
         }
         public override void OnUpdate()
         {
-            Vector3 pos = eva.Evaluate(this.start.position, this.end.position, this.timeObject.progress);
-            this.prefabData.SetPos(pos);
-        }
-        public override void OnDestroy()
-        {
-            this.start = null;
-            this.end = null;
-            this.eva = null;
+            Vector3 pos = eva.Evaluate(this.start.curPos, this.end.curPos, this.timeObject.progress);
+            this.res.obj.SetPos(pos);
         }
     }
 }

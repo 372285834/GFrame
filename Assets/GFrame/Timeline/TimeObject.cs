@@ -7,7 +7,7 @@ namespace highlight.timeline
 {
     public class TimeStyle : Object
     {
-        public string name = "node";
+        public string name = "";
         public int x = 0;
         public int y = 0;
         //[NonSerialized]
@@ -70,6 +70,20 @@ namespace highlight.timeline
         public int frameSinceTrigger { get { return mFrameSinceTrigger; } }
         public float timeSinceTrigger { get { return mFrameSinceTrigger / root.FrameRate; } }
         public TimeObject parent { get; private set; }
+        public int Depth
+        {
+            get
+            {
+                int dep = 0;
+                var _parent = this.parent;
+                while (_parent != null)
+                {
+                    dep++;
+                    _parent = _parent.parent;
+                }
+                return dep;
+            }
+        }
         public bool IsRoot { get { return parent == null; } }
         protected List<TimeObject> _childs = new List<TimeObject>();
         public List<TimeObject> Childs { get { return _childs; } }
@@ -96,6 +110,7 @@ namespace highlight.timeline
             obj.root = root;
             obj.timeStyle = data;
             obj.frameRange = data.Range;
+            root.nodeDic[data.name] = obj;
             for (int i = 0; i < data.Components.Length; i++)
             {
                 ComponentData comp = ComponentData.Get(data.Components[i], obj);
@@ -146,11 +161,11 @@ namespace highlight.timeline
                 return null;
             AddArray<TimeStyle>(ref timeStyle.Childs, data);
             //timeStyle.Childs.Add(data);
-            TimeObject evt = TimeObject.Create(this.root, data, this);
-            evt.index = _childs.Count;
-            _childs.Add(evt);
-            evt.Init();
-            return evt;
+            TimeObject obj = TimeObject.Create(this.root, data, this);
+            obj.index = _childs.Count;
+            _childs.Add(obj);
+            obj.Init();
+            return obj;
         }
         public void RemoveChild(TimeObject evt)
         {
@@ -257,7 +272,7 @@ namespace highlight.timeline
                 _childs[i].SetId(i);
         }
 
-        public void Init()
+        public virtual void Init()
         {
             _hasTriggered = false;
             _hasFinished = false;
@@ -268,7 +283,7 @@ namespace highlight.timeline
                 _childs[i].Init();
             }
         }
-        public void Destroy()
+        public virtual void Destroy()
         {
             if (timeStyle == null)
                 return;
@@ -282,7 +297,7 @@ namespace highlight.timeline
             _childs.Clear();
         }
 
-        public void Pause()
+        public virtual void Pause()
         {
 #if UNITY_EDITOR
             PreEvent();
@@ -298,7 +313,7 @@ namespace highlight.timeline
 #endif
         }
 
-        public void Resume()
+        public virtual void Resume()
         {
 #if UNITY_EDITOR
             PreEvent();
@@ -314,7 +329,7 @@ namespace highlight.timeline
 #endif
         }
 
-        public void Stop()
+        public virtual void Stop()
         {
             //_hasTriggered = true;
             _hasFinished = true;
@@ -336,7 +351,10 @@ namespace highlight.timeline
         void setProgress(int framesSinceTrigger)
         {
             mFrameSinceTrigger = framesSinceTrigger;
-            progress = (float)mFrameSinceTrigger / this.Length;
+            if (this.Length <= 0)
+                progress = 1f;
+            else
+                progress = (float)mFrameSinceTrigger / this.Length;
         }
         protected void UpdateFrame(int frame)
         {
@@ -407,7 +425,7 @@ namespace highlight.timeline
         }
         #region editor
 #if UNITY_EDITOR
-        public void UpdateEditor(int frame)
+        protected void UpdateEditor(int frame)
         {
             setProgress(frame);
             PreEvent();
@@ -422,7 +440,7 @@ namespace highlight.timeline
 
             PostEvent();
         }
-        public virtual void UpdateChildsEditor(int frame)
+        protected virtual void UpdateChildsEditor(int frame)
         {
             int limit = _childs.Count;
 
@@ -531,13 +549,26 @@ namespace highlight.timeline
             else
                 return this.parent.frameRange;
         }
+
+        public int AllCount
+        {
+            get
+            {
+                int count = 0;
+                for(int i=0;i<Childs.Count;i++)
+                {
+                    count += Childs[i].AllCount + 1;
+                }
+                return count;
+            }
+        }
         public static int Compare(TimeObject e1, TimeObject e2)
         {
             return e1.Start.CompareTo(e2.Start);
         }
 
         #region virtual Function
-        protected virtual void OnInit()
+        protected void OnInit()
         {
             for (int i = 0; i < _components.Count; i++)
             {
@@ -549,7 +580,7 @@ namespace highlight.timeline
             }
         }
         // timeline 销毁
-        protected virtual void OnDestroy()
+        protected void OnDestroy()
         {
             for (int i = 0; i < _actions.Count; i++)
                 _actions[i].OnDestroy();
@@ -560,14 +591,14 @@ namespace highlight.timeline
             }
             _components.Clear();
         }
-        protected virtual void OnTrigger()
+        protected void OnTrigger()
         {
             for (int i = 0; i < _components.Count; i++)
                 _components[i].OnTrigger();
             for (int i = 0; i < _actions.Count; i++)
                 _actions[i].OnTrigger();
         }
-        protected virtual void OnUpdate()
+        protected void OnUpdate()
         {
             //for (int i = 0; i < _components.Count; i++)
             //    _components[i].OnUpdate();
@@ -575,32 +606,32 @@ namespace highlight.timeline
                 _actions[i].OnUpdate();
         }
         // event完成
-        protected virtual void OnFinish()
+        protected void OnFinish()
         {
-            for (int i = 0; i < _components.Count; i++)
-                _components[i].OnFinish();
+          //  for (int i = 0; i < _components.Count; i++)
+         //       _components[i].OnFinish();
             for (int i = 0; i < _actions.Count; i++)
                 _actions[i].OnFinish();
         }
         //timeline 完成
-        protected virtual void OnStop()
+        protected void OnStop()
         {
-            for (int i = 0; i < _components.Count; i++)
-                _components[i].OnStop();
+         //   for (int i = 0; i < _components.Count; i++)
+         //       _components[i].OnStop();
             for (int i = 0; i < _actions.Count; i++)
                 _actions[i].OnStop();
         }
-        protected virtual void OnResume()
+        protected void OnResume()
         {
-            for (int i = 0; i < _components.Count; i++)
-                _components[i].OnResume();
+          //  for (int i = 0; i < _components.Count; i++)
+          //      _components[i].OnResume();
             for (int i = 0; i < _actions.Count; i++)
                 _actions[i].OnResume();
         }
-        protected virtual void OnPause()
+        protected void OnPause()
         {
-            for (int i = 0; i < _components.Count; i++)
-                _components[i].OnPause();
+         //   for (int i = 0; i < _components.Count; i++)
+         //       _components[i].OnPause();
             for (int i = 0; i < _actions.Count; i++)
                 _actions[i].OnPause();
         }

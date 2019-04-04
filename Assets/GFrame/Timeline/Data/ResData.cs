@@ -6,30 +6,52 @@ using UnityEditor;
 #endif
 namespace highlight
 {
-    public class ResStyle : ComponentStyle
+    public enum eResType
+    {
+        Effect,
+        Animator,
+        Item,
+        Npc,
+    }
+    [Time("资源加载", typeof(ResData))]
+    public abstract class ResStyle : ComponentStyle
     {
         public string res;
+        public eResType eType;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
             this.res = EditorGUILayout.TextField("资源名：", this.res);
+            this.eType = (eResType)EditorGUILayout.EnumPopup("类型：", this.eType);
         }
 #endif
     }
-    public class ResData : ComponentData
+    public abstract class ResData : ComponentData
     {
-    }
-    public class PrefabData : ResData
-    {
-        public SceneObject obj;
-
-        public void SetPos(Vector3 pos)
+        public System.Object asset;
+        public SceneObject obj { get { return asset as SceneObject; } }
+        public Animator animator { get { return asset as Animator; } }
+        public override void OnInit()
         {
-            obj.transform.position = pos;
+            if (asset == null)
+                this.timeObject.SetActive(false);
+            switch ((this.style as ResStyle).eType)
+            {
+                case eResType.Effect:
+                    break;
+                case eResType.Animator:
+                    break;
+                case eResType.Item:
+                    break;
+                case eResType.Npc:
+                    break;
+                default:
+                    break;
+            }
         }
-        public void SetParent(Transform t)
+        void loadComplete()
         {
-            obj.transform.SetParent(t);
+            this.timeObject.SetActive(asset != null);
         }
     }
 }

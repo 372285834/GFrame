@@ -11,8 +11,23 @@ namespace highlight
     {
         public TimeStyle style { get { return obj == null ? null : obj.timeStyle; } }
         public TimeObject obj;
+        public int index;
         public TimelineNode root;
         public TimeNode parent;
+        public int Depth
+        {
+            get
+            {
+                int dep = 0;
+                var _parent = this.parent;
+                while (_parent != null)
+                {
+                    dep++;
+                    _parent = _parent.parent;
+                }
+                return dep;
+            }
+        }
         public bool isRoot { get { return this is TimelineNode; } }
         public void CreatChild(TimelineNode root)
         {
@@ -31,6 +46,7 @@ namespace highlight
         {
             GameObject go = new GameObject(_obj.timeStyle.name);
             TimeNode node = go.AddComponent<TimeNode>();
+            node.index = _obj.index;
             node.transform.SetParent(this.transform);
             node.obj = _obj;
             node.parent = this;
@@ -50,6 +66,7 @@ namespace highlight
             {
                 style = new TimeStyle();
                 style.Range = this.style.Range;
+                style.name = "node" + this.root.timeline.AllCount;
             }
             TimeObject _obj = this.obj.AddChild(style);
             TimeNode node = creatNode(_obj, root);

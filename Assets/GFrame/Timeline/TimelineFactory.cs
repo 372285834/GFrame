@@ -83,10 +83,10 @@ namespace highlight
             if (style == null)
                 return null;
             Timeline tl = style.Creat();
-            tl.Init();
             int id = (int)mIdGenerator.generateNewId();
             tl.SetId(id);
             mActiveDic.Add(id, tl);
+            tl.Init();
             return tl;
         }
         public static void Release(Timeline tl)

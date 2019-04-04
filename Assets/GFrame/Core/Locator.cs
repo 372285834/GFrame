@@ -25,14 +25,10 @@ namespace highlight
         public eType type;
         public eNameType eName;
         //[JsonIgnore]
-        public Vector3 position;
-        public bool isFollow;
         public Locator(eType t, eNameType eN)
         {
             type = t;
             eName = eN;
-            position = Vector3.zero;
-            isFollow = true;
         }
         public const string Root = "l_root";
         public const string HandR = "l_hand_r";

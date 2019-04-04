@@ -36,6 +36,7 @@ namespace highlight.timeline
         public TimelineStyle lStyle { get { return timeStyle as TimelineStyle; } }
         public Target target = new Target();
         public SceneObject owner = null;
+        public Dictionary<string, TimeObject> nodeDic = new Dictionary<string, TimeObject>();
         public float FrameRate
         {
             get
@@ -63,7 +64,7 @@ namespace highlight.timeline
         // Current frame.
         private int _currentFrame = -1;
         /// @brief Is the sequence paused?
-        public bool IsPaused { get { return !_isPlaying && _currentFrame >= 0; } }
+        public bool IsPaused { get { return _isInit && !_isPlaying && _currentFrame >= 0; } }
 
         /// @brief Is the sequence stopped?
         public bool IsStopped { get { return _currentFrame < 0; } }
@@ -79,7 +80,7 @@ namespace highlight.timeline
         {
             Play(curTime, RoundToInt(startTime * lStyle.FrameRate));
         }
-        public void Play(float curTime, int startFrame=0)
+        public void Play(float curTime, int startFrame)
         {
             if (!_isInit || _isPlaying)
                 return;
@@ -90,40 +91,49 @@ namespace highlight.timeline
             _lastUpdateTime = curTime;
             SetCurrentFrame(startFrame);
         }
-        protected override void OnInit()
+        public TimeObject GetObj(string name)
         {
+            TimeObject obj = null;
+            nodeDic.TryGetValue(name, out obj);
+            return obj;
+        }
+        public override void Init()
+        {
+            if (_isInit)
+                return;
             _isInit = true;
-            base.OnInit();
+            base.Init();
         }
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-            owner = null;
-            target.Clear();
-        }
-        protected override void OnStop()
+        public override void Destroy()
         {
             _isInit = false;
+            base.Destroy();
+            owner = null;
+            target.Clear();
+            nodeDic.Clear();
+        }
+        public override void Stop()
+        {
             if (IsStopped)
                 return;
             _isPlaying = false;
             _isPlayingForward = true;
             _currentFrame = -1;
-            base.OnStop();
+            base.Stop();
         }
-        protected override void OnPause()
+        public override void Pause()
         {
             if (!_isPlaying)
                 return;
             _isPlaying = false;
-            base.OnPause();
+            base.Pause();
         }
-        protected override void OnResume()
+        public override void Resume()
         {
             if (_isPlaying)
                 return;
             _isPlaying = true;
-            base.OnResume();
+            base.Resume();
         }
         public void Update(float time)
         {
@@ -159,6 +169,7 @@ namespace highlight.timeline
 #if UNITY_EDITOR
             _isPlayingForward = frame >= _currentFrame;
             _currentFrame = Clamp(frame, 0, lStyle.Length);
+            UpdateEditor(_currentFrame);
 #endif
         }
         int RoundToInt(float f)
@@ -171,7 +182,7 @@ namespace highlight.timeline
                 return a;
             if (c > b)
                 return b;
-            return a;
+            return c;
         }
     }
 }

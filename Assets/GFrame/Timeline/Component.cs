@@ -29,8 +29,7 @@ namespace highlight
     public abstract class Component : Object
     {
         public int index;
-        public PrefabData prefabData { get { return timeObject.resData as PrefabData; } }
-        public AnimatorData animatorData { get { return timeObject.resData as AnimatorData; } }
+        public ResData res { get { return timeObject.resData; } }
         public TimeObject timeObject { protected set; get; }
         public Timeline root { get { return this.timeObject.root; } }
         public SceneObject owner { get { return this.root.owner; } }
@@ -46,10 +45,6 @@ namespace highlight
         public virtual void OnInit() { }
         public virtual void OnDestroy() { }// timeline 销毁
         public virtual void OnTrigger() { }
-        public virtual void OnFinish() { } // event完成
-        public virtual void OnStop() { } //timeline 完成
-        public virtual void OnResume() { }
-        public virtual void OnPause() { }
         #endregion
     }
     public abstract class ComponentStyle : Object

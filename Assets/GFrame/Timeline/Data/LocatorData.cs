@@ -10,40 +10,41 @@ namespace highlight
     [Time("数据/挂点", typeof(LocatorData))]
     public class LocatorStyle : ComponentStyle
     {
-        public int index;
+        public int index = 0;
         public Locator locator;
+        public bool isFollow = false;
+        public Vector3 off;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
             Locator l = this.locator;//, string name
             // GUILayout.Space(10f);
             this.index = EditorGUILayout.IntField("目标index:", this.index);
-            l.isFollow = EditorGUILayout.Toggle("是否跟随：", l.isFollow);
             l.type = (Locator.eType)EditorGUILayout.EnumPopup("类型：", l.type);
             l.eName = (Locator.eNameType)EditorGUILayout.EnumPopup("挂点名:", l.eName);
-            l.position = EditorGUILayout.Vector3Field("偏移：", l.position);
+            this.off = EditorGUILayout.Vector3Field("偏移：", this.off);
             this.locator = l;
         }
 #endif
     }
     public class LocatorData : ComponentData
     {
+        public LocatorStyle loStyle { get { return this.style as LocatorStyle; } }
         public Locator locator { get { return (this.style as LocatorStyle).locator; } }
-        public Vector3 position
+        public Vector3 curPos
         {
             get
             {
-                if (!locator.isFollow)
-                    return pos;
-                return target.position + locator.position;
+                if(target != null && loStyle.isFollow)
+                {
+                    return target.position + loStyle.off;
+                }
+                 return pos;
             }
         }
-        Vector3 pos;
+        public Vector3 pos;
         public Transform target { get; private set; }
-        public override void OnInit()
-        {
-            
-        }
+
         public override void OnTrigger()
         {
             SceneObject targetObj = null;
@@ -61,15 +62,14 @@ namespace highlight
                     pos = this.root.target.getPos(index);
                     break;
                 case Locator.eType.LT_SCENE:
-                    pos = locator.position;
+                    pos = loStyle.off;
                     break;
                 case Locator.eType.LT_PARENT:
-                    PrefabData pre = this.timeObject.parent.resData as PrefabData;
-                    targetObj = pre.obj;
+                    targetObj = this.timeObject.parent.resData.obj;
                     break;
                 case Locator.eType.LT_PARENT_POS:
-                    PrefabData pre2 = this.timeObject.parent.resData as PrefabData;
-                    pos = pre2.obj.getPosition();
+                    targetObj = this.timeObject.parent.resData.obj;
+                    pos = targetObj.getPosition();
                     break;
                 default:
                     break;
@@ -77,14 +77,13 @@ namespace highlight
             if (targetObj != null)
             {
                 target = targetObj.getLocator(locator.parentName);
-                pos = target.position + locator.position;
+                pos = target.position + loStyle.off;
             }
             //this.prefabData.transform
             //this.root.target.getObj
         }
         public override void OnDestroy()
         {
-            base.OnDestroy();
             this.target = null;
             pos = Vector3.zero;
         }

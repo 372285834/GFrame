@@ -34,7 +34,7 @@ namespace highlight
                 _Inst = EditorWindow.GetWindow<TimeWindow>();
                 _Inst.titleContent = new GUIContent("Timeline");
                 _Inst.minSize = new Vector2(250f, 200f);
-                _Inst.LoadData();
+              //  _Inst.LoadData();
             }
         }
         void OnEnable()
@@ -42,8 +42,10 @@ namespace highlight
             if (!Directory.Exists(timelineDir))
                 Directory.CreateDirectory(timelineDir);
         }
+        bool isLoaded = false;
         void LoadData()
         {
+            isLoaded = true;
             TimelineFactory.Init();
             TimelineFactory.AutoRelease = false;
             allStyleList = LoadAssets(timelineDir, "*" + Suffix);
@@ -85,6 +87,7 @@ namespace highlight
         static UnityEngine.Object selectObj;
         public static TimeNode curNode;
         public static TimelineNode root { get { return curNode == null ? null : curNode.root; } }
+        public static Timeline timeline { get { return root == null ? null : root.timeline; } }
         [InitializeOnLoadMethod]
         static void Start()
         {
@@ -135,6 +138,11 @@ namespace highlight
             {
                 curNode.UpdateData();
             }
+            if(timeline != null && timeline.IsPlaying)
+            {
+                timeline.Update(Time.realtimeSinceStartup);
+                Inst.Repaint();
+            }
         }
         public static bool EnableCustomHierarchy = true;
         // 绘制Hiercrch
@@ -170,42 +178,73 @@ namespace highlight
 
             }
         }
+        Vector2 scrollPos = Vector2.zero;
         void OnGUI()
         {
-            EditorGUILayout.BeginVertical();
+            _Inst = this;
+            //  Rect rect = this.position;
+            //   rect.height = 500f;
+            //  rect.width = 500f;
+            // scrollPos = GUI.BeginScrollView(new Rect(0, 0, Screen.width, Screen.height - 50f), scrollPos, new Rect(0, 0, Screen.width, 500));
+            // scrollPos = GUI.BeginScrollView(this.position, scrollPos,rect);
+            //GUI.BeginGroup(new Rect(0, 0, Screen.width, Screen.height - 50f));
+            
+            if (allStyleNames == null)
+            {
+                LoadData();
+            }
+            GUILayout.BeginVertical();
 
-            drawTitle();
+            scrollPos = GUILayout.BeginScrollView(scrollPos);
             GUILayout.Space(5f);
-            drawAddNode();
+            //    GUILayout.BeginVertical();
+            drawTitle();
             GUILayout.Space(5f);
             drawRoot();
             GUILayout.Space(5f);
             DrawTreeTimeline(root, 0);
+         //   GUILayout.EndVertical();
+            GUILayout.EndScrollView();
 
-            EditorGUILayout.EndVertical();
+            drawControl();
+            GUILayout.Space(5f);
+            GUILayout.EndVertical();
+            // GUI.EndScrollView();
+            // GUI.EndGroup();
         }
         int curSelectIdx = 0;
         void drawTitle()
         {
             EditorGUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Refresh", GUILayout.MinHeight(25f), GUILayout.MinWidth(50f)))
+            if (GUILayout.Button("Refresh", GUILayout.MaxHeight(25f), GUILayout.MaxWidth(100f)))
             {
-                if (Inst == null)
-                    ShowEditor();
-                LoadData();
+                 LoadData();
             }
-            if (allStyleNames == null)
-                return;
-            int newIdx = EditorGUILayout.IntPopup(curSelectIdx, allStyleNames, allStyleNamesIndexs, GUILayout.MinHeight(25f), GUILayout.MinWidth(50f)); //(rt, curSelectIdx, allStyleNames);
-            if (newIdx != curSelectIdx)
+            if (allStyleNames != null)
             {
-                curSelectIdx = newIdx;
-                UpdateSelectSkill();
+                int newIdx = EditorGUILayout.IntPopup(curSelectIdx, allStyleNames, allStyleNamesIndexs, GUILayout.MaxHeight(25f), GUILayout.MaxWidth(150f)); //(rt, curSelectIdx, allStyleNames);
+                if (newIdx != curSelectIdx)
+                {
+                    curSelectIdx = newIdx;
+                    UpdateSelectSkill();
+                }
             }
-            if (GUILayout.Button("+", GUILayout.MinHeight(25f), GUILayout.MinWidth(50f))) 
+            
+            if (GUILayout.Button("+", GUILayout.MaxHeight(25f), GUILayout.MaxWidth(50f))) 
             {
                 creatTimeline();
+            }
+            if (root != null && root.timelineStyle != null)
+            {
+                TimelineStyle style = root.timelineStyle;
+                string rName = "保存-" + root.name;
+                if (root.isChange)
+                    rName += "*";
+                if (GUILayout.Button(rName, GUILayout.MaxHeight(25f), GUILayout.MaxWidth(200f)))
+                {
+                    Save(style);
+                }
             }
             EditorGUILayout.EndHorizontal();
             
@@ -217,20 +256,6 @@ namespace highlight
             动画,
             特效,
             导弹,
-        }
-        NodeType curType = NodeType.空节点;
-        void drawAddNode()
-        {
-            if (curNode != null)
-            {
-                EditorGUILayout.BeginHorizontal();
-                curType = (NodeType)EditorGUILayout.EnumPopup(curType);
-                if (GUILayout.Button("添加子节点", GUILayout.MinHeight(25f), GUILayout.MinWidth(50f)))
-                {
-                    addChild(curNode,curType);
-                }
-                EditorGUILayout.EndHorizontal();
-            }
         }
         void addChild(TimeNode parent,NodeType type)
         {
@@ -281,12 +306,18 @@ namespace highlight
             float sliderStartFrame = rang.Start;
             float sliderEndFrame = rang.End;
             EditorGUI.BeginChangeCheck();
-            float allW = position.width - 150f;
+            float allW = position.width - 170f;
             float evtW = allW * (float)validRange.Length / node.root.obj.Length;
             float startX = allW * (float)validRange.Start / node.root.obj.Length;
             GUILayout.Space(startX);
+            if (GUILayout.Button("+",GUILayout.MaxWidth(20f)))
+            {
+                ShowTimelineMenu(node);
+            }
             if (GUILayout.Button(node.name, GUILayout.Width(70f)))
+            {
                 SetSelect(node);
+            }
             GUILayout.Label(validRange.Start.ToString(), GUILayout.Width(20f));
             GUI.enabled = !node.isRoot;
             EditorGUILayout.MinMaxSlider(ref sliderStartFrame, ref sliderEndFrame, validRange.Start, validRange.End, GUILayout.Width(evtW));
@@ -311,32 +342,72 @@ namespace highlight
                 DrawTreeTimeline(node.transform.GetChild(i).GetComponent<TimeNode>(), level + 1);
             }
         }
-
         void drawRoot()
         {
             if (root == null)
                 return;
-            string rName = "保存-" + root.name;
-            if (root.isChange)
-                rName += "*";
             TimelineStyle style = root.timelineStyle;
             if (style == null)
                 return;
-            if (GUILayout.Button(rName, GUILayout.MinHeight(30f)))
-            {
-                Save(style);
-            }
             EditorGUILayout.BeginHorizontal();
             // root.name = EditorGUILayout.TextField(root.name);
-            GUILayout.Label("帧率：", EditorStyles.label);
-            style.FrameRate = EditorGUILayout.IntField(style.FrameRate);
-            GUILayout.Label("总帧数:", EditorStyles.label);
+            GUILayout.Label("帧率:", EditorStyles.label, GUILayout.Width(35f));
+            style.FrameRate = EditorGUILayout.IntField(style.FrameRate, GUILayout.Width(100f));
+            GUILayout.Label("总帧数:", EditorStyles.label, GUILayout.Width(45f));
             style.x = 0;
-            style.y = EditorGUILayout.IntSlider(style.y,1,999999);
-            GUILayout.Label("t:" + style.LengthTime + "s", GUILayout.Width(100f));
+            style.y = EditorGUILayout.IntField(style.y, GUILayout.Width(100f));
+            if (style.y < 1)
+                style.y = 1;
+            GUILayout.Label("t:" + style.LengthTime + "s", GUILayout.Width(30f));
             EditorGUILayout.EndHorizontal();
         }
-
+        void drawControl()
+        {
+            if (timeline == null)
+                return;
+            EditorGUILayout.BeginHorizontal();
+            GUI.enabled = Application.isPlaying;
+            int curFrame = timeline.GetCurrentFrame();
+            if (GUILayout.Button("停止", GUILayout.Width(35f)))
+            {
+                timeline.Stop();
+            }
+            if (timeline.IsStopped || timeline.IsPaused)
+            {
+                if (GUILayout.Button("播放", GUILayout.Width(35f)))
+                {
+                    timeline.Init();
+                    timeline.Play(Time.realtimeSinceStartup,timeline.GetCurrentFrame());
+                }
+            }
+            else if (timeline.IsPlaying)
+            {
+                if (GUILayout.Button("暂停", GUILayout.Width(35f)))
+                {
+                    timeline.Pause();
+                }
+            }
+            int frame = EditorGUILayout.IntSlider(curFrame, -1, root.style.y);
+            if (frame != curFrame)
+            {
+                timeline.Pause();
+                timeline.SetCurrentFrameEditor(frame);
+            }
+            GUI.enabled &= curFrame < timeline.Length;
+            if (GUILayout.Button("下一帧", GUILayout.Width(45f)))
+            {
+                timeline.Pause();
+                timeline.SetCurrentFrameEditor(curFrame + 1);
+            }
+            GUI.enabled &= curFrame > 0;
+            if (GUILayout.Button("上一帧", GUILayout.Width(45f)))
+            {
+                timeline.Pause();
+                timeline.SetCurrentFrameEditor(curFrame - 1);
+            }
+            EditorGUILayout.EndHorizontal();
+            GUI.enabled = true;
+        }
 
         void ShowTimelineMenu(TimeNode node)
         {

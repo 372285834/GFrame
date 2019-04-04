@@ -23,5 +23,20 @@ namespace highlight
         {
 
         }
+        public void SetPos(Vector3 pos)
+        {
+            transform.position = pos;
+        }
+        public void SetLocalPos(Vector3 pos)
+        {
+            transform.localPosition = pos;
+        }
+        public void SetParent(Transform t)
+        {
+            transform.SetParent(t);
+            transform.localPosition = Vector3.zero;
+            transform.localScale = Vector3.one;
+            transform.localRotation = Quaternion.identity;
+        }
     }
 }
