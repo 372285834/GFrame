@@ -14,10 +14,6 @@ namespace highlight
         [Desc("运动轨迹")]
         public TrailData eva;
 
-        public override void OnTrigger()
-        {
-
-        }
         public override void OnUpdate()
         {
             Vector3 pos = eva.Evaluate(this.start.curPos, this.end.curPos, this.timeObject.progress);

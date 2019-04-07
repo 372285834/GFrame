@@ -31,15 +31,16 @@ namespace highlight
         {
 
         }
-        public override void OnTrigger()
+        public override TriggerStatus OnTrigger()
         {
             AnimatorStyle style = this.style as AnimatorStyle;
             if (style.isSelf)
                 animator = this.owner.animator;
             else
                 animator = this.root.target.getObj().animator;
+            return TriggerStatus.Success;
         }
-        public override void OnDestroy()
+        public override void OnStop()
         {
             animator = null;
         }

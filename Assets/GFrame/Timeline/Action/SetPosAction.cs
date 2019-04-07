@@ -11,9 +11,9 @@ namespace highlight
         [Desc("目标挂点")]
         public LocatorData target;
 
-        public override void OnTrigger()
+        public override TriggerStatus OnTrigger()
         {
-
+            return TriggerStatus.Success;
         }
         public override void OnUpdate()
         {

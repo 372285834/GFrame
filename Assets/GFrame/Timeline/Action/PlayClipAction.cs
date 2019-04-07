@@ -9,11 +9,12 @@ namespace highlight
     {
         [Desc("动画数据")]
         public AnimatorData data;
-        public override void OnTrigger()
+        public override TriggerStatus OnTrigger()
         {
             AnimatorStyle style = data.style as AnimatorStyle;
             data.animator.speed = style.speed;
             data.animator.CrossFadeInFixedTime(style.clip, style.duration);
+            return TriggerStatus.Success;
         }
         public override void OnUpdate()
         {

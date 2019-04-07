@@ -6,6 +6,12 @@ using System.Reflection;
 
 namespace highlight
 {
+    public enum TriggerStatus
+    {
+        Failure = 1,
+        Success = 2,
+        Running = 3
+    }
     [AttributeUsage(AttributeTargets.Class)]
     public class TimeAttribute : System.Attribute
     {
@@ -43,8 +49,8 @@ namespace highlight
         public List<ComponentData> GetComponents { get { return timeObject.GetComponents; } }
         #region virtual Function
         public virtual void OnInit() { }
-        public virtual void OnDestroy() { }// timeline 销毁
-        public virtual void OnTrigger() { }
+        public virtual TriggerStatus OnTrigger() { return TriggerStatus.Success; }
+        public virtual void OnStop() { } //timeline 完成
         #endregion
     }
     public abstract class ComponentStyle : Object

@@ -109,7 +109,6 @@ namespace highlight
         public virtual void OnUpdate() { }
 
         public virtual void OnFinish() { } // event完成
-        public virtual void OnStop() { } //timeline 完成
         public virtual void OnResume() { }
         public virtual void OnPause() { }
         #endregion
@@ -169,7 +168,7 @@ namespace highlight
                 }
             }
         }
-        public override void OnDestroy()
+        public void ClearData()
         {
             FieldInfo[] infos = this.style.Attr.Infos;
             if (infos != null && infos.Length > 0)

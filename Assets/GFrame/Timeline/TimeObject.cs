@@ -190,7 +190,7 @@ namespace highlight.timeline
         }
         public void RemoveComponent(ComponentData data)
         {
-            data.OnDestroy();
+            data.OnStop();
             RemoveArray<ComponentStyle>(ref this.timeStyle.Components, data.style);
             this._components.Remove(data);
             for(int i=0;i<this.timeStyle.Actions.Length;i++)
@@ -237,7 +237,7 @@ namespace highlight.timeline
         }
         public void RemoveAction(TimeAction action)
         {
-            action.OnDestroy();
+            action.OnStop();
             RemoveArray<ActionStyle>(ref this.timeStyle.Actions, action.style);
             this._actions.Remove(action);
             Rebuild();
@@ -281,7 +281,18 @@ namespace highlight.timeline
                 return;
             for (int i = 0; i != _childs.Count; ++i)
                 _childs[i].Destroy();
-            OnDestroy();
+
+            for (int i = 0; i < _actions.Count; i++)
+            {
+                _actions[i].ClearData();
+                TimeAction.Release(_actions[i]);
+            }
+            _actions.Clear();
+            for (int i = 0; i < _components.Count; i++)
+            {
+                ComponentData.Release(_components[i]);
+            }
+            _components.Clear();
             this.timeStyle.release(this);
             this.timeStyle = null;
             this.resData = null;
@@ -350,15 +361,16 @@ namespace highlight.timeline
         }
         protected void UpdateFrame(int frame)
         {
-            setProgress(frame);
             if (!activeSelf || HasFinished)
                 return;
+            setProgress(frame);
 #if UNITY_EDITOR
             PreEvent();
 #endif
             if (!_hasTriggered)
             {
-                Trigger();
+                if (!Trigger())
+                    return;
             }
             OnUpdate();
             UpdateChilds(frame);
@@ -391,18 +403,21 @@ namespace highlight.timeline
                 }
                 else //if( frame > _events[_currentEvent].End ) // is it finished
                 {
-                    if (!_childs[i].HasFinished && (_childs[i].HasTriggered || _childs[i].triggerOnSkip))
+                    if (_childs[i].HasTriggered || _childs[i].triggerOnSkip)
                     {
                         _childs[i].UpdateFrame(_childs[i].Length);
                     }
                 }
             }
         }
-        public void Trigger()
+        public bool Trigger()
         {
-            _hasTriggered = true;
-
-            OnTrigger();
+            TriggerStatus status = OnTrigger();
+            if (status == TriggerStatus.Success)
+                _hasTriggered = true;
+            if (status == TriggerStatus.Failure)
+                this.Stop();
+            return status != TriggerStatus.Failure;
         }
         public void Finish()
         {
@@ -423,7 +438,10 @@ namespace highlight.timeline
             PreEvent();
 
             if (!_hasTriggered)
-                Trigger();
+            {
+                if (!Trigger())
+                    return;
+            }
 
             OnUpdateEditor();
             UpdateChildsEditor(frame);
@@ -571,24 +589,26 @@ namespace highlight.timeline
                 _actions[i].OnInit();
             }
         }
-        // timeline 销毁
-        protected void OnDestroy()
+        protected TriggerStatus OnTrigger()
         {
-            for (int i = 0; i < _actions.Count; i++)
-                _actions[i].OnDestroy();
+            TriggerStatus status = TriggerStatus.Success;
             for (int i = 0; i < _components.Count; i++)
             {
-                ComponentData.Release(_components[i]);
-                _components[i].OnDestroy();
+                TriggerStatus _status = _components[i].OnTrigger();
+                if (_status == TriggerStatus.Failure)
+                    return status;
+                if (_status == TriggerStatus.Running)
+                    _status = TriggerStatus.Running;
             }
-            _components.Clear();
-        }
-        protected void OnTrigger()
-        {
-            for (int i = 0; i < _components.Count; i++)
-                _components[i].OnTrigger();
             for (int i = 0; i < _actions.Count; i++)
-                _actions[i].OnTrigger();
+            {
+                TriggerStatus _status = _actions[i].OnTrigger();
+                if (_status == TriggerStatus.Failure)
+                    return _status;
+                if (_status == TriggerStatus.Running)
+                    _status = TriggerStatus.Running;
+            }
+            return status;
         }
         protected void OnUpdate()
         {
@@ -608,8 +628,8 @@ namespace highlight.timeline
         //timeline 完成
         protected void OnStop()
         {
-         //   for (int i = 0; i < _components.Count; i++)
-         //       _components[i].OnStop();
+            for (int i = 0; i < _components.Count; i++)
+                _components[i].OnStop();
             for (int i = 0; i < _actions.Count; i++)
                 _actions[i].OnStop();
         }

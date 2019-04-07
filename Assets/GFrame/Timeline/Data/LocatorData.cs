@@ -45,7 +45,7 @@ namespace highlight
         public Vector3 pos;
         public Transform target { get; private set; }
 
-        public override void OnTrigger()
+        public override TriggerStatus OnTrigger()
         {
             SceneObject targetObj = null;
             //pos = locator.position;
@@ -79,10 +79,11 @@ namespace highlight
                 target = targetObj.getLocator(locator.parentName);
                 pos = target.position + loStyle.off;
             }
+            return TriggerStatus.Success;
             //this.prefabData.transform
             //this.root.target.getObj
         }
-        public override void OnDestroy()
+        public override void OnStop()
         {
             this.target = null;
             pos = Vector3.zero;

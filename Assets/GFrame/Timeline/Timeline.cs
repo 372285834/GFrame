@@ -106,6 +106,8 @@ namespace highlight.timeline
         }
         public override void Destroy()
         {
+            if (!IsStopped)
+                Stop();
             _isInit = false;
             base.Destroy();
             owner = null;
