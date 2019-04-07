@@ -7,13 +7,23 @@ namespace highlight
 
     public class SceneObject : Object
     {
-        public Transform transform;
+        public Transform root;
         public Animator animator;
         public Dictionary<string, Transform> LocatorDic = new Dictionary<string, Transform>();
         //public AnimationBox aniBox;
+        public void Init(GameObject go)
+        {
+            this.root = go.transform;
+            this.animator = go.GetComponentInChildren<Animator>(true);
+            Transform[] tfs = go.GetComponentsInChildren<Transform>(true);
+            for(int i=0;i<tfs.Length;i++)
+            {
+                LocatorDic[tfs[i].name] = tfs[i];
+            }
+        }
         public Vector3 getPosition()
         {
-            return transform.position;
+            return root.position;
         }
         public Transform getLocator(string name)
         {
@@ -25,18 +35,18 @@ namespace highlight
         }
         public void SetPos(Vector3 pos)
         {
-            transform.position = pos;
+            root.position = pos;
         }
         public void SetLocalPos(Vector3 pos)
         {
-            transform.localPosition = pos;
+            root.localPosition = pos;
         }
         public void SetParent(Transform t)
         {
-            transform.SetParent(t);
-            transform.localPosition = Vector3.zero;
-            transform.localScale = Vector3.one;
-            transform.localRotation = Quaternion.identity;
+            root.SetParent(t);
+            root.localPosition = Vector3.zero;
+            root.localScale = Vector3.one;
+            root.localRotation = Quaternion.identity;
         }
     }
 }

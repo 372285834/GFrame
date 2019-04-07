@@ -14,27 +14,26 @@ namespace highlight
         Npc,
     }
     [Time("资源加载", typeof(ResData))]
-    public abstract class ResStyle : ComponentStyle
+    public sealed class ResStyle : ComponentStyle
     {
-        public string res;
         public eResType eType;
+        public string res;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
-            this.res = EditorGUILayout.TextField("资源名：", this.res);
             this.eType = (eResType)EditorGUILayout.EnumPopup("类型：", this.eType);
+            this.res = EditorGUILayout.TextField("资源名：", this.res);
         }
 #endif
     }
-    public abstract class ResData : ComponentData
+    public sealed class ResData : ComponentData
     {
         public System.Object asset;
+        public bool isLoaded { get { return asset != null; } }
         public SceneObject obj { get { return asset as SceneObject; } }
         public Animator animator { get { return asset as Animator; } }
         public override void OnInit()
         {
-            if (asset == null)
-                this.timeObject.SetActive(false);
             switch ((this.style as ResStyle).eType)
             {
                 case eResType.Effect:
@@ -48,10 +47,6 @@ namespace highlight
                 default:
                     break;
             }
-        }
-        void loadComplete()
-        {
-            this.timeObject.SetActive(asset != null);
         }
     }
 }

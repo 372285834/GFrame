@@ -51,14 +51,6 @@ namespace highlight.timeline
         public TimeStyle timeStyle { get; private set; }
         public ResData resData { get; private set; }
         public bool activeSelf { get; private set; }
-        public void SetActive(bool v)
-        {
-            activeSelf = v;
-            if (this.mFrameSinceTrigger > 0)
-            {
-                this.UpdateFrame(this.mFrameSinceTrigger);
-            }
-        }
         private bool _hasTriggered = false;
         public bool HasTriggered { get { return _hasTriggered; } }
 

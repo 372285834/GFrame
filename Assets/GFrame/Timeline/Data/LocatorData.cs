@@ -37,7 +37,7 @@ namespace highlight
             {
                 if(target != null && loStyle.isFollow)
                 {
-                    return target.position + loStyle.off;
+                    pos = target.position + loStyle.off;
                 }
                  return pos;
             }
