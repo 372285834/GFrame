@@ -1,7 +1,4 @@
 ﻿using UnityEngine;
-#if CROSS_PLATFORM_INPUT
-using UnityStandardAssets.CrossPlatformInput;
-#endif
 
 namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityInput
 {
@@ -14,11 +11,7 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityInput
 
         public override TaskStatus OnUpdate()
         {
-#if CROSS_PLATFORM_INPUT
-            return CrossPlatformInputManager.GetButtonUp(buttonName.Value) ? TaskStatus.Success : TaskStatus.Failure;
-#else
             return Input.GetButtonUp(buttonName.Value) ? TaskStatus.Success : TaskStatus.Failure;
-#endif
         }
 
         public override void OnReset()

@@ -30,7 +30,12 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityParticleSystem
                 return TaskStatus.Failure;
             }
 
+#if UNITY_5_1 || UNITY_5_2 || UNITY_5_3 || UNITY_5_4
             particleSystem.startSize = startSize.Value;
+#else
+            ParticleSystem.MainModule mainParticleSystem = particleSystem.main;
+            mainParticleSystem.startSize = startSize.Value;
+#endif
 
             return TaskStatus.Success;
         }

@@ -1,3 +1,4 @@
+#if UNITY_5_1 || UNITY_5_2 || UNITY_5_3 || UNITY_5_4
 using UnityEngine;
 
 namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityParticleSystem
@@ -42,3 +43,4 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityParticleSystem
         }
     }
 }
+#endif

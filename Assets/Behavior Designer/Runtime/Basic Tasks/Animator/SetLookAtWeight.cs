@@ -22,6 +22,7 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityAnimator
 
         private Animator animator;
         private GameObject prevGameObject;
+        private bool weightSet;
 
         public override void OnStart()
         {
@@ -30,6 +31,7 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityAnimator
                 animator = currentGameObject.GetComponent<Animator>();
                 prevGameObject = currentGameObject;
             }
+            weightSet = false;
         }
 
         public override TaskStatus OnUpdate()
@@ -39,9 +41,16 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityAnimator
                 return TaskStatus.Failure;
             }
 
-            animator.SetLookAtWeight(weight.Value, bodyWeight, headWeight, eyesWeight, clampWeight);
+            return weightSet ? TaskStatus.Success : TaskStatus.Running;
+        }
 
-            return TaskStatus.Success;
+        public override void OnAnimatorIK()
+        {
+            if (animator == null) {
+                return;
+            }
+            animator.SetLookAtWeight(weight.Value, bodyWeight, headWeight, eyesWeight, clampWeight);
+            weightSet = true;
         }
 
         public override void OnReset()

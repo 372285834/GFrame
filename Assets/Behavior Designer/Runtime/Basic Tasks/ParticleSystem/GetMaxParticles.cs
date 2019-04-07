@@ -31,7 +31,11 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityParticleSystem
                 return TaskStatus.Failure;
             }
 
+#if UNITY_5_1 || UNITY_5_2 || UNITY_5_3 || UNITY_5_4
             storeResult.Value = particleSystem.maxParticles;
+#else
+            storeResult.Value = particleSystem.main.maxParticles;
+#endif
 
             return TaskStatus.Success;
         }

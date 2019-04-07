@@ -620,8 +620,8 @@ namespace highlight.timeline
         // event完成
         protected void OnFinish()
         {
-          //  for (int i = 0; i < _components.Count; i++)
-         //       _components[i].OnFinish();
+            for (int i = 0; i < _components.Count; i++)
+                _components[i].OnFinish();
             for (int i = 0; i < _actions.Count; i++)
                 _actions[i].OnFinish();
         }

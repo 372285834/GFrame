@@ -50,6 +50,7 @@ namespace highlight
         #region virtual Function
         public virtual void OnInit() { }
         public virtual TriggerStatus OnTrigger() { return TriggerStatus.Success; }
+        public virtual void OnFinish() { } // event完成
         public virtual void OnStop() { } //timeline 完成
         #endregion
     }

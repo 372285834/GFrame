@@ -108,7 +108,6 @@ namespace highlight
         #region virtual Function
         public virtual void OnUpdate() { }
 
-        public virtual void OnFinish() { } // event完成
         public virtual void OnResume() { }
         public virtual void OnPause() { }
         #endregion

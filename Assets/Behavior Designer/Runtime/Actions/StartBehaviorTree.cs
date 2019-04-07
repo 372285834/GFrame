@@ -39,8 +39,10 @@ namespace BehaviorDesigner.Runtime.Tasks
 
             if (behavior != null) {
                 var variables = Owner.GetAllVariables();
-                for (int i = 0; i < variables.Count; ++i) {
-                    behavior.SetVariable(variables[i].Name, variables[i]);
+                if (variables != null && synchronizeVariables.Value) {
+                    for (int i = 0; i < variables.Count; ++i) {
+                        behavior.SetVariableValue(variables[i].Name, variables[i]);
+                    }
                 }
 
                 behavior.EnableBehavior();
@@ -66,7 +68,7 @@ namespace BehaviorDesigner.Runtime.Tasks
             return TaskStatus.Success;
         }
 
-        private void BehaviorEnded()
+        private void BehaviorEnded(Behavior behavior)
         {
             behaviorComplete = true;
         }

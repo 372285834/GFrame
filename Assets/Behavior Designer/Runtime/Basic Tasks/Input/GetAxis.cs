@@ -1,8 +1,4 @@
 ﻿using UnityEngine;
-#if CROSS_PLATFORM_INPUT
-using UnityStandardAssets.CrossPlatformInput;
-#endif
-
 
 namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityInput
 {
@@ -20,11 +16,7 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityInput
 
         public override TaskStatus OnUpdate()
         {
-#if CROSS_PLATFORM_INPUT
-            var axisValue = CrossPlatformInputManager.GetAxis(axisName.Value);
-#else
             var axisValue = Input.GetAxis(axisName.Value);
-#endif
 
             // if variable set to none, assume multiplier of 1
             if (!multiplier.IsNone) {

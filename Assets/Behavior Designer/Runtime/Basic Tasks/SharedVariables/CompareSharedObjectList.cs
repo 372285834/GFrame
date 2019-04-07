@@ -1,6 +1,3 @@
-using UnityEngine;
-using System.Linq;
-
 namespace BehaviorDesigner.Runtime.Tasks.Basic.SharedVariables
 {
     [TaskCategory("Basic/SharedVariable")]
@@ -21,7 +18,12 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.SharedVariables
             if (variable.Value.Count != compareTo.Value.Count)
                 return TaskStatus.Failure;
 
-            return variable.Value.Except(compareTo.Value).Count() > 0 ? TaskStatus.Failure : TaskStatus.Success;
+            for (int i = 0; i < variable.Value.Count; ++i) {
+                if (variable.Value[i] != compareTo.Value[i]) {
+                    return TaskStatus.Failure;
+                }
+            }
+            return TaskStatus.Success;
         }
 
         public override void OnReset()

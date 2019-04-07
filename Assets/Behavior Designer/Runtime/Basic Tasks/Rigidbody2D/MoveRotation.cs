@@ -2,8 +2,8 @@ using UnityEngine;
 
 namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityRigidbody2D
 {
-    [TaskCategory("Basic/Rigidbody")]
-    [TaskDescription("Rotates the Rigidbody to the specified rotation. Returns Success.")]
+    [TaskCategory("Basic/Rigidbody2D")]
+    [TaskDescription("Rotates the Rigidbody2D to the specified rotation. Returns Success.")]
     public class MoveRotation : Action
     {
         [Tooltip("The GameObject that the task operates on. If null the task GameObject is used.")]

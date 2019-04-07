@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace BehaviorDesigner.Runtime.Tasks
 {
     [TaskDescription("Returns success as soon as the event specified by eventName has been received.")]
@@ -20,14 +18,18 @@ namespace BehaviorDesigner.Runtime.Tasks
         public SharedVariable storedValue3;
 
         private bool eventReceived = false;
+        private bool registered = false;
 
-        public override void OnAwake()
+        public override void OnStart()
         {
             // Let the behavior tree know that we are interested in receiving the event specified
-            Owner.RegisterEvent(eventName.Value, ReceivedEvent);
-            Owner.RegisterEvent<object>(eventName.Value, ReceivedEvent);
-            Owner.RegisterEvent<object, object>(eventName.Value, ReceivedEvent);
-            Owner.RegisterEvent<object, object, object>(eventName.Value, ReceivedEvent);
+            if (!registered) {
+                Owner.RegisterEvent(eventName.Value, ReceivedEvent);
+                Owner.RegisterEvent<object>(eventName.Value, ReceivedEvent);
+                Owner.RegisterEvent<object, object>(eventName.Value, ReceivedEvent);
+                Owner.RegisterEvent<object, object, object>(eventName.Value, ReceivedEvent);
+                registered = true;
+            }
         }
 
         public override TaskStatus OnUpdate()
@@ -37,6 +39,13 @@ namespace BehaviorDesigner.Runtime.Tasks
 
         public override void OnEnd()
         {
+            if (eventReceived) {
+                Owner.UnregisterEvent(eventName.Value, ReceivedEvent);
+                Owner.UnregisterEvent<object>(eventName.Value, ReceivedEvent);
+                Owner.UnregisterEvent<object, object>(eventName.Value, ReceivedEvent);
+                Owner.UnregisterEvent<object, object, object>(eventName.Value, ReceivedEvent);
+                registered = false;
+            }
             eventReceived = false;
         }
 
@@ -91,6 +100,9 @@ namespace BehaviorDesigner.Runtime.Tasks
             Owner.UnregisterEvent<object>(eventName.Value, ReceivedEvent);
             Owner.UnregisterEvent<object, object>(eventName.Value, ReceivedEvent);
             Owner.UnregisterEvent<object, object, object>(eventName.Value, ReceivedEvent);
+
+            eventReceived = false;
+            registered = false;
         }
 
         public override void OnReset()

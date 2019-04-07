@@ -13,6 +13,7 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityAnimator
 
         private Animator animator;
         private GameObject prevGameObject;
+        private bool positionSet;
 
         public override void OnStart()
         {
@@ -21,6 +22,7 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityAnimator
                 animator = currentGameObject.GetComponent<Animator>();
                 prevGameObject = currentGameObject;
             }
+            positionSet = false;
         }
 
         public override TaskStatus OnUpdate()
@@ -30,9 +32,16 @@ namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityAnimator
                 return TaskStatus.Failure;
             }
 
-            animator.SetLookAtPosition(position.Value);
+            return positionSet ? TaskStatus.Success : TaskStatus.Running;
+        }
 
-            return TaskStatus.Success;
+        public override void OnAnimatorIK()
+        {
+            if (animator == null) {
+                return;
+            }
+            animator.SetLookAtPosition(position.Value);
+            positionSet = true;
         }
 
         public override void OnReset()

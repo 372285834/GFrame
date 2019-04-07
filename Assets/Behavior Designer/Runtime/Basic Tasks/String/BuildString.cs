@@ -1,6 +1,3 @@
-using UnityEngine;
-using System;
-
 namespace BehaviorDesigner.Runtime.Tasks.Basic.UnityString
 {
     [TaskCategory("Basic/String")]

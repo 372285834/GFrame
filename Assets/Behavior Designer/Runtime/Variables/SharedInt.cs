@@ -1,6 +1,3 @@
-using UnityEngine;
-using System.Collections;
-
 namespace BehaviorDesigner.Runtime
 {
     [System.Serializable]

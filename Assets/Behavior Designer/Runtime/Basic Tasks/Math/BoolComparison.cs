@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace BehaviorDesigner.Runtime.Tasks.Basic.Math
 {
     [TaskCategory("Basic/Math")]

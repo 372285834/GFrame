@@ -1,4 +1,3 @@
-using UnityEngine;
 namespace BehaviorDesigner.Runtime.Tasks
 {
     [TaskDescription("The return failure task will always return failure except when the child task is running.")]
