@@ -7,12 +7,14 @@ namespace highlight
 
     public class SceneObject : Object
     {
+        public bool isClear = false;
         public Transform root;
         public Animator animator;
         public Dictionary<string, Transform> LocatorDic = new Dictionary<string, Transform>();
         //public AnimationBox aniBox;
         public void Init(GameObject go)
         {
+            isClear = false;
             this.root = go.transform;
             this.animator = go.GetComponentInChildren<Animator>(true);
             Transform[] tfs = go.GetComponentsInChildren<Transform>(true);
@@ -47,6 +49,10 @@ namespace highlight
             root.localPosition = Vector3.zero;
             root.localScale = Vector3.one;
             root.localRotation = Quaternion.identity;
+        }
+        public void Clear()
+        {
+            isClear = true;
         }
     }
 }

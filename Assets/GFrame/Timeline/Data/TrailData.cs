@@ -4,7 +4,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace highlight
+namespace highlight.timeline
 {
     [Time("数据/轨迹", typeof(TrailData))]
     public class TrailStyle : ComponentStyle
@@ -17,7 +17,7 @@ namespace highlight
         }
 #endif
     }
-    public class TrailData : ComponentData
+    public class TrailData : ComponentData, IEvaluateV3
     {
         public Vector3 Evaluate(Vector3 start, Vector3 end, float time)
         {

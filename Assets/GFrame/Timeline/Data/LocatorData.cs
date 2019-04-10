@@ -5,7 +5,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace highlight
+namespace highlight.timeline
 {
     [Time("数据/挂点", typeof(LocatorData))]
     public class LocatorStyle : ComponentStyle
@@ -27,23 +27,27 @@ namespace highlight
         }
 #endif
     }
-    public class LocatorData : ComponentData
+    public class LocatorData : ComponentData, IPosition,ITransform
     {
         public LocatorStyle loStyle { get { return this.style as LocatorStyle; } }
         public Locator locator { get { return (this.style as LocatorStyle).locator; } }
-        public Vector3 curPos
+        Vector3 curPos;
+        public Vector3 pos
         {
             get
             {
-                if(target != null && loStyle.isFollow)
+                if (transform != null && loStyle.isFollow)
                 {
-                    pos = target.position + loStyle.off;
+                    curPos = transform.position + loStyle.off;
                 }
-                 return pos;
+                return curPos;
+            }
+            set
+            {
+                curPos = value;
             }
         }
-        public Vector3 pos;
-        public Transform target { get; private set; }
+        public Transform transform { get; set; }
 
         public override TriggerStatus OnTrigger()
         {
@@ -53,31 +57,49 @@ namespace highlight
             switch (locator.type)
             {
                 case Locator.eType.LT_OWNER:
-                    targetObj = this.root.owner;
+                    targetObj = this.owner;
                     break;
                 case Locator.eType.LT_TARGET:
                     targetObj = this.root.target.getObj(index);
+                    if(targetObj == null || targetObj.isClear)
+                    {
+                        return TriggerStatus.Failure;
+                    }
                     break;
                 case Locator.eType.LT_TARGET_POS:
-                    pos = this.root.target.getPos(index);
+                    if (!this.root.target.checkIndex(index))
+                        return TriggerStatus.Failure;
+                    curPos = this.root.target.getPos(index);
                     break;
                 case Locator.eType.LT_SCENE:
-                    pos = loStyle.off;
+                    curPos = loStyle.off;
                     break;
                 case Locator.eType.LT_PARENT:
                     targetObj = this.timeObject.parent.resData.obj;
+                    if (targetObj == null || targetObj.isClear)
+                    {
+                        return TriggerStatus.Failure;
+                    }
                     break;
                 case Locator.eType.LT_PARENT_POS:
                     targetObj = this.timeObject.parent.resData.obj;
-                    pos = targetObj.getPosition();
+                    if (targetObj == null || targetObj.isClear)
+                    {
+                        return TriggerStatus.Failure;
+                    }
+                    curPos = targetObj.getPosition();
                     break;
                 default:
                     break;
             }
             if (targetObj != null)
             {
-                target = targetObj.getLocator(locator.parentName);
-                pos = target.position + loStyle.off;
+                transform = targetObj.getLocator(locator.parentName);
+                if(transform == null)
+                {
+                    return TriggerStatus.Failure;
+                }
+                curPos = transform.position + loStyle.off;
             }
             return TriggerStatus.Success;
             //this.prefabData.transform
@@ -85,8 +107,8 @@ namespace highlight
         }
         public override void OnStop()
         {
-            this.target = null;
-            pos = Vector3.zero;
+            this.transform = null;
+            curPos = Vector3.zero;
         }
     }
 }

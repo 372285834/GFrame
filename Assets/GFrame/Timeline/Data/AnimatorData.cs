@@ -4,7 +4,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace highlight
+namespace highlight.timeline
 {
     [Time("数据/动画", typeof(AnimatorData))]
     public class AnimatorStyle : ComponentStyle
@@ -34,11 +34,15 @@ namespace highlight
         public override TriggerStatus OnTrigger()
         {
             AnimatorStyle style = this.style as AnimatorStyle;
+            if (string.IsNullOrEmpty(style.clip))
+            {
+                return TriggerStatus.Failure;
+            }
             if (style.isSelf)
                 animator = this.owner.animator;
             else
                 animator = this.root.target.getObj().animator;
-            return TriggerStatus.Success;
+            return animator == null ? TriggerStatus.Failure : TriggerStatus.Success;
         }
         public override void OnStop()
         {

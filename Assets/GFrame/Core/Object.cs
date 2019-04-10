@@ -22,9 +22,9 @@ namespace highlight
     };
     public abstract class Object
 	{
-		private int _id = -1;
-        public int id { get { return _id; } }
-		internal void SetId( int id ) { _id = id; }
+		private int _onlyId = -1;
+        public int onlyId { get { return _onlyId; } }
+		internal void SetOnlyId( int id ) { _onlyId = id; }
         public static T DeepCopyWithReflection<T>(T obj)
         {
             Type type = obj.GetType();

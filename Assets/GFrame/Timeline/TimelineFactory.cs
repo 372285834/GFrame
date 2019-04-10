@@ -3,7 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-namespace highlight
+namespace highlight.timeline
 {
     public static class TimelineFactory
     {
@@ -50,8 +50,7 @@ namespace highlight
             //    }
             //}
         }
-        static List<Timeline> releaseList = new List<Timeline>();
-        public static bool AutoRelease = true;
+        static List<Timeline> destroyList = new List<Timeline>();
         public static void Update(float time)
         {
             if (mActiveDic.Count == 0)
@@ -59,18 +58,18 @@ namespace highlight
             foreach (var tl in mActiveDic.Values)
             {
                 tl.Update(time);
-                if (tl.IsStopped && AutoRelease)
-                    releaseList.Add(tl);
+                if (tl.IsStopped && tl.DestroyOnStop)
+                    destroyList.Add(tl);
             }
-            if (AutoRelease)
+            if(destroyList.Count > 0)
             {
-                foreach (var tl in releaseList)
+                foreach (var tl in destroyList)
                 {
-                    TimelineFactory.Release(tl);
+                    mActiveDic.Remove(tl.onlyId);
+                    tl.Destroy();
                 }
-                releaseList.Clear();
+                destroyList.Clear();
             }
-            
         }
         public static Timeline GetActive(int id)
         {
@@ -84,17 +83,10 @@ namespace highlight
                 return null;
             Timeline tl = style.Creat();
             int id = (int)mIdGenerator.generateNewId();
-            tl.SetId(id);
+            tl.SetOnlyId(id);
             mActiveDic.Add(id, tl);
             tl.Init();
             return tl;
-        }
-        public static void Release(Timeline tl)
-        {
-            if (tl == null)
-                return;
-            tl.Destroy();
-            mActiveDic.Remove(tl.id);
         }
 
         public static Type GetType(string name)

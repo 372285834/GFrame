@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-namespace highlight
+namespace highlight.timeline
 {
     [AttributeUsage(AttributeTargets.Field)]
     public class DescAttribute : System.Attribute
@@ -30,11 +30,13 @@ namespace highlight
             type = _type;
             List<FieldInfo> flist = new List<FieldInfo>();
             Type iter = typeof(ComponentData);
+            Type inter = typeof(ITimeInterface);
             FieldInfo[] pis = type.GetFields();
             for (int j = 0; j < pis.Length; j++)
             {
                 FieldInfo fi = pis[j];
-                if (fi.FieldType.IsSubclassOf(iter))//t.IsInterface && iter.IsAssignableFrom(t))// 
+                if (iter.IsAssignableFrom(fi.FieldType) ||
+                    (fi.FieldType.IsInterface && inter.IsAssignableFrom(fi.FieldType)))// fi.FieldType.IsSubclassOf(iter))//t.IsInterface && 
                 {
                     DescAttribute attr = Attribute.GetCustomAttribute(fi, typeof(DescAttribute)) as DescAttribute;
                     // DescAttribute[] attrs = t.GetCustomAttributes(typeof(DescAttribute), true) as DescAttribute[];

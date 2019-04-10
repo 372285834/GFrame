@@ -39,7 +39,7 @@ namespace highlight
             ShowMenu();
             drawRang();
             string arr2 = showData ? "Hide" : "Show";
-            List<ComponentData> comps = mScript.obj.GetComponents;
+            List<ComponentData> comps = mScript.obj.ComponentList;
             if (GUILayout.Button("数据(" + comps.Count + ")" + arr2))
                 showData = !showData;
             if (showData)
@@ -63,7 +63,7 @@ namespace highlight
             GUILayout.Space(10f);
             // DrawSeparator(2);
             // GUILayout.Space(5f);
-            List<TimeAction> Actions = mScript.obj.Actions;
+            List<TimeAction> Actions = mScript.obj.ActionList;
             string arr = showAction ? "Hide" : "Show";
             if (GUILayout.Button("行为(" + Actions.Count + ")" + arr))
                 showAction = !showAction;
@@ -243,7 +243,7 @@ namespace highlight
             {
                 tempList.Clear();
                 tempStrList.Clear();
-                List<ComponentData> list = mScript.obj.GetComponents;
+                List<ComponentData> list = mScript.obj.ComponentList;
                 for (int j = 0; j < list.Count; j++)
                 {
                     ComponentData data = list[j];

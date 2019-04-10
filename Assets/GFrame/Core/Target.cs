@@ -11,12 +11,18 @@ namespace highlight
             mObjects = new List<SceneObject>();
             mPositions = new List<Vector3>();
         }
+        public bool checkIndex(int idx)
+        {
+            return idx >= 0 && idx < mObjects.Count;
+        }
         public Vector3 getPos(int idx = 0)
         {
             return mPositions[idx];
         }
         public SceneObject getObj(int idx = 0)
         {
+            if (idx < 0 || idx >= mObjects.Count)
+                return null;
             return mObjects[idx];
         }
         public void addPosition(Vector3 pos)

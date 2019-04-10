@@ -110,7 +110,20 @@ namespace highlight
         {
             return !(a == b);
         }
-
+        public static FrameRange operator +(FrameRange a, FrameRange b)
+        {
+            FrameRange c = a;
+            c.Start += b.Start;
+            c.End += b.End;
+            return c;
+        }
+        public static FrameRange operator +(FrameRange a, int b)
+        {
+            FrameRange c = a;
+            c.Start += b;
+            c.End += b;
+            return c;
+        }
         public override bool Equals(object obj)
         {
             if (obj.GetType() != GetType())
@@ -128,15 +141,13 @@ namespace highlight
         {
             return string.Format("{0},{1}", Start, End);
         }
+        public static FrameRange Resize(int x, int y, FrameRange clampV)
+        {
+            FrameRange cur = new FrameRange(x, y);
+            return Resize(cur, clampV);
+        }
         public static FrameRange Resize(FrameRange cur, FrameRange clampV)
         {
-            cur.Start = Mathf.Clamp(cur.Start, clampV.Start, clampV.End);
-            cur.End = Mathf.Clamp(cur.End, cur.Start, clampV.End);
-            return cur;
-        }
-        public static FrameRange Resize(int x,int y, FrameRange clampV)
-        {
-            FrameRange cur = new FrameRange(x,y);
             cur.Start = Mathf.Clamp(cur.Start, clampV.Start, clampV.End);
             cur.End = Mathf.Clamp(cur.End, cur.Start, clampV.End);
             return cur;

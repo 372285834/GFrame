@@ -47,7 +47,6 @@ namespace highlight
         {
             isLoaded = true;
             TimelineFactory.Init();
-            TimelineFactory.AutoRelease = false;
             allStyleList = LoadAssets(timelineDir, "*" + Suffix);
             InitStyles();
             curSelectIdx = 0;

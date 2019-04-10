@@ -7,6 +7,7 @@ namespace highlight.timeline
    // [Time("Timeline", typeof(Timeline))]
     public class TimelineStyle : TimeStyle
     {
+        public bool loop = false;
         public int FrameRate = DEFAULT_FRAMES_PER_SECOND;
         public const int DEFAULT_FRAMES_PER_SECOND = 60;
         public const int DEFAULT_LENGTH = 2;
@@ -22,6 +23,7 @@ namespace highlight.timeline
         public Timeline Creat()
         {
             Timeline root = linePool.Get();
+            root.DestroyOnStop = true;
             TimeObject.Create(root, this, null);
             return root;
         }
@@ -68,10 +70,8 @@ namespace highlight.timeline
 
         /// @brief Is the sequence stopped?
         public bool IsStopped { get { return _currentFrame < 0; } }
-        public void SetCurrentTime(float time)
-        {
-            SetCurrentFrame(RoundToInt(time * lStyle.FrameRate));
-        }
+
+        public bool DestroyOnStop = true;
         public int GetCurrentFrame()
         {
             return _currentFrame;
@@ -91,7 +91,7 @@ namespace highlight.timeline
             _lastUpdateTime = curTime;
             SetCurrentFrame(startFrame);
         }
-        public TimeObject GetObj(string name)
+        public TimeObject FindObj(string name)
         {
             TimeObject obj = null;
             nodeDic.TryGetValue(name, out obj);
@@ -150,30 +150,39 @@ namespace highlight.timeline
                 _lastUpdateTime += timePerFrame * numFrames;
             }
         }
+        public void SetCurrentTime(float time)
+        {
+            SetCurrentFrame(RoundToInt(time * lStyle.FrameRate));
+        }
         /// @brief Sets current frame.
         /// @param frame Frame.
         /// @sa Length, GetCurrentFrame
         public void SetCurrentFrame(int frame)
         {
-            _currentFrame = Clamp(frame, 0, lStyle.Length);
+            _currentFrame = Clamp(frame, 0, this.Length);
 
             _isPlayingForward = _currentFrame >= frame;
 
             UpdateFrame(_currentFrame);
 
-            if (_currentFrame == lStyle.Length)
+            if (_currentFrame == this.Length)
             {
+                if(this.lStyle.loop)
+                {
+                    _currentFrame = 0;
+                    return;
+                }
                 Stop();
             }
         }
+#if UNITY_EDITOR
         public void SetCurrentFrameEditor(int frame)
         {
-#if UNITY_EDITOR
             _isPlayingForward = frame >= _currentFrame;
-            _currentFrame = Clamp(frame, 0, lStyle.Length);
+            _currentFrame = Clamp(frame, 0, this.Length);
             UpdateEditor(_currentFrame);
-#endif
         }
+#endif
         int RoundToInt(float f)
         {
             return (int)Math.Floor(f + 0.5f);

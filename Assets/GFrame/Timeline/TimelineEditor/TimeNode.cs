@@ -5,7 +5,7 @@ using UnityEngine;
 using highlight.timeline;
 using System;
 
-namespace highlight
+namespace highlight.timeline
 {
     public class TimeNode : MonoBehaviour
     {
@@ -31,14 +31,14 @@ namespace highlight
         public bool isRoot { get { return this is TimelineNode; } }
         public void CreatChild(TimelineNode root)
         {
-            if (obj.Childs.Count == 0)
+            if (obj.ChildList.Count == 0)
             {
                 UnityEditor.Selection.activeObject = this;
                 return;
             }
-            for (int i = 0; i < obj.Childs.Count; i++)
+            for (int i = 0; i < obj.ChildList.Count; i++)
             {
-                TimeNode node = creatNode(obj.Childs[i], root);
+                TimeNode node = creatNode(obj.ChildList[i], root);
                 node.CreatChild(root);
             }
         }

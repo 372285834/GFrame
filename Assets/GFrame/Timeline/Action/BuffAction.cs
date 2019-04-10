@@ -2,22 +2,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 namespace highlight.timeline
 {
-    [Action("行为/设置坐标", typeof(SetPosAction))]
-    public class SetPosAction : TimeAction
+    [Action("行为/运行buff", typeof(BuffAction))]
+    public class BuffAction : TimeAction
     {
-        [Desc("目标挂点")]
-        public IPosition target;
-
+        [Desc("buff数据")]
+        public BuffData data;
         public override TriggerStatus OnTrigger()
         {
-            return TriggerStatus.Success;
+            return data == null ? TriggerStatus.Failure : TriggerStatus.Success;
         }
         public override void OnUpdate()
         {
-            this.res.obj.SetPos(this.target.pos);
+
         }
     }
 }

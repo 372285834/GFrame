@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using highlight.timeline;
-namespace highlight
+namespace highlight.timeline
 {
     public class TimelineNode : TimeNode
     {
@@ -14,7 +14,9 @@ namespace highlight
             GameObject go = new GameObject(_style.name);
             //go.hideFlags = HideFlags.DontSave;
             TimelineNode node = go.AddComponent<TimelineNode>();
-            node.obj = _style.Creat();
+            Timeline tl = _style.Creat();
+            tl.DestroyOnStop = false;
+            node.obj = tl;
             node.parent = null;
             node.root = node;
             node.CreatChild(node);

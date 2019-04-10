@@ -4,10 +4,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace highlight
+namespace highlight.timeline
 {
     public enum TriggerStatus
     {
+        InActive = 0,
         Failure = 1,
         Success = 2,
         Running = 3
@@ -29,24 +30,21 @@ namespace highlight
             if (name.LastIndexOf("/") > -1)
                 this.name = name.Substring(name.LastIndexOf("/") + 1);
             capacity = _capacity;
+            if (dType == null)
+                dType = typeof(ComponentData);
             this.dataType = dType;
         }
     }
     public abstract class Component : Object
     {
         public int index;
-        public ResData res { get { return timeObject.resData; } }
+        public TriggerStatus status = TriggerStatus.InActive;
         public TimeObject timeObject { protected set; get; }
+        public ResData res { get { return timeObject.resData; } }
         public Timeline root { get { return this.timeObject.root; } }
         public SceneObject owner { get { return this.root.owner; } }
-        public TimeStyle timeStyle
-        {
-            get
-            {
-                return this.timeObject.timeStyle;
-            }
-        }
-        public List<ComponentData> GetComponents { get { return timeObject.GetComponents; } }
+        public TimeStyle timeStyle { get { return this.timeObject.timeStyle; } }
+        public List<ComponentData> ComponentList { get { return timeObject.ComponentList; } }
         #region virtual Function
         public virtual void OnInit() { }
         public virtual TriggerStatus OnTrigger() { return TriggerStatus.Success; }

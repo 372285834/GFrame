@@ -51,9 +51,9 @@ namespace highlight.timeline
         public TimeStyle timeStyle { get; private set; }
         public ResData resData { get; private set; }
         public bool activeSelf { get; private set; }
-        private bool _hasTriggered = false;
-        public bool HasTriggered { get { return _hasTriggered; } }
-
+        private TriggerStatus _status = TriggerStatus.InActive;// = false;
+        public TriggerStatus Status { get { return _status; } }
+        public bool IsTrigger { get { return _status != TriggerStatus.InActive; } }
         private bool _hasFinished = false;
         public bool HasFinished { get { return _hasFinished; } }
         public float progress { get; private set; }
@@ -78,11 +78,11 @@ namespace highlight.timeline
         }
         public bool IsRoot { get { return parent == null; } }
         protected List<TimeObject> _childs = new List<TimeObject>();
-        public List<TimeObject> Childs { get { return _childs; } }
+        public List<TimeObject> ChildList { get { return _childs; } }
         List<ComponentData> _components = new List<ComponentData>();
-        public List<ComponentData> GetComponents { get { return _components; } }
+        public List<ComponentData> ComponentList { get { return _components; } }
         List<TimeAction> _actions = new List<TimeAction>();
-        public List<TimeAction> Actions { get { return _actions; } }
+        public List<TimeAction> ActionList { get { return _actions; } }
         public ComponentData GetComponent(int idx)
         {
             if (idx < 0 || idx >= _components.Count)
@@ -250,6 +250,41 @@ namespace highlight.timeline
             this._actions.Insert(idx, action);
             Rebuild();
         }
+        public T FindComponent<T>() where T : Component
+        {
+            Type t = typeof(T);
+            for (int i = 0; i < _components.Count; i++)
+            {
+                if (_components[i].GetType() == t)
+                    return _components[i] as T;
+            }
+            for (int i = 0; i < _actions.Count; i++)
+            {
+                if (_actions[i].GetType() == t)
+                    return _actions[i] as T;
+            }
+            return null;
+        }
+        public T FindComponentData<T>() where T : ComponentData
+        {
+            Type t = typeof(T);
+            for(int i=0;i<_components.Count;i++)
+            {
+                if (_components[i].GetType() == t)
+                    return _components[i] as T;
+            }
+            return null;
+        }
+        public T FindAction<T>() where T : TimeAction
+        {
+            Type t = typeof(T);
+            for(int i=0;i<_actions.Count;i++)
+            {
+                if (_actions[i].GetType() == t)
+                    return _actions[i] as T;
+            }
+            return null;
+        }
         public void Rebuild()
         {
             UpdateChildIds();
@@ -261,12 +296,12 @@ namespace highlight.timeline
         private void UpdateChildIds()
         {
             for (int i = 0; i < _childs.Count; ++i)
-                _childs[i].SetId(i);
+                _childs[i].SetOnlyId(i);
         }
 
         public virtual void Init()
         {
-            _hasTriggered = false;
+            this._status = TriggerStatus.InActive;
             _hasFinished = false;
             setProgress(0);
             OnInit();
@@ -307,7 +342,7 @@ namespace highlight.timeline
 #endif
             for (int i = 0; i != _childs.Count; ++i)
             {
-                if (_childs[i].HasTriggered && !_childs[i].HasFinished)
+                if (_childs[i].IsTrigger && !_childs[i].HasFinished)
                     _childs[i].Pause();
             }
             OnPause();
@@ -323,7 +358,7 @@ namespace highlight.timeline
 #endif
             for (int i = 0; i != _childs.Count; ++i)
             {
-                if (_childs[i].HasTriggered && !_childs[i].HasFinished)
+                if (_childs[i].IsTrigger && !_childs[i].HasFinished)
                     _childs[i].Resume();
             }
             OnResume();
@@ -334,6 +369,7 @@ namespace highlight.timeline
 
         public virtual void Stop()
         {
+            this._status = TriggerStatus.InActive;
             //_hasTriggered = true;
             _hasFinished = true;
             setProgress(0);
@@ -342,7 +378,7 @@ namespace highlight.timeline
 #endif
             for (int i = _childs.Count - 1; i >= 0; --i)
             {
-                if (_childs[i].HasTriggered)
+                if (_childs[i].IsTrigger)
                     _childs[i].Stop();
             }
             OnStop();
@@ -367,11 +403,8 @@ namespace highlight.timeline
 #if UNITY_EDITOR
             PreEvent();
 #endif
-            if (!_hasTriggered)
-            {
-                if (!Trigger())
-                    return;
-            }
+            if (!Trigger())
+                return;
             OnUpdate();
             UpdateChilds(frame);
             if (frame == Length)
@@ -403,7 +436,7 @@ namespace highlight.timeline
                 }
                 else //if( frame > _events[_currentEvent].End ) // is it finished
                 {
-                    if (_childs[i].HasTriggered || _childs[i].triggerOnSkip)
+                    if (_childs[i].IsTrigger || _childs[i].triggerOnSkip)
                     {
                         _childs[i].UpdateFrame(_childs[i].Length);
                     }
@@ -412,12 +445,13 @@ namespace highlight.timeline
         }
         public bool Trigger()
         {
-            TriggerStatus status = OnTrigger();
-            if (status == TriggerStatus.Success)
-                _hasTriggered = true;
-            if (status == TriggerStatus.Failure)
-                this.Stop();
-            return status != TriggerStatus.Failure;
+            if(_status == TriggerStatus.InActive || _status == TriggerStatus.Running)
+            {
+                _status = OnTrigger();
+                if (_status == TriggerStatus.Failure)
+                    this.Stop();
+            }
+            return this.Status == TriggerStatus.Success;
         }
         public void Finish()
         {
@@ -437,11 +471,8 @@ namespace highlight.timeline
             setProgress(frame);
             PreEvent();
 
-            if (!_hasTriggered)
-            {
-                if (!Trigger())
-                    return;
-            }
+            if (!Trigger())
+                return;
 
             OnUpdateEditor();
             UpdateChildsEditor(frame);
@@ -470,7 +501,7 @@ namespace highlight.timeline
                 //Profiler.BeginSample("Event: " + i + " " + _events[i].name );
                 if (frame < _childs[i].Start)
                 {
-                    if (_childs[i].HasTriggered)
+                    if (_childs[i].IsTrigger)
                         _childs[i].Stop();
 
                 }
@@ -506,7 +537,7 @@ namespace highlight.timeline
         #endregion
         public bool IsLastEvent()
         {
-            return index == root.Childs.Count - 1;
+            return index == root.ChildList.Count - 1;
         }
         public int Start
         {
@@ -565,9 +596,9 @@ namespace highlight.timeline
             get
             {
                 int count = 0;
-                for(int i=0;i<Childs.Count;i++)
+                for(int i=0;i<ChildList.Count;i++)
                 {
-                    count += Childs[i].AllCount + 1;
+                    count += ChildList[i].AllCount + 1;
                 }
                 return count;
             }
@@ -594,19 +625,27 @@ namespace highlight.timeline
             TriggerStatus status = TriggerStatus.Success;
             for (int i = 0; i < _components.Count; i++)
             {
-                TriggerStatus _status = _components[i].OnTrigger();
-                if (_status == TriggerStatus.Failure)
-                    return status;
-                if (_status == TriggerStatus.Running)
-                    _status = TriggerStatus.Running;
+                if(_components[i].status == TriggerStatus.InActive || _components[i].status == TriggerStatus.Running)
+                {
+                    TriggerStatus _status = _components[i].OnTrigger();
+                    _components[i].status = _status;
+                    if (_status == TriggerStatus.Failure)
+                        return _status;
+                    if (_status == TriggerStatus.Running)
+                        status = _status;
+                }
             }
             for (int i = 0; i < _actions.Count; i++)
             {
-                TriggerStatus _status = _actions[i].OnTrigger();
-                if (_status == TriggerStatus.Failure)
-                    return _status;
-                if (_status == TriggerStatus.Running)
-                    _status = TriggerStatus.Running;
+                if (_actions[i].status == TriggerStatus.InActive || _actions[i].status == TriggerStatus.Running)
+                {
+                    TriggerStatus _status = _actions[i].OnTrigger();
+                    _actions[i].status = _status;
+                    if (_status == TriggerStatus.Failure)
+                        return _status;
+                    if (_status == TriggerStatus.Running)
+                        status = _status;
+                }
             }
             return status;
         }
@@ -629,9 +668,15 @@ namespace highlight.timeline
         protected void OnStop()
         {
             for (int i = 0; i < _components.Count; i++)
+            {
                 _components[i].OnStop();
+                _components[i].status = TriggerStatus.InActive;
+            }
             for (int i = 0; i < _actions.Count; i++)
+            {
                 _actions[i].OnStop();
+                _actions[i].status = TriggerStatus.InActive;
+            }
         }
         protected void OnResume()
         {
