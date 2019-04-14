@@ -7,6 +7,7 @@ namespace highlight
 
     public class SceneObject : Object
     {
+        public string state;
         public bool isClear = false;
         public Transform root;
         public Animator animator;

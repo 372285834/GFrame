@@ -44,13 +44,13 @@ namespace highlight.timeline
     public class TimeObject : Object
     {
         public int index = 0;
+        public string name { get { return this.timeStyle.name; } }
         public FrameRange frameRange { get; private set; }
         public Timeline root { get; private set; }
         public bool triggerOnSkip { get { return true; } }
 
         public TimeStyle timeStyle { get; private set; }
         public ResData resData { get; private set; }
-        public bool activeSelf { get; private set; }
         private TriggerStatus _status = TriggerStatus.InActive;// = false;
         public TriggerStatus Status { get { return _status; } }
         public bool IsTrigger { get { return _status != TriggerStatus.InActive; } }
@@ -79,6 +79,7 @@ namespace highlight.timeline
         public bool IsRoot { get { return parent == null; } }
         protected List<TimeObject> _childs = new List<TimeObject>();
         public List<TimeObject> ChildList { get { return _childs; } }
+        public int childCount { get { return _childs.Count; } }
         List<ComponentData> _components = new List<ComponentData>();
         public List<ComponentData> ComponentList { get { return _components; } }
         List<TimeAction> _actions = new List<TimeAction>();
@@ -134,6 +135,15 @@ namespace highlight.timeline
         public TimeObject GetChild(int index)
         {
             return _childs[index];
+        }
+        public TimeObject GetChild(string name)
+        {
+            for(int i=0;i<_childs.Count;i++)
+            {
+                if (_childs[i].name == name)
+                    return _childs[i];
+            }
+            return null;
         }
         public TimeObject GetChild(TimeStyle s)
         {
@@ -301,14 +311,18 @@ namespace highlight.timeline
 
         public virtual void Init()
         {
-            this._status = TriggerStatus.InActive;
-            _hasFinished = false;
-            setProgress(0);
+            Reset();
             OnInit();
             for (int i = 0; i < _childs.Count; i++)
             {
                 _childs[i].Init();
             }
+        }
+        public void Reset()
+        {
+            this._status = TriggerStatus.InActive;
+            _hasFinished = false;
+            setProgress(0);
         }
         public virtual void Destroy()
         {
@@ -397,7 +411,7 @@ namespace highlight.timeline
         }
         protected void UpdateFrame(int frame)
         {
-            if (!activeSelf || HasFinished)
+            if (HasFinished)
                 return;
             setProgress(frame);
 #if UNITY_EDITOR

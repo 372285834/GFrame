@@ -170,6 +170,7 @@ namespace highlight.timeline
                 if(this.lStyle.loop)
                 {
                     _currentFrame = 0;
+                    base.Init();
                     return;
                 }
                 Stop();

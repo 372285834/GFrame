@@ -44,6 +44,7 @@ namespace highlight.timeline
         public Timeline root { get { return this.timeObject.root; } }
         public SceneObject owner { get { return this.root.owner; } }
         public TimeStyle timeStyle { get { return this.timeObject.timeStyle; } }
+        public string name { get { return this.timeObject.name; } }
         public List<ComponentData> ComponentList { get { return timeObject.ComponentList; } }
         #region virtual Function
         public virtual void OnInit() { }
