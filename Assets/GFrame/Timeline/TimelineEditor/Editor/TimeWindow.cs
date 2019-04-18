@@ -1,12 +1,11 @@
-﻿using highlight.timeline;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-namespace highlight
+namespace highlight.tl
 {
     public class TimeWindow : EditorWindow
     {
@@ -99,9 +98,8 @@ namespace highlight
             {
                 selectObj = Selection.objects[0];
                 string path = AssetDatabase.GetAssetPath(Selection.objects[0]);
-                if (path.EndsWith(".tl"))
+                if (path.EndsWith(".tl") && Inst != null && allStyleList != null)
                 {
-                    ShowEditor();
                     int idx = allStyleList.FindIndex(x => x.name == Selection.objects[0].name);
                     if (idx > -1)
                     {
@@ -111,7 +109,7 @@ namespace highlight
                     }
                 }
             }
-            if(Inst == null)
+            if (Inst == null)
             {
                 if (root != null)
                 {
@@ -495,7 +493,7 @@ namespace highlight
         }
         public static JsonSerializerSettings getSetting()
         {
-            JsonSerializerSettings setting = new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Auto, DefaultValueHandling = DefaultValueHandling.Ignore };
+            JsonSerializerSettings setting = new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Auto, DefaultValueHandling = DefaultValueHandling.Ignore, NullValueHandling = NullValueHandling.Ignore};
             return setting;
         }
 

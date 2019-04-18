@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 
-namespace highlight.timeline
+namespace highlight.tl
 {
    // [Time("Timeline", typeof(Timeline))]
     public class TimelineStyle : TimeStyle
@@ -38,7 +38,10 @@ namespace highlight.timeline
         public TimelineStyle lStyle { get { return timeStyle as TimelineStyle; } }
         public Target target = new Target();
         public SceneObject owner = null;
+        public Buff buff = null;
+        public Skill skill = null;
         public Dictionary<string, TimeObject> nodeDic = new Dictionary<string, TimeObject>();
+        public Dictionary<string, TimeAction> actionDic = new Dictionary<string, TimeAction>();
         public float FrameRate
         {
             get
@@ -89,13 +92,19 @@ namespace highlight.timeline
                 Resume();
             _isPlaying = true;
             _lastUpdateTime = curTime;
-            SetCurrentFrame(startFrame);
+            UpdateFrame(startFrame);
         }
         public TimeObject FindObj(string name)
         {
             TimeObject obj = null;
             nodeDic.TryGetValue(name, out obj);
             return obj;
+        }
+        public TimeAction FindAction(string key)
+        {
+            TimeAction action = null;
+            actionDic.TryGetValue(key, out action);
+            return action;
         }
         public override void Init()
         {
@@ -111,8 +120,11 @@ namespace highlight.timeline
             _isInit = false;
             base.Destroy();
             owner = null;
+            buff = null;
+            skill = null;
             target.Clear();
             nodeDic.Clear();
+            actionDic.Clear();
         }
         public override void Stop()
         {
@@ -146,24 +158,26 @@ namespace highlight.timeline
             if (delta >= timePerFrame)
             {
                 int numFrames = RoundToInt(delta * FrameRate);
-                SetCurrentFrame(_currentFrame + numFrames);
+                UpdateFrame(_currentFrame + numFrames);
                 _lastUpdateTime += timePerFrame * numFrames;
             }
         }
         public void SetCurrentTime(float time)
         {
-            SetCurrentFrame(RoundToInt(time * lStyle.FrameRate));
+            UpdateFrame(RoundToInt(time * lStyle.FrameRate));
         }
         /// @brief Sets current frame.
         /// @param frame Frame.
         /// @sa Length, GetCurrentFrame
-        public void SetCurrentFrame(int frame)
+        public void UpdateFrame(int frame)
         {
+            if (!_isPlaying)
+                return;
             _currentFrame = Clamp(frame, 0, this.Length);
 
             _isPlayingForward = _currentFrame >= frame;
 
-            UpdateFrame(_currentFrame);
+            _UpdateFrame(_currentFrame);
 
             if (_currentFrame == this.Length)
             {

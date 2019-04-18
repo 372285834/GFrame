@@ -1,8 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using highlight.timeline;
-namespace highlight.timeline
+namespace highlight.tl
 {
     public class TimelineNode : TimeNode
     {

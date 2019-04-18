@@ -1,8 +1,7 @@
-﻿using highlight.timeline;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-namespace highlight.timeline
+namespace highlight.tl
 {
     [Action("行为/播放动画", typeof(PlayClipAction))]
     public class PlayClipAction : TimeAction

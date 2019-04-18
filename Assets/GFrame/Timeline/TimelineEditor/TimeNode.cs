@@ -2,10 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using highlight.timeline;
 using System;
 
-namespace highlight.timeline
+namespace highlight.tl
 {
     public class TimeNode : MonoBehaviour
     {

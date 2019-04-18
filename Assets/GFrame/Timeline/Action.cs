@@ -1,8 +1,7 @@
-﻿using highlight.timeline;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
-namespace highlight.timeline
+namespace highlight.tl
 {
     [AttributeUsage(AttributeTargets.Field)]
     public class DescAttribute : System.Attribute
@@ -53,6 +52,7 @@ namespace highlight.timeline
     }
     public sealed class ActionStyle : Object
     {
+        public string key;
         public string name;
         public int[] Indexs;
         public ActionStyle()

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 
-namespace highlight.timeline
+namespace highlight.tl
 {
     public class TimeStyle : Object
     {
@@ -119,6 +119,8 @@ namespace highlight.timeline
                 action.index = i;
                 obj._actions.Add(action);
                 action.SetData(obj._components);
+                if (!string.IsNullOrEmpty(style.key))
+                    root.actionDic[style.key] = action;
             }
             for (int i = 0; i < data.Childs.Length; i++)
             {
@@ -409,7 +411,7 @@ namespace highlight.timeline
             else
                 progress = (float)mFrameSinceTrigger / this.Length;
         }
-        protected void UpdateFrame(int frame)
+        protected void _UpdateFrame(int frame)
         {
             if (HasFinished)
                 return;
@@ -446,13 +448,13 @@ namespace highlight.timeline
                 }
                 else if (frame >= _childs[i].Start && frame <= _childs[i].End)
                 {
-                    _childs[i].UpdateFrame(frame - _childs[i].Start);
+                    _childs[i]._UpdateFrame(frame - _childs[i].Start);
                 }
                 else //if( frame > _events[_currentEvent].End ) // is it finished
                 {
                     if (_childs[i].IsTrigger || _childs[i].triggerOnSkip)
                     {
-                        _childs[i].UpdateFrame(_childs[i].Length);
+                        _childs[i]._UpdateFrame(_childs[i].Length);
                     }
                 }
             }

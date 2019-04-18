@@ -1,9 +1,7 @@
-﻿using highlight.timeline;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
-namespace highlight.timeline
+namespace highlight.tl
 {
     [Action("行为/播放引用timeline", typeof(PlayTimelineAction))]
     public class PlayTimelineAction : TimeAction
@@ -18,7 +16,7 @@ namespace highlight.timeline
             {
                 return TriggerStatus.Failure;
             }
-            target.timeline.Play(Time.realtimeSinceStartup);
+            target.timeline.Play(this.root.timeSinceTrigger);
             return TriggerStatus.Success;
         }
         public override void OnUpdate()

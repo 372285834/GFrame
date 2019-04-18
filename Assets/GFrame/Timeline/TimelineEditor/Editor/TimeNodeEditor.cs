@@ -1,11 +1,10 @@
-﻿using highlight.timeline;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-namespace highlight
+namespace highlight.tl
 {
     [CanEditMultipleObjects, CustomEditor(typeof(TimeNode))]
     [ExecuteInEditMode]

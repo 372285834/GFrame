@@ -1,9 +1,8 @@
-﻿using highlight.timeline;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace highlight.timeline
+namespace highlight.tl
 {
     [Action("行为/设置坐标", typeof(SetPosAction))]
     public class SetPosAction : TimeAction

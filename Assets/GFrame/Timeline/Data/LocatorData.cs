@@ -5,7 +5,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace highlight.timeline
+namespace highlight.tl
 {
     [Time("数据/挂点", typeof(LocatorData))]
     public class LocatorStyle : ComponentStyle
@@ -61,10 +61,6 @@ namespace highlight.timeline
                     break;
                 case Locator.eType.LT_TARGET:
                     targetObj = this.root.target.getObj(index);
-                    if(targetObj == null || targetObj.isClear)
-                    {
-                        return TriggerStatus.Failure;
-                    }
                     break;
                 case Locator.eType.LT_TARGET_POS:
                     if (!this.root.target.checkIndex(index))
@@ -76,10 +72,6 @@ namespace highlight.timeline
                     break;
                 case Locator.eType.LT_PARENT:
                     targetObj = this.timeObject.parent.resData.obj;
-                    if (targetObj == null || targetObj.isClear)
-                    {
-                        return TriggerStatus.Failure;
-                    }
                     break;
                 case Locator.eType.LT_PARENT_POS:
                     targetObj = this.timeObject.parent.resData.obj;
@@ -94,6 +86,10 @@ namespace highlight.timeline
             }
             if (targetObj != null)
             {
+                if (targetObj.isClear)
+                {
+                    return TriggerStatus.Failure;
+                }
                 transform = targetObj.getLocator(locator.parentName);
                 if(transform == null)
                 {

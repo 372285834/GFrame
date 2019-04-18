@@ -4,7 +4,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
-namespace highlight.timeline
+namespace highlight.tl
 {
     [Time("数据/buff", typeof(BuffData))]
     public class BuffStyle : ComponentStyle
@@ -20,6 +20,7 @@ namespace highlight.timeline
     }
     public class BuffData : ComponentData
     {
+        public int id;
         public override void OnInit()
         {
 

@@ -1,8 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace highlight.timeline
+namespace highlight.tl
 {
     public interface ITimeInterface { }
     public interface IPosition : ITimeInterface
@@ -21,5 +22,10 @@ namespace highlight.timeline
     {
         Timeline timeline { get; set; }
         TimelineStyle timelineStyle { get; set; }
+    }
+
+    public interface ICondition : ITimeInterface
+    {
+        bool GetBool();
     }
 }

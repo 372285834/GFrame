@@ -1,22 +1,25 @@
-﻿using System.Collections;
+﻿using highlight.tl;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace highlight
 {
-
     public class SceneObject : Object
     {
-        public string state;
+        public Timeline ai;
+        public Buffs buffs;
+        public Skills skills;
+        public RoleAttrs attrs;
         public bool isClear = false;
-        public Transform root;
+        public Transform transform;
         public Animator animator;
         public Dictionary<string, Transform> LocatorDic = new Dictionary<string, Transform>();
         //public AnimationBox aniBox;
         public void Init(GameObject go)
         {
             isClear = false;
-            this.root = go.transform;
+            this.transform = go.transform;
             this.animator = go.GetComponentInChildren<Animator>(true);
             Transform[] tfs = go.GetComponentsInChildren<Transform>(true);
             for(int i=0;i<tfs.Length;i++)
@@ -26,7 +29,7 @@ namespace highlight
         }
         public Vector3 getPosition()
         {
-            return root.position;
+            return transform.position;
         }
         public Transform getLocator(string name)
         {
@@ -38,21 +41,50 @@ namespace highlight
         }
         public void SetPos(Vector3 pos)
         {
-            root.position = pos;
+            transform.position = pos;
         }
         public void SetLocalPos(Vector3 pos)
         {
-            root.localPosition = pos;
+            transform.localPosition = pos;
         }
         public void SetParent(Transform t)
         {
-            root.SetParent(t);
-            root.localPosition = Vector3.zero;
-            root.localScale = Vector3.one;
-            root.localRotation = Quaternion.identity;
+            transform.SetParent(t);
+            transform.localPosition = Vector3.zero;
+            transform.localScale = Vector3.one;
+            transform.localRotation = Quaternion.identity;
         }
-        public void Clear()
+        public virtual void UpdateFrame(int frame)
         {
+            if (ai != null)
+                ai.UpdateFrame(frame);
+            if(attrs != null)
+                attrs.UpdateFrame(frame);
+            if (skills != null)
+                skills.UpdateFrame(frame);
+            if (buffs != null)
+                buffs.UpdateFrame(frame);
+        }
+        public virtual void UpdateRender()
+        {
+
+        }
+        public virtual void Clear()
+        {
+            if (skills != null)
+                skills.Release();
+            if (buffs != null)
+                buffs.Release();
+            if (attrs != null)
+                attrs.Release();
+            if (ai != null)
+                ai.Destroy();
+            skills = null;
+            buffs = null;
+            ai = null;
+            LocatorDic.Clear();
+            animator = null;
+            transform = null;
             isClear = true;
         }
     }

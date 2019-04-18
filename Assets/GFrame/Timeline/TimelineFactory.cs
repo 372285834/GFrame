@@ -1,9 +1,8 @@
-﻿using highlight.timeline;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-namespace highlight.timeline
+namespace highlight.tl
 {
     public static class TimelineFactory
     {
@@ -50,6 +49,7 @@ namespace highlight.timeline
             //    }
             //}
         }
+        /*
         static List<Timeline> destroyList = new List<Timeline>();
         public static void Update(float time)
         {
@@ -77,6 +77,7 @@ namespace highlight.timeline
             mActiveDic.TryGetValue(id, out tl);
             return tl;
         }
+        */
         public static Timeline Creat(TimelineStyle style)
         {
             if (style == null)
@@ -84,9 +85,13 @@ namespace highlight.timeline
             Timeline tl = style.Creat();
             int id = (int)mIdGenerator.generateNewId();
             tl.SetOnlyId(id);
-            mActiveDic.Add(id, tl);
+           // mActiveDic.Add(id, tl);
             tl.Init();
             return tl;
+        }
+        public static void Destroy(Timeline tl)
+        {
+            tl.Destroy();
         }
 
         public static Type GetType(string name)
