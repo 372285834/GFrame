@@ -5,10 +5,14 @@ using System.Text;
 
 namespace highlight
 {
+    public interface IObserver
+    {
+        void Clear();
+    }
     /// <summary>
     /// 观察者;
     /// </summary>
-    public class Observer
+    public class Observer : IObserver
     {
         //event AcHandler ac;
         List<AcHandler> mList = new List<AcHandler>();
@@ -16,7 +20,7 @@ namespace highlight
         List<AcHandler> lockList = new List<AcHandler>();
         public virtual void AddObserver(AcHandler _func, bool immediately = true)
         {
-            if (immediately) 
+            if (immediately)
                 _func();
             for (int i = 0; i < lockList.Count; i++)
             {
@@ -39,14 +43,14 @@ namespace highlight
         }
         public virtual void RemoveObserver(AcHandler _func)
         {
-            if(isLock)
+            if (isLock)
             {
                 lockList.Add(_func);
                 return;
             }
             for (int i = 0; i < mList.Count; i++)
             {
-                if(_func == mList[i])
+                if (_func == mList[i])
                 {
                     mList.RemoveAt(i);
                     return;
@@ -79,18 +83,23 @@ namespace highlight
             {
                 mList[i]();
             }
-                //if (ac != null)
-                //    ac();
+            //if (ac != null)
+            //    ac();
             isLock = false;
+        }
+        public void Clear()
+        {
+            mList.Clear();
+            lockList.Clear();
         }
     }
 
-    public class ObserverV<T>
+    public class ObserverV<T> : IObserver
     {
         //event AcHandler ac;
         protected List<EvtHandler<T>> mList = new List<EvtHandler<T>>();
         bool isLock = false;
-         List<EvtHandler<T>> lockList = new List<EvtHandler<T>>();
+        List<EvtHandler<T>> lockList = new List<EvtHandler<T>>();
         public virtual void AddObserver(EvtHandler<T> _func)
         {
             for (int i = 0; i < lockList.Count; i++)

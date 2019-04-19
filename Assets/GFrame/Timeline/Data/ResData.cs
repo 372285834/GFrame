@@ -30,7 +30,7 @@ namespace highlight.tl
     {
         public System.Object asset;
         public bool isLoaded { get { return asset != null; } }
-        public SceneObject obj { get { return asset as SceneObject; } }
+        public Role obj { get { return asset as Role; } }
         public Animator animator { get { return asset as Animator; } }
         public override void OnInit()
         {

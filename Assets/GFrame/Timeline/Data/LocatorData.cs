@@ -51,7 +51,7 @@ namespace highlight.tl
 
         public override TriggerStatus OnTrigger()
         {
-            SceneObject targetObj = null;
+            Role targetObj = null;
             //pos = locator.position;
             //SceneObject mObj = this.prefabData.obj;
             switch (locator.type)

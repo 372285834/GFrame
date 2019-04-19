@@ -41,7 +41,7 @@ namespace highlight.tl
         public TimeObject timeObject { protected set; get; }
         public ResData res { get { return timeObject.resData; } }
         public Timeline root { get { return this.timeObject.root; } }
-        public SceneObject owner { get { return this.root.owner; } }
+        public Role owner { get { return this.root.owner; } }
         public TimeStyle timeStyle { get { return this.timeObject.timeStyle; } }
         public string name { get { return this.timeObject.name; } }
         public List<ComponentData> ComponentList { get { return timeObject.ComponentList; } }

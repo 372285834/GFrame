@@ -4,11 +4,11 @@ namespace highlight
 {
 	public class Target
 	{
-        protected List<SceneObject> mObjects;
+        protected List<Role> mObjects;
         protected List<Vector3> mPositions;
         public Target()
         {
-            mObjects = new List<SceneObject>();
+            mObjects = new List<Role>();
             mPositions = new List<Vector3>();
         }
         public bool checkIndex(int idx)
@@ -19,7 +19,7 @@ namespace highlight
         {
             return mPositions[idx];
         }
-        public SceneObject getObj(int idx = 0)
+        public Role getObj(int idx = 0)
         {
             if (idx < 0 || idx >= mObjects.Count)
                 return null;
@@ -29,7 +29,7 @@ namespace highlight
         {
             mPositions.Add(pos);
         }
-        public void addObj(SceneObject obj)
+        public void addObj(Role obj)
         {
             mObjects.Add(obj);
         }

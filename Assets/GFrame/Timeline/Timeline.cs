@@ -37,7 +37,7 @@ namespace highlight.tl
     {
         public TimelineStyle lStyle { get { return timeStyle as TimelineStyle; } }
         public Target target = new Target();
-        public SceneObject owner = null;
+        public Role owner = null;
         public Buff buff = null;
         public Skill skill = null;
         public Dictionary<string, TimeObject> nodeDic = new Dictionary<string, TimeObject>();

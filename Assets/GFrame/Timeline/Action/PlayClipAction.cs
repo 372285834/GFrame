@@ -8,13 +8,23 @@ namespace highlight.tl
     {
         [Desc("动画数据")]
         public AnimatorData data;
+        [Desc("目标")]
+        public TargetData target;
+        public Role obj
+        {
+            get
+            {
+                if (target == null)
+                    return this.owner;
+                return this.target.obj;
+            }
+        }
         public override TriggerStatus OnTrigger()
         {
             if (data == null)
                 return TriggerStatus.Failure;
             AnimatorStyle style = data.style as AnimatorStyle;
-            data.animator.speed = style.speed;
-            data.animator.CrossFadeInFixedTime(style.clip, style.duration);
+            obj.PlayClip(style.clip, style.duration, style.speed);
             return TriggerStatus.Success;
         }
         public override void OnUpdate()

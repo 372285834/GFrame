@@ -19,17 +19,19 @@ namespace highlight
     {
         public override BoolValue OnChange(BoolValue t)
         {
+            BoolValue b = t;
             for (int i = mList.Count - 1; i >= 0; i--)
             {
-                t = mList[i](t);
-                if (t.value)
-                    return t;
+                BoolValue cur = mList[i](b);
+                if (cur.level > b.level)
+                    b = cur;
             }
-            return t;
+            return b;
         }
     }
     public class AttrValue<T> : ObserverV<T>
     {
+        public AttrType type;
         public T value;
         public T GetValue()
         {
@@ -39,10 +41,17 @@ namespace highlight
     }
     public struct BoolValue
     {
+        public int level;
         public bool value;
+        public BoolValue(bool v,int lv=0)
+        {
+            value = v;
+            level = lv;
+        }
     }
     public struct IntValue
     {
+        static float ratio = 0.001f;
         public readonly static IntValue zero = new IntValue(0);
         public int baseValue;
         public int extraValue;
@@ -74,15 +83,15 @@ namespace highlight
             get
             {
                 int aValue = this.baseValue + this.extraValue;
-                int baseR = this.baseValue * this.basePer;
-                int totalR = aValue * this.totalPer;
+                int baseR = (int)(ratio * this.baseValue * this.basePer);
+                int totalR = (int)(ratio * aValue * this.totalPer);
                 return aValue + baseR + totalR;
             }
         }
 
         public float showValue
         {
-            get { return value * 0.001f; }
+            get { return value * ratio; }
         }
         public static IntValue operator +(IntValue a, IntValue b)
         {
@@ -136,7 +145,7 @@ namespace highlight
         //    return attr;
         //}
     }
-    public enum IntAttrType
+    public enum AttrType
     {
         move_speed = 1,
         max_hp,
@@ -162,91 +171,78 @@ namespace highlight
 
         reduce_cd,
 
-    }
-    public enum BoolAttrType
-    {
-        non_control = 1,
-        non_select,
-        non_move,
-        non_atk,
-        non_visible,
+
+        non_control = 100, //不受控
+        non_select,//不受选种
+        non_move,//不可移动
+        non_atk,//不可攻击
+        non_visible,//不可见 隐身
+        force_visible,//强制显形
     }
     public class RoleAttrs
     {
+        public Role obj;
+        private Dictionary<AttrType, IObserver> dic = new Dictionary<AttrType, IObserver>();
+        public ObserverV<AttrType> obs = new ObserverV<AttrType>();
+
         private readonly static ObjectPool<RoleAttrs> pool = new ObjectPool<RoleAttrs>();
-        public static RoleAttrs Get(SceneObject _obj)
+        public static RoleAttrs Get(Role _obj)
         {
-            RoleAttrs skills = pool.Get();
-            skills.obj = _obj;
-            return skills;
+            RoleAttrs bfs = pool.Get();
+            bfs.obj = _obj;
+            return bfs;
         }
         public void Release()
         {
             foreach (var v in dic.Values)
             {
                 v.Clear();
+                if (v is IntAttr)
+                    intPool.Release((IntAttr)v);
+                else if (v is IntAttr)
+                    boolPool.Release((BoolAttr)v);
             }
-            obj = null;
+            dic.Clear();
+            obs.Clear();
             pool.Release(this);
         }
-        public SceneObject obj;
-        public Dictionary<IntAttrType, IntAttr> dic;
-        public IntAttr max_hp;
-        public IntAttr max_mp;
-        public IntAttr hp;
-        public IntAttr mp;
-        public IntAttr recovery_hp;
-        public IntAttr recovery_mp;
-        public IntAttr def_phy;
-        public IntAttr def_magic;
-        public IntAttr toughness;//韧性 减少控制时间
-        public IntAttr def_reduce_speed;//减少减速时间
-        public IntAttr dodge;//闪避
 
-        public IntAttr hit;//命中
-        public IntAttr atk_speed;
-        public IntAttr atk_phy;
-        public IntAttr atk_magic;
-        public IntAttr ignore_phy;
-        public IntAttr ignore_magic;
-        public IntAttr crit;
-        public IntAttr crit_odds;
-
-        public IntAttr move_speed;
-        public IntAttr reduce_cd;
-
-        public BoolAttr non_control; //不受控
-        public BoolAttr non_select;//不受选种
-        public BoolAttr non_move;//不可移动
-        public BoolAttr non_atk;//不可攻击
-        public BoolAttr non_visible;//不可见
+        private readonly static ObjectPool<IntAttr> intPool = new ObjectPool<IntAttr>();
+        private readonly static ObjectPool<BoolAttr> boolPool = new ObjectPool<BoolAttr>();
+        
+        public void Change(AttrType t)
+        {
+            obs.Change(t);
+        }
         public void UpdateFrame(int frame)
         {
 
         }
-        public IntAttr GetIntAttr(IntAttrType t)
+        public IntAttr GetIntAttr(AttrType t,bool add = false)
         {
-            IntAttr v = null;
+            IObserver v = null;
             dic.TryGetValue(t, out v);
-            return v;
+            if(v == null && add)
+            {
+                IntAttr iv = intPool.Get();
+                iv.type = t;
+                v = iv;
+                dic[t] = v;
+            }
+            return (IntAttr)v;
         }
-        public BoolAttr GetBoolAttr(BoolAttrType t)
+        public BoolAttr GetBoolAttr(AttrType t, bool add = false)
         {
-            if (t == BoolAttrType.non_move)
-                return non_move;
-            if (t == BoolAttrType.non_atk)
-                return non_atk;
-            if (t == BoolAttrType.non_visible)
-                return non_visible;
-            if (t == BoolAttrType.non_control)
-                return this.non_control;
-            if (t == BoolAttrType.non_select)
-                return non_select;
-            return null;
-        }
-        public void Init()
-        {
-
+            IObserver v = null;
+            dic.TryGetValue(t, out v);
+            if (v == null && add)
+            {
+                BoolAttr iv = boolPool.Get();
+                iv.type = t;
+                v = iv;
+                dic[t] = v;
+            }
+            return (BoolAttr)v;
         }
     }
 }

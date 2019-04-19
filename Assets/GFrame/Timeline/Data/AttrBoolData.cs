@@ -11,7 +11,7 @@ namespace highlight.tl
     public class AttrBoolStyle : ComponentStyle
     {
         public BoolValue value;
-        public BoolAttrType attrType;
+        public AttrType attrType;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
@@ -20,10 +20,10 @@ namespace highlight.tl
         }
 #endif
     }
-    public class AttrBoolData : ComponentData
+    public class AttrBoolData : ComponentData, ICondition
     {
         public BoolValue value;
-        public BoolAttrType attrType;
+        public AttrType attrType;
         public override void OnInit()
         {
 

@@ -5,10 +5,10 @@ using UnityEditor;
 #endif
 namespace highlight.tl
 {
-    [Time("数据/条件属性", typeof(AttrBoolCondition))]
+    [Time("数据/Condition/Bool属性判断", typeof(AttrBoolCondition))]
     public class AttrBoolConditionStyle : ComponentStyle
     {
-        public BoolAttrType attrType;
+        public AttrType attrType;
         public bool value;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
@@ -20,7 +20,7 @@ namespace highlight.tl
     }
     public class AttrBoolCondition : ComponentData
     {
-        public BoolAttrType attrType;
+        public AttrType attrType;
         public bool value;
         public override void OnInit()
         {
@@ -28,8 +28,8 @@ namespace highlight.tl
         }
         public override TriggerStatus OnTrigger()
         {
-            BoolAttr attr = this.owner.attrs.GetBoolAttr(attrType);
-            bool v = attr.GetValue().value;
+            BoolAttr attr = this.owner.attrs.GetBoolAttr(attrType, false);
+            bool v = attr == null ? false : attr.GetValue().value;
             if (v != value)
                 return TriggerStatus.Failure;
             return TriggerStatus.Success;

@@ -7,7 +7,7 @@ namespace highlight
     {
         public Skills ower;
         public Timeline timeline;
-        public SceneObject obj { get { return ower.obj; } }
+        public Role obj { get { return ower.obj; } }
         public TimelineStyle style { get { return timeline != null ? timeline.lStyle : null; } }
         public bool IsStop { get { return timeline != null ? timeline.IsStopped : false; } }
         public void UpdateFrame(int frame)
@@ -22,8 +22,10 @@ namespace highlight
             skill.ower = _ower;
             if (_style != null)
             {
-                skill.timeline = TimelineFactory.Creat(_style);
-                skill.timeline.skill = skill;
+                Timeline tl = TimelineFactory.Creat(_style);
+                skill.timeline = tl;
+                tl.owner = _ower.obj;
+                tl.skill = skill;
             }
             return skill;
         }
@@ -42,7 +44,7 @@ namespace highlight
     }
     public class Skills : List<Skill>
     {
-        public SceneObject obj;
+        public Role obj;
         public void AddSkill(TimelineStyle style)
         {
             Skill skill = Skill.Get(this, style);
@@ -69,7 +71,7 @@ namespace highlight
             temp.Clear();
         }
         private readonly static ObjectPool<Skills> pool = new ObjectPool<Skills>();
-        public static Skills Get(SceneObject _obj)
+        public static Skills Get(Role _obj)
         {
             Skills skills = pool.Get();
             skills.obj = _obj;

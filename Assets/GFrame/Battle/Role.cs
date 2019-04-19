@@ -5,27 +5,26 @@ using UnityEngine;
 
 namespace highlight
 {
-    public class SceneObject : Object
+    public class Role : Object
     {
+        public RoleControl entity;
         public Timeline ai;
-        public Buffs buffs;
-        public Skills skills;
         public RoleAttrs attrs;
+        public Skills skills;
+        public Buffs buffs;
         public bool isClear = false;
-        public Transform transform;
-        public Animator animator;
-        public Dictionary<string, Transform> LocatorDic = new Dictionary<string, Transform>();
+        public Transform transform { get { return entity.transform; } }
+        public Animator animator { get { return entity.mAnimator; } }
         //public AnimationBox aniBox;
-        public void Init(GameObject go)
+        public void Init(RoleControl _entity)
         {
+            entity = _entity;
             isClear = false;
-            this.transform = go.transform;
-            this.animator = go.GetComponentInChildren<Animator>(true);
-            Transform[] tfs = go.GetComponentsInChildren<Transform>(true);
-            for(int i=0;i<tfs.Length;i++)
-            {
-                LocatorDic[tfs[i].name] = tfs[i];
-            }
+        }
+        public void PlayClip(string name,float duration,float speed)
+        {
+            animator.speed = speed;
+            animator.CrossFadeInFixedTime(name, duration);
         }
         public Vector3 getPosition()
         {
@@ -33,11 +32,7 @@ namespace highlight
         }
         public Transform getLocator(string name)
         {
-            return null;
-        }
-        public void PlayAction()
-        {
-
+            return entity.Get(name);
         }
         public void SetPos(Vector3 pos)
         {
@@ -82,9 +77,6 @@ namespace highlight
             skills = null;
             buffs = null;
             ai = null;
-            LocatorDic.Clear();
-            animator = null;
-            transform = null;
             isClear = true;
         }
     }

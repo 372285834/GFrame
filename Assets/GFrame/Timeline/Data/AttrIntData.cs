@@ -11,8 +11,8 @@ namespace highlight.tl
     public class AttrIntStyle : ComponentStyle
     {
         public IntValue value;
-        public IntAttrType attrType;
-        public bool once;
+        public AttrType attrType;
+        public int count;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
@@ -24,8 +24,9 @@ namespace highlight.tl
     public class AttrIntData : ComponentData
     {
         public IntValue value;
-        public IntAttrType attrType;
-        public bool once;
+        public AttrType attrType;
+        public int count;
+        public int curCount = 0;
         public override void OnInit()
         {
 

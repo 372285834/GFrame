@@ -14,11 +14,11 @@ namespace highlight.tl
         小于等于,
         等于,
     }
-    [Time("数据/数值属性", typeof(AttrIntCondition))]
+    [Time("数据/Condition/Int属性判断", typeof(AttrIntCondition))]
     public class AttrIntConditionStyle : ComponentStyle
     {
         public int value;
-        public IntAttrType attrType;
+        public AttrType attrType;
         public AttrCompareType cType;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
@@ -31,7 +31,7 @@ namespace highlight.tl
     public class AttrIntCondition : ComponentData
     {
         public int value;
-        public IntAttrType attrType;
+        public AttrType attrType;
         public AttrCompareType cType;
         public override void OnInit()
         {
@@ -39,8 +39,10 @@ namespace highlight.tl
         }
         public override TriggerStatus OnTrigger()
         {
-            IntAttr attr = this.owner.attrs.GetIntAttr(attrType);
-            int v = attr.GetValue().value;
+            IntAttr attr = this.owner.attrs.GetIntAttr(attrType, false);
+            int v = 0;
+            if(attr != null)
+                v = attr.GetValue().value;
             bool b = false;
             switch (cType)
             {
