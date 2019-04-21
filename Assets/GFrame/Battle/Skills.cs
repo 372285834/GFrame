@@ -5,6 +5,7 @@ namespace highlight
 {
     public class Skill : Object
     {
+        public int id;
         public Skills ower;
         public Timeline timeline;
         public Role obj { get { return ower.obj; } }
@@ -45,15 +46,24 @@ namespace highlight
     public class Skills : List<Skill>
     {
         public Role obj;
+        private Dictionary<int, Skill> dic = new Dictionary<int, Skill>();
+        public Skill GetById(int id)
+        {
+            Skill sk = null;
+            dic.TryGetValue(id, out sk);
+            return sk;
+        }
         public void AddSkill(TimelineStyle style)
         {
             Skill skill = Skill.Get(this, style);
             base.Add(skill);
+            dic[skill.id] = skill;
         }
         public void RemoveSkill(Skill skill)
         {
             base.Remove(skill);
             Skill.Release(skill);
+            dic.Remove(skill.id);
         }
         static List<Skill> temp = new List<Skill>();
         public void UpdateFrame(int frame)
@@ -66,7 +76,7 @@ namespace highlight
             }
             for (int i = 0; i < temp.Count; i++)
             {
-                Remove(temp[i]);
+                RemoveSkill(temp[i]);
             }
             temp.Clear();
         }
@@ -83,7 +93,8 @@ namespace highlight
             {
                 Skill.Release(this[i]);
             }
-            base.Clear();
+            this.Clear();
+            dic.Clear();
             obj = null;
             pool.Release(this);
         }

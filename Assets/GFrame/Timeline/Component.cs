@@ -2,7 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
-
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 namespace highlight.tl
 {
     public enum TriggerType
@@ -101,7 +103,7 @@ namespace highlight.tl
 #if UNITY_EDITOR
         public virtual void OnInspectorGUI()
         {
-
+            this.tType = (TriggerType)EditorGUILayout.EnumPopup("触发类型：", tType);
         }
 #endif
     }

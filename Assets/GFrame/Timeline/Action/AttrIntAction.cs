@@ -27,7 +27,7 @@ namespace highlight.tl
 
             if (data.count <= 0)
             {
-                this.obj.AddIntAttr(this.data.attrType, this);
+                this.obj.attrs.AddIntAttr(this.data.attrType, this);
             }
 
             return true;
@@ -49,14 +49,14 @@ namespace highlight.tl
             if(b && data.curCount < data.count)
             {
                 data.curCount++;
-                this.obj.AddIntAttr(this.data.attrType, this.data.value);
+                this.obj.attrs.AddIntAttr(this.data.attrType, this.data.value);
             }
         }
         public override void OnFinish()
         {
             if (data.count <= 0)
             {
-                obj.RemoveIntAttr(this.data.attrType, this);
+                obj.attrs.RemoveIntAttr(this.data.attrType, this);
             }
         }
         //public IntValue UpdateValue(IntValue v)

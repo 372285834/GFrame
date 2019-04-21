@@ -67,7 +67,7 @@ namespace highlight
             }
             for (int i = 0; i < temp.Count; i++)
             {
-                Remove(temp[i]);
+                RemoveBuff(temp[i]);
             }
             temp.Clear();
         }

@@ -233,6 +233,10 @@ namespace highlight.tl
             TimeAction action = obj as TimeAction;
             ActionStyle actionComp = action.style;
             FieldInfo[] fls = actionComp.Attr.Infos;
+
+            actionComp.tType = (TriggerType)EditorGUILayout.EnumPopup("触发类型：", actionComp.tType);
+            actionComp.key = EditorGUILayout.TextField("key：", actionComp.key);
+
             if (actionComp.Indexs == null || actionComp.Indexs.Length != fls.Length)
             {
                 actionComp.Indexs = new int[fls.Length];

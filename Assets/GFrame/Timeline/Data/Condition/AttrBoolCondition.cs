@@ -28,7 +28,7 @@ namespace highlight.tl
         }
         public override bool OnTrigger()
         {
-            BoolAttr attr = this.owner.GetBoolAttr(attrType, false);
+            BoolAttr attr = this.owner.attrs.GetBoolAttr(attrType, false);
             bool v = attr == null ? false : attr.GetValue().value;
             if (v != value)
                 return false;

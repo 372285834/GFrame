@@ -218,4 +218,107 @@ namespace highlight
         non_visible,//不可见 隐身
         force_visible,//强制显形
     }
+    public  class RoleAttrs
+    {
+        public Role role;
+        private Dictionary<int, IAttrValue> dic = new Dictionary<int, IAttrValue>();
+        private ObserverV<IAttrValue> obs_value = new ObserverV<IAttrValue>();
+
+        private readonly static ObjectPool<IntAttr> intPool = new ObjectPool<IntAttr>();
+        private readonly static ObjectPool<BoolAttr> boolPool = new ObjectPool<BoolAttr>();
+
+        public void AddObs_Attr(AcHandler<IAttrValue> ac)
+        {
+            obs_value.AddObserver(ac);
+        }
+        public void RemoveObs_Attr(AcHandler<IAttrValue> ac)
+        {
+            obs_value.RemoveObserver(ac);
+        }
+        protected void Change(IAttrValue t)
+        {
+            obs_value.Change(t);
+        }
+        public IntAttr GetIntAttr(AttrType t, bool add = false)
+        {
+            IAttrValue v = null;
+            dic.TryGetValue((int)t, out v);
+            if (v == null && add)
+            {
+                IntAttr iv = intPool.Get();
+                iv.type = t;
+                v = iv;
+                dic[(int)t] = v;
+            }
+            return (IntAttr)v;
+        }
+        public void AddIntAttr(AttrType t, IntValue v)
+        {
+            IntAttr list = GetIntAttr(t, true);
+            list.value += v;
+            list.GetValue();
+            this.Change(list);
+        }
+        public void AddIntAttr(AttrType t, IIntAttrValue v)
+        {
+            IntAttr list = GetIntAttr(t, true);
+            list.AddValue(v);
+            this.Change(list);
+        }
+        public bool RemoveIntAttr(AttrType t, IIntAttrValue v)
+        {
+            IntAttr list = GetIntAttr(t, true);
+            bool b = list.RemoveValue(v);
+            this.Change(list);
+            return b;
+        }
+        public BoolAttr GetBoolAttr(AttrType t, bool add = false)
+        {
+            IAttrValue v = null;
+            dic.TryGetValue((int)t, out v);
+            if (v == null && add)
+            {
+                BoolAttr iv = boolPool.Get();
+                iv.type = t;
+                v = iv;
+                dic[(int)t] = v;
+            }
+            return (BoolAttr)v;
+        }
+        public void AddBoolAttr(AttrType t, IBoolAttrValue v)
+        {
+            BoolAttr list = GetBoolAttr(t, true);
+            list.AddValue(v);
+            this.Change(list);
+        }
+        public bool RemoveBoolAttr(AttrType t, IBoolAttrValue v)
+        {
+            BoolAttr list = GetBoolAttr(t, true);
+            bool b = list.RemoveValue(v);
+            this.Change(list);
+            return b;
+        }
+        private readonly static ObjectPool<RoleAttrs> pool = new ObjectPool<RoleAttrs>();
+        public static RoleAttrs Get(Role _obj)
+        {
+            RoleAttrs attrs = pool.Get();
+            attrs.role = _obj;
+            return attrs;
+        }
+        public void Release()
+        {
+            foreach (var v in dic.Values)
+            {
+                v.ClearValue();
+                if (v is IntAttr)
+                    intPool.Release((IntAttr)v);
+                else if (v is IntAttr)
+                    boolPool.Release((BoolAttr)v);
+            }
+            dic.Clear();
+            obs_value.Clear();
+            role = null;
+            pool.Release(this);
+        }
+    }
 }

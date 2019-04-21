@@ -39,7 +39,7 @@ namespace highlight.tl
         }
         public override bool OnTrigger()
         {
-            IntAttr attr = this.owner.GetIntAttr(attrType, false);
+            IntAttr attr = this.owner.attrs.GetIntAttr(attrType, false);
             int v = 0;
             if(attr != null)
                 v = attr.GetValue().value;
