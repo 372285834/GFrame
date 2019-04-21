@@ -24,7 +24,7 @@ public class ApplyTool
         IsApplying = true;
         try
         {
-            UnityEngine.GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource(instance);
+            UnityEngine.GameObject prefab = PrefabUtility.FindPrefabRoot(instance);
             //BirthMgr mgr = prefab.GetComponent<BirthMgr>();
             //if (mgr != null)
             //{

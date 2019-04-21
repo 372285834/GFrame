@@ -97,10 +97,10 @@ namespace highlight
     public class ObserverV<T> : IObserver
     {
         //event AcHandler ac;
-        protected List<EvtHandler<T>> mList = new List<EvtHandler<T>>();
+        protected List<AcHandler<T>> mList = new List<AcHandler<T>>();
         bool isLock = false;
-        List<EvtHandler<T>> lockList = new List<EvtHandler<T>>();
-        public virtual void AddObserver(EvtHandler<T> _func)
+        List<AcHandler<T>> lockList = new List<AcHandler<T>>();
+        public virtual void AddObserver(AcHandler<T> _func)
         {
             for (int i = 0; i < lockList.Count; i++)
             {
@@ -121,7 +121,7 @@ namespace highlight
             //ac -= _func;
             //ac += _func;
         }
-        public virtual void RemoveObserver(EvtHandler<T> _func)
+        public virtual void RemoveObserver(AcHandler<T> _func)
         {
             if (isLock)
             {
@@ -143,7 +143,7 @@ namespace highlight
             //}
             //ac -= _func;
         }
-        public virtual T Change(T t)
+        public void Change(T t)
         {
             isLock = true;
             if (lockList.Count > 0)
@@ -159,19 +159,13 @@ namespace highlight
                 lockList.Clear();
             }
 
-            t = OnChange(t);
+            for (int i = mList.Count - 1; i >= 0; i--)
+            {
+                mList[i](t);
+            }
             //if (ac != null)
             //    ac();
             isLock = false;
-            return t;
-        }
-        public virtual T OnChange(T t)
-        {
-            for (int i = mList.Count - 1; i >= 0; i--)
-            {
-                t = mList[i](t);
-            }
-            return t;
         }
         public void Clear()
         {

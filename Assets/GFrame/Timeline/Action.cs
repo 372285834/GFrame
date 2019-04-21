@@ -52,6 +52,7 @@ namespace highlight.tl
     }
     public sealed class ActionStyle : Object
     {
+        public TriggerType tType = TriggerType.Failure;
         public string key;
         public string name;
         public int[] Indexs;
@@ -114,7 +115,20 @@ namespace highlight.tl
         public virtual void OnPause() { }
         #endregion
 
-
+        public TriggerStatus Trigger()
+        {
+            status = TriggerStatus.Success;
+            TriggerType tType = style.tType;
+            if (tType == TriggerType.None)
+                return status;
+            if (OnTrigger())
+                return status;
+            if (tType == TriggerType.Running)
+                status = TriggerStatus.Running;
+            else
+                status = TriggerStatus.Failure;
+            return status;
+        }
         private readonly static Dictionary<string, ObjectPool> ActionPoolDic = new Dictionary<string, ObjectPool>();
 
         public static TimeAction Get(ActionStyle comp, TimeObject t)

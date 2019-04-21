@@ -20,10 +20,10 @@ namespace highlight.tl
     public class TargetData : ComponentData
     {
         public Role obj;
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
             obj = this.root.target.getObj((this.style as TargetStyle).index);
-            return TriggerStatus.Success;
+            return true;
             //this.prefabData.transform
             //this.root.target.getObj
         }

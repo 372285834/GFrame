@@ -4,7 +4,7 @@ using UnityEngine;
 namespace highlight.tl
 {
     [Action("行为/Bool属性执行", typeof(AttrBoolAction))]
-    public class AttrBoolAction : TimeAction
+    public class AttrBoolAction : TimeAction, IBoolAttrValue
     {
         [Desc("Bool数据")]
         public AttrBoolData data;
@@ -19,32 +19,36 @@ namespace highlight.tl
                 return this.target.obj;
             }
         }
-        private BoolAttr attr;
-        public override TriggerStatus OnTrigger()
+        //private BoolAttr attr {
+        //    get
+        //    {
+        //        return obj.GetBoolAttr(data.attrType, true);
+        //    }
+        //}
+        public override bool OnTrigger()
         {
             if (data == null)
-                return TriggerStatus.Failure;
+                return false;
+            obj.AddBoolAttr(this.data.attrType, this);
             //else
             //{
-            attr = this.owner.attrs.GetBoolAttr(data.attrType, true);
-            attr.AddObserver(this.CalcBool);
-            this.obj.attrs.Change(this.data.attrType);
+            //attr.Add(this);
+            //this.obj.Change(this.data.attrType);
             //}
-            return TriggerStatus.Success;
+            return true;
         }
         public override void OnFinish()
         {
-            attr.RemoveObserver(this.CalcBool);
-            this.obj.attrs.Change(this.data.attrType);
+            obj.RemoveBoolAttr(this.data.attrType, this);
+            //if(attr != null)
+            //{
+            //    attr.Remove(this);
+            //    this.obj.Change(this.data.attrType);
+            //}
         }
-        public override void OnStop()
+        public BoolValue GetValue()
         {
-            attr = null;
-        }
-        public BoolValue CalcBool(BoolValue v)
-        {
-            bool b = this.data.GetBool();
-            return new BoolValue(b);
+            return this.data.value;
         }
     }
 }

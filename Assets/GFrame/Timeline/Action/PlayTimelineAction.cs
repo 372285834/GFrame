@@ -9,15 +9,15 @@ namespace highlight.tl
         [Desc("目标挂点")]
         public ITimelineHandler target;
 
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
             target.timeline = TimelineFactory.Creat(target.timelineStyle);
             if(target.timeline == null)
             {
-                return TriggerStatus.Failure;
+                return false;
             }
             target.timeline.Play(this.root.timeSinceTrigger);
-            return TriggerStatus.Success;
+            return true;
         }
         public override void OnUpdate()
         {

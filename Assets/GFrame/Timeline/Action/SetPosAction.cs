@@ -10,9 +10,9 @@ namespace highlight.tl
         [Desc("目标挂点")]
         public IPosition target;
 
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
-            return TriggerStatus.Success;
+            return true;
         }
         public override void OnUpdate()
         {

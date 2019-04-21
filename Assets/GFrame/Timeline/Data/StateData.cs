@@ -11,16 +11,6 @@ namespace highlight.tl
     {
         RoleState,
     }
-    public enum RoleState
-    {
-        Idle,
-        Move,
-        Hit,
-        Attack,
-        AutoFight,
-        LostControl,
-        Dead,
-    }
     [Time("数据/状态", typeof(StateData))]
     public class StateStyle : ComponentStyle
     {
@@ -41,7 +31,7 @@ namespace highlight.tl
         {
             get
             {
-                return (int)_curState;
+                return _curState;
             }
             set
             {

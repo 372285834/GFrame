@@ -14,29 +14,68 @@ namespace highlight
     //    Reduce_BasePer,
     //    Reduce_TotalPer,
     //}
-    public class IntAttr : AttrValue<IntValue> { }
-    public class BoolAttr : AttrValue<BoolValue>
+    public interface IAttrValue
     {
-        public override BoolValue OnChange(BoolValue t)
+        AttrType type { get; set; }
+        void ClearValue();
+    }
+    public interface IIntAttrValue
+    {
+        IntValue GetValue();
+    }
+    public interface IBoolAttrValue
+    {
+        BoolValue GetValue();
+    }
+    public class IntAttr : AttrValue<IntValue, IIntAttrValue> {
+        public override IntValue GetValue()
         {
-            BoolValue b = t;
-            for (int i = mList.Count - 1; i >= 0; i--)
+            tempValue = this.value;
+            for (int i = 0; i < this.Count; i++)
             {
-                BoolValue cur = mList[i](b);
-                if (cur.level > b.level)
-                    b = cur;
+                tempValue += this[i].GetValue();
             }
-            return b;
+            return tempValue;
         }
     }
-    public class AttrValue<T> : ObserverV<T>
+    public class BoolAttr : AttrValue<BoolValue, IBoolAttrValue>
     {
-        public AttrType type;
-        public T value;
-        public T GetValue()
+        public override BoolValue GetValue()
         {
-            T v = this.Change(this.value);
-            return v;
+            tempValue = this.value;
+            for (int i = 0; i < this.Count; i++)
+            {
+                BoolValue cur = this[i].GetValue();
+                if (cur.level > tempValue.level)
+                    tempValue = cur;
+            }
+            return tempValue;
+        }
+    }
+    public class AttrValue<T,V> : List<V>, IAttrValue
+    {
+        public AttrType type { get; set; }
+        public T value;
+        public T tempValue;
+        public virtual T GetValue()
+        {
+            tempValue = value;
+            return value;
+        }
+        public virtual void AddValue(V v)
+        {
+            this.Add(v);
+            this.GetValue();
+        }
+        public virtual bool RemoveValue(V v)
+        {
+            bool b = this.Remove(v);
+            this.GetValue();
+            return b;
+        }
+        public virtual void ClearValue()
+        {
+            this.Clear();
         }
     }
     public struct BoolValue
@@ -178,71 +217,5 @@ namespace highlight
         non_atk,//不可攻击
         non_visible,//不可见 隐身
         force_visible,//强制显形
-    }
-    public class RoleAttrs
-    {
-        public Role obj;
-        private Dictionary<AttrType, IObserver> dic = new Dictionary<AttrType, IObserver>();
-        public ObserverV<AttrType> obs = new ObserverV<AttrType>();
-
-        private readonly static ObjectPool<RoleAttrs> pool = new ObjectPool<RoleAttrs>();
-        public static RoleAttrs Get(Role _obj)
-        {
-            RoleAttrs bfs = pool.Get();
-            bfs.obj = _obj;
-            return bfs;
-        }
-        public void Release()
-        {
-            foreach (var v in dic.Values)
-            {
-                v.Clear();
-                if (v is IntAttr)
-                    intPool.Release((IntAttr)v);
-                else if (v is IntAttr)
-                    boolPool.Release((BoolAttr)v);
-            }
-            dic.Clear();
-            obs.Clear();
-            pool.Release(this);
-        }
-
-        private readonly static ObjectPool<IntAttr> intPool = new ObjectPool<IntAttr>();
-        private readonly static ObjectPool<BoolAttr> boolPool = new ObjectPool<BoolAttr>();
-        
-        public void Change(AttrType t)
-        {
-            obs.Change(t);
-        }
-        public void UpdateFrame(int frame)
-        {
-
-        }
-        public IntAttr GetIntAttr(AttrType t,bool add = false)
-        {
-            IObserver v = null;
-            dic.TryGetValue(t, out v);
-            if(v == null && add)
-            {
-                IntAttr iv = intPool.Get();
-                iv.type = t;
-                v = iv;
-                dic[t] = v;
-            }
-            return (IntAttr)v;
-        }
-        public BoolAttr GetBoolAttr(AttrType t, bool add = false)
-        {
-            IObserver v = null;
-            dic.TryGetValue(t, out v);
-            if (v == null && add)
-            {
-                BoolAttr iv = boolPool.Get();
-                iv.type = t;
-                v = iv;
-                dic[t] = v;
-            }
-            return (BoolAttr)v;
-        }
     }
 }

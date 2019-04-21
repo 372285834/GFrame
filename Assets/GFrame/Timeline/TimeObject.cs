@@ -385,6 +385,8 @@ namespace highlight.tl
 
         public virtual void Stop()
         {
+            if (this.IsTrigger && !HasFinished)
+                this.Finish();
             this._status = TriggerStatus.InActive;
             //_hasTriggered = true;
             _hasFinished = true;
@@ -643,8 +645,7 @@ namespace highlight.tl
             {
                 if(_components[i].status == TriggerStatus.InActive || _components[i].status == TriggerStatus.Running)
                 {
-                    TriggerStatus _status = _components[i].OnTrigger();
-                    _components[i].status = _status;
+                    TriggerStatus _status = _components[i].Trigger();
                     if (_status == TriggerStatus.Failure)
                         return _status;
                     if (_status == TriggerStatus.Running)
@@ -655,8 +656,7 @@ namespace highlight.tl
             {
                 if (_actions[i].status == TriggerStatus.InActive || _actions[i].status == TriggerStatus.Running)
                 {
-                    TriggerStatus _status = _actions[i].OnTrigger();
-                    _actions[i].status = _status;
+                    TriggerStatus _status = _actions[i].Trigger();
                     if (_status == TriggerStatus.Failure)
                         return _status;
                     if (_status == TriggerStatus.Running)
@@ -676,9 +676,16 @@ namespace highlight.tl
         protected void OnFinish()
         {
             for (int i = 0; i < _components.Count; i++)
-                _components[i].OnFinish();
+            {
+                if (_components[i].status == TriggerStatus.Running || _components[i].status == TriggerStatus.Success)
+                    _components[i].OnFinish();
+            }
+                
             for (int i = 0; i < _actions.Count; i++)
-                _actions[i].OnFinish();
+            {
+                if (_actions[i].status == TriggerStatus.Running || _actions[i].status == TriggerStatus.Success)
+                    _actions[i].OnFinish();
+            }
         }
         //timeline 完成
         protected void OnStop()

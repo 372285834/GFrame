@@ -25,10 +25,10 @@ namespace highlight.tl
         {
             count = (this.style as CountStyle).count;
         }
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
             cur = 0;
-            return TriggerStatus.Success;
+            return true;
         }
     }
 }

@@ -49,7 +49,7 @@ namespace highlight.tl
         }
         public Transform transform { get; set; }
 
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
             Role targetObj = null;
             //pos = locator.position;
@@ -64,7 +64,7 @@ namespace highlight.tl
                     break;
                 case Locator.eType.LT_TARGET_POS:
                     if (!this.root.target.checkIndex(index))
-                        return TriggerStatus.Failure;
+                        return false;
                     curPos = this.root.target.getPos(index);
                     break;
                 case Locator.eType.LT_SCENE:
@@ -77,7 +77,7 @@ namespace highlight.tl
                     targetObj = this.timeObject.parent.resData.obj;
                     if (targetObj == null || targetObj.isClear)
                     {
-                        return TriggerStatus.Failure;
+                        return false;
                     }
                     curPos = targetObj.getPosition();
                     break;
@@ -88,16 +88,16 @@ namespace highlight.tl
             {
                 if (targetObj.isClear)
                 {
-                    return TriggerStatus.Failure;
+                    return false;
                 }
                 transform = targetObj.getLocator(locator.parentName);
                 if(transform == null)
                 {
-                    return TriggerStatus.Failure;
+                    return false;
                 }
                 curPos = transform.position + loStyle.off;
             }
-            return TriggerStatus.Success;
+            return true;
             //this.prefabData.transform
             //this.root.target.getObj
         }

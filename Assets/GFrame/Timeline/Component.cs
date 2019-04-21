@@ -5,6 +5,12 @@ using System.Reflection;
 
 namespace highlight.tl
 {
+    public enum TriggerType
+    {
+        None = 0,
+        Running = 1,
+        Failure = 2,
+    }
     public enum TriggerStatus
     {
         InActive = 0,
@@ -47,13 +53,14 @@ namespace highlight.tl
         public List<ComponentData> ComponentList { get { return timeObject.ComponentList; } }
         #region virtual Function
         public virtual void OnInit() { }
-        public virtual TriggerStatus OnTrigger() { return TriggerStatus.Success; }
+        public virtual bool OnTrigger() { return true; }
         public virtual void OnFinish() { } // event完成
         public virtual void OnStop() { } //timeline 完成
         #endregion
     }
     public abstract class ComponentStyle : Object
     {
+        public TriggerType tType = TriggerType.None;
         // [JsonIgnore]
         public string TypeName
         {
@@ -101,7 +108,20 @@ namespace highlight.tl
     public class ComponentData : Component
     {
         public ComponentStyle style { private set; get; }
-
+        public TriggerStatus Trigger()
+        {
+            status = TriggerStatus.Success;
+            TriggerType tType = style.tType;
+            if (tType == TriggerType.None)
+                return status;
+            if (OnTrigger())
+                return status;
+            if (tType == TriggerType.Running)
+                status = TriggerStatus.Running;
+            else
+                status = TriggerStatus.Failure;
+            return status;
+        }
         private readonly static Dictionary<string, ObjectPool> CompPoolDic = new Dictionary<string, ObjectPool>();
 
         public static ComponentData Get(ComponentStyle comp, TimeObject t)

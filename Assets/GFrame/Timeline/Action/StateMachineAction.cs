@@ -13,7 +13,7 @@ namespace highlight.tl
         {
            // this.owner.StateMachine = this;
         }
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
            // this.owner.state = this.data.curState;
             for (int i = 0; i < this.timeObject.childCount; i++)
@@ -26,7 +26,7 @@ namespace highlight.tl
                     obj.Stop();
             }
             // this.owner.animator
-            return TriggerStatus.Success;
+            return true;
         }
         public override void OnUpdate()
         {

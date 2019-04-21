@@ -37,9 +37,9 @@ namespace highlight.tl
         {
 
         }
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
-            IntAttr attr = this.owner.attrs.GetIntAttr(attrType, false);
+            IntAttr attr = this.owner.GetIntAttr(attrType, false);
             int v = 0;
             if(attr != null)
                 v = attr.GetValue().value;
@@ -64,7 +64,7 @@ namespace highlight.tl
                 default:
                     break;
             }
-            return b ? TriggerStatus.Success : TriggerStatus.Failure;
+            return b;
         }
     }
 }

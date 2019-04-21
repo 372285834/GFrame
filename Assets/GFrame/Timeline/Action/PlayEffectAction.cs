@@ -6,9 +6,9 @@ namespace highlight.tl
     [Action("行为/播放特效", typeof(PlayEffectAction))]
     public class PlayEffectAction : TimeAction
     {
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
-            return TriggerStatus.Success;
+            return true;
         }
         public override void OnUpdate()
         {

@@ -9,7 +9,7 @@ namespace highlight.tl
     {
         [Desc("状态数据")]
         public StateData state;
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
             string key = state.stateType.ToString();
             TimeAction ac = this.root.FindAction(key);
@@ -18,7 +18,7 @@ namespace highlight.tl
                 (ac as StateMachineAction).Switch(state.curState);
                 //return TriggerStatus.Success;
             }
-            return TriggerStatus.Failure;
+            return true;
         }
     }
 }

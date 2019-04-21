@@ -19,13 +19,13 @@ namespace highlight.tl
                 return this.target.obj;
             }
         }
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
             if (data == null)
-                return TriggerStatus.Failure;
+                return false;
             AnimatorStyle style = data.style as AnimatorStyle;
             obj.PlayClip(style.clip, style.duration, style.speed);
-            return TriggerStatus.Success;
+            return true;
         }
         public override void OnUpdate()
         {

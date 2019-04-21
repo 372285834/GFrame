@@ -105,7 +105,7 @@ public class MapDataStyleEditor : Editor
     }
     static void addDataToList(List<MapItemPos> dataList,GameObject go)
     {
-        GameObject prefab = PrefabUtility.GetCorrespondingObjectFromSource<GameObject>(go);
+        GameObject prefab = PrefabUtility.FindPrefabRoot(go);
         string path = AssetDatabase.GetAssetPath(prefab);
         string guid = AssetDatabase.AssetPathToGUID(path);
         MapItemPrefabData data = null;

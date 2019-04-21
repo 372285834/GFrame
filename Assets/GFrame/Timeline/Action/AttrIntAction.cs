@@ -3,7 +3,7 @@ using System.Collections.Generic;
 namespace highlight.tl
 {
     [Action("行为/Int属性执行", typeof(AttrIntAction))]
-    public class AttrIntAction : TimeAction
+    public class AttrIntAction : TimeAction,IIntAttrValue
     {
         [Desc("Int数据")]
         public AttrIntData data;
@@ -11,7 +11,6 @@ namespace highlight.tl
         public TargetData target;
         [Desc("间隔时间")]
         public CountData interval;
-        private IntAttr attr;
         public Role obj
         {
             get
@@ -21,20 +20,17 @@ namespace highlight.tl
                 return this.target.obj;
             }
         }
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
-            if (data == null || this.obj == null || this.obj.attrs == null)
-                return TriggerStatus.Failure;
+            if (data == null || this.obj == null)
+                return false;
 
-            attr = this.obj.attrs.GetIntAttr(data.attrType, true);
             if (data.count <= 0)
             {
-                attr.AddObserver(this.CalcInt);
-                this.obj.attrs.Change(this.data.attrType);
+                this.obj.AddIntAttr(this.data.attrType, this);
             }
-                
 
-            return TriggerStatus.Success;
+            return true;
         }
         public override void OnUpdate()
         {
@@ -53,30 +49,22 @@ namespace highlight.tl
             if(b && data.curCount < data.count)
             {
                 data.curCount++;
-                attr.value += this.data.value;
-                this.obj.attrs.Change(this.data.attrType);
+                this.obj.AddIntAttr(this.data.attrType, this.data.value);
             }
         }
         public override void OnFinish()
         {
             if (data.count <= 0)
             {
-                attr.RemoveObserver(this.CalcInt);
-                this.obj.attrs.Change(this.data.attrType);
+                obj.RemoveIntAttr(this.data.attrType, this);
             }
-            attr = null;
-        }
-        public override void OnStop()
-        {
-            attr = null;
         }
         //public IntValue UpdateValue(IntValue v)
         //{
         //    return IntValue.Calculation(this.data.calcType, this.data.value, v);
         //}
-        public IntValue CalcInt(IntValue v)
+        public IntValue GetValue()
         {
-            v += this.data.value;
             return this.data.value;
         }
     }

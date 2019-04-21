@@ -26,13 +26,13 @@ namespace highlight.tl
         {
 
         }
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
-            BoolAttr attr = this.owner.attrs.GetBoolAttr(attrType, false);
+            BoolAttr attr = this.owner.GetBoolAttr(attrType, false);
             bool v = attr == null ? false : attr.GetValue().value;
             if (v != value)
-                return TriggerStatus.Failure;
-            return TriggerStatus.Success;
+                return false;
+            return true;
         }
     }
 }

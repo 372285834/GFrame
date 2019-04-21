@@ -12,9 +12,9 @@ namespace highlight.tl
         public IPosition end;
         [Desc("运动轨迹")]
         public IEvaluateV3 eva;
-        public override TriggerStatus OnTrigger()
+        public override bool OnTrigger()
         {
-            return (start == null || end == null || eva == null) ? TriggerStatus.Failure : TriggerStatus.Success;
+            return (start == null || end == null || eva == null) ? false : true;
         }
         public override void OnUpdate()
         {
