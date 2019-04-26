@@ -7,6 +7,7 @@ namespace highlight
     public static class App
     {
         public static Timer Timer = new Timer();
+        public static int deltaFrame { private set; get; }
         static bool isInit = false;
         public static Observer obsUpdate = new Observer();
         public static void Init()
@@ -29,7 +30,7 @@ namespace highlight
         }
         public static void Update()
         {
-            
+            deltaFrame += 1;
             if (IsDown())
                 downPos = Input.mousePosition;
             UpdateShaderTime();

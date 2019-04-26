@@ -7,10 +7,10 @@ using UnityEditor;
 #endif
 namespace highlight.tl
 {
-    [Time("数据/数值属性", typeof(AttrIntData))]
-    public class AttrIntStyle : ComponentStyle
+    [Time("数据/数值属性", typeof(AttrPropData))]
+    public class AttrPropStyle : ComponentStyle
     {
-        public IntValue value;
+        public PropValue value;
         public AttrType attrType;
         public int count;
 #if UNITY_EDITOR
@@ -21,9 +21,9 @@ namespace highlight.tl
         }
 #endif
     }
-    public class AttrIntData : ComponentData
+    public class AttrPropData : ComponentData
     {
-        public IntValue value;
+        public PropValue value;
         public AttrType attrType;
         public int count;
         public int curCount = 0;

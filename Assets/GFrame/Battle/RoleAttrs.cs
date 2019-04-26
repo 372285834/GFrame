@@ -16,19 +16,18 @@ namespace highlight
     //}
     public interface IAttrValue
     {
-        AttrType type { get; set; }
         void ClearValue();
     }
-    public interface IIntAttrValue
+    public interface IPropAttrValue
     {
-        IntValue GetValue();
+        PropValue GetValue();
     }
     public interface IBoolAttrValue
     {
         BoolValue GetValue();
     }
-    public class IntAttr : AttrValue<IntValue, IIntAttrValue> {
-        public override IntValue GetValue()
+    public class PropAttr : AttrValue<PropValue, IPropAttrValue> {
+        public override PropValue GetValue()
         {
             tempValue = this.value;
             for (int i = 0; i < this.Count; i++)
@@ -54,7 +53,6 @@ namespace highlight
     }
     public class AttrValue<T,V> : List<V>, IAttrValue
     {
-        public AttrType type { get; set; }
         public T value;
         public T tempValue;
         public virtual T GetValue()
@@ -88,22 +86,22 @@ namespace highlight
             level = lv;
         }
     }
-    public struct IntValue
+    public struct PropValue
     {
         static float ratio = 0.001f;
-        public readonly static IntValue zero = new IntValue(0);
+        public readonly static PropValue zero = new PropValue(0);
         public int baseValue;
         public int extraValue;
         public int basePer;
         public int totalPer;
-        public IntValue(int bv)
+        public PropValue(int bv)
         {
             baseValue = bv;
             extraValue = 0;
             basePer = 0;
             totalPer = 0;
         }
-        public IntValue(int bv, int ev, int br, int er)
+        public PropValue(int bv, int ev, int br, int er)
         {
             baseValue = bv;
             extraValue = ev;
@@ -132,9 +130,9 @@ namespace highlight
         {
             get { return value * ratio; }
         }
-        public static IntValue operator +(IntValue a, IntValue b)
+        public static PropValue operator +(PropValue a, PropValue b)
         {
-            IntValue c = a;
+            PropValue c = a;
             c.baseValue += b.baseValue;
             c.basePer += b.basePer;
             c.extraValue += b.extraValue;
@@ -199,7 +197,7 @@ namespace highlight
         def_reduce_speed,//减少减速时间
         dodge,//闪避
 
-        hit,//命中
+        hit_rate,//命中率
         atk_speed,
         atk_phy,
         atk_magic,
@@ -210,92 +208,105 @@ namespace highlight
 
         reduce_cd,
 
+        kill_hero_num = 100,//击杀英雄次数
+        kill_monster_num,//杀小兵次数
+        dead_num,//死亡次数
+        assist_num,//助攻次数
+        continue_kill_num,//连续击杀次数
 
-        non_control = 100, //不受控
+        non_control = 200, //不受控
         non_select,//不受选种
         non_move,//不可移动
         non_atk,//不可攻击
         non_visible,//不可见 隐身
         force_visible,//强制显形
+        cross_solider,//穿过小兵
+        non_obstacle,//无视障碍
+    }
+    public enum RoleObsType
+    {
+        Prop,
+        Bool,
+        Num,
+        Hit,//受到攻击
+        Attack,//攻击别人
     }
     public  class RoleAttrs
     {
         public Role role;
-        private Dictionary<int, IAttrValue> dic = new Dictionary<int, IAttrValue>();
-        private ObserverV<IAttrValue> obs_value = new ObserverV<IAttrValue>();
+        private Dictionary<int, object> dic = new Dictionary<int, object>();
+        private Observer<RoleObsType, object> obs = new Observer<RoleObsType, object>();
 
-        private readonly static ObjectPool<IntAttr> intPool = new ObjectPool<IntAttr>();
+        private readonly static ObjectPool<PropAttr> intPool = new ObjectPool<PropAttr>();
         private readonly static ObjectPool<BoolAttr> boolPool = new ObjectPool<BoolAttr>();
 
-        public void AddObs_Attr(AcHandler<IAttrValue> ac)
+        public void AddObs(AcHandler<RoleObsType, object> ac)
         {
-            obs_value.AddObserver(ac);
+            obs.AddObserver(ac);
         }
-        public void RemoveObs_Attr(AcHandler<IAttrValue> ac)
+        public void RemoveObs(AcHandler<RoleObsType, object> ac)
         {
-            obs_value.RemoveObserver(ac);
+            obs.RemoveObserver(ac);
         }
-        protected void Change(IAttrValue t)
+        protected void Change(RoleObsType t, object o)
         {
-            obs_value.Change(t);
+            obs.Change(t, o);
         }
-        public IntAttr GetIntAttr(AttrType t, bool add = false)
+        public PropAttr GetProp(AttrType t, bool add = false)
         {
-            IAttrValue v = null;
+            object v = null;
             dic.TryGetValue((int)t, out v);
             if (v == null && add)
             {
-                IntAttr iv = intPool.Get();
-                iv.type = t;
+                PropAttr iv = intPool.Get();
                 v = iv;
                 dic[(int)t] = v;
             }
-            return (IntAttr)v;
+            return (PropAttr)v;
         }
-        public void AddIntAttr(AttrType t, IntValue v)
+        public void CalcProp(AttrType t, PropValue v)
         {
-            IntAttr list = GetIntAttr(t, true);
+            PropAttr list = GetProp(t, true);
             list.value += v;
             list.GetValue();
-            this.Change(list);
+            this.Change(RoleObsType.Prop, list);
         }
-        public void AddIntAttr(AttrType t, IIntAttrValue v)
+        public void AddProp(AttrType t, IPropAttrValue v)
         {
-            IntAttr list = GetIntAttr(t, true);
+            PropAttr list = GetProp(t, true);
             list.AddValue(v);
-            this.Change(list);
+            this.Change(RoleObsType.Prop, list);
         }
-        public bool RemoveIntAttr(AttrType t, IIntAttrValue v)
+        public bool RemoveProp(AttrType t, IPropAttrValue v)
         {
-            IntAttr list = GetIntAttr(t, true);
+            PropAttr list = GetProp(t, true);
             bool b = list.RemoveValue(v);
-            this.Change(list);
+            this.Change(RoleObsType.Prop, list);
             return b;
         }
-        public BoolAttr GetBoolAttr(AttrType t, bool add = false)
+        public BoolAttr GetBool(AttrType t, bool add = false)
         {
-            IAttrValue v = null;
+            object v = null;
             dic.TryGetValue((int)t, out v);
             if (v == null && add)
             {
                 BoolAttr iv = boolPool.Get();
-                iv.type = t;
                 v = iv;
                 dic[(int)t] = v;
             }
             return (BoolAttr)v;
         }
-        public void AddBoolAttr(AttrType t, IBoolAttrValue v)
+        public void AddBool(AttrType t, IBoolAttrValue v)
         {
-            BoolAttr list = GetBoolAttr(t, true);
+            BoolAttr list = GetBool(t, true);
             list.AddValue(v);
-            this.Change(list);
+            this.Change(RoleObsType.Bool, list);
         }
-        public bool RemoveBoolAttr(AttrType t, IBoolAttrValue v)
+        public bool RemoveBool(AttrType t, IBoolAttrValue v)
         {
-            BoolAttr list = GetBoolAttr(t, true);
+            BoolAttr list = GetBool(t, true);
             bool b = list.RemoveValue(v);
-            this.Change(list);
+            this.Change(RoleObsType.Bool, list);
             return b;
         }
         private readonly static ObjectPool<RoleAttrs> pool = new ObjectPool<RoleAttrs>();
@@ -309,14 +320,15 @@ namespace highlight
         {
             foreach (var v in dic.Values)
             {
-                v.ClearValue();
-                if (v is IntAttr)
-                    intPool.Release((IntAttr)v);
-                else if (v is IntAttr)
+                if(v is IAttrValue)
+                    (v as IAttrValue).ClearValue();
+                if (v is PropAttr)
+                    intPool.Release((PropAttr)v);
+                else if (v is BoolAttr)
                     boolPool.Release((BoolAttr)v);
             }
             dic.Clear();
-            obs_value.Clear();
+            obs.Clear();
             role = null;
             pool.Release(this);
         }

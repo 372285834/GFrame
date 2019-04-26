@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 namespace highlight.tl
 {
-    [Action("行为/Int属性执行", typeof(AttrIntAction))]
-    public class AttrIntAction : TimeAction,IIntAttrValue
+    [Action("行为/Int属性执行", typeof(AttrPropAction))]
+    public class AttrPropAction : TimeAction,IPropAttrValue
     {
         [Desc("Int数据")]
-        public AttrIntData data;
+        public AttrPropData data;
         [Desc("目标")]
         public TargetData target;
         [Desc("间隔时间")]
@@ -27,7 +27,7 @@ namespace highlight.tl
 
             if (data.count <= 0)
             {
-                this.obj.attrs.AddIntAttr(this.data.attrType, this);
+                this.obj.attrs.AddProp(this.data.attrType, this);
             }
 
             return true;
@@ -37,10 +37,10 @@ namespace highlight.tl
             bool b = true;
             if(interval != null)
             {
-                interval.cur++;
-                if (interval.cur == interval.count)
+                interval.cur += App.deltaFrame;
+                if (interval.cur >= interval.count)
                 {
-                    interval.cur = 0;
+                    interval.cur = interval.cur - interval.count;
                     b = true;
                 }
                 else
@@ -49,21 +49,21 @@ namespace highlight.tl
             if(b && data.curCount < data.count)
             {
                 data.curCount++;
-                this.obj.attrs.AddIntAttr(this.data.attrType, this.data.value);
+                this.obj.attrs.CalcProp(this.data.attrType, this.data.value);
             }
         }
         public override void OnFinish()
         {
             if (data.count <= 0)
             {
-                obj.attrs.RemoveIntAttr(this.data.attrType, this);
+                obj.attrs.RemoveProp(this.data.attrType, this);
             }
         }
         //public IntValue UpdateValue(IntValue v)
         //{
         //    return IntValue.Calculation(this.data.calcType, this.data.value, v);
         //}
-        public IntValue GetValue()
+        public PropValue GetValue()
         {
             return this.data.value;
         }

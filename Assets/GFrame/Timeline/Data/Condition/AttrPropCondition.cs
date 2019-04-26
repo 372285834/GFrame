@@ -14,8 +14,8 @@ namespace highlight.tl
         小于等于,
         等于,
     }
-    [Time("数据/Condition/Int属性判断", typeof(AttrIntCondition))]
-    public class AttrIntConditionStyle : ComponentStyle
+    [Time("数据/Condition/Int属性判断", typeof(AttrPropCondition))]
+    public class AttrPropConditionStyle : ComponentStyle
     {
         public int value;
         public AttrType attrType;
@@ -28,7 +28,7 @@ namespace highlight.tl
         }
 #endif
     }
-    public class AttrIntCondition : ComponentData
+    public class AttrPropCondition : ComponentData
     {
         public int value;
         public AttrType attrType;
@@ -39,7 +39,7 @@ namespace highlight.tl
         }
         public override bool OnTrigger()
         {
-            IntAttr attr = this.owner.attrs.GetIntAttr(attrType, false);
+            PropAttr attr = this.owner.attrs.GetProp(attrType, false);
             int v = 0;
             if(attr != null)
                 v = attr.GetValue().value;

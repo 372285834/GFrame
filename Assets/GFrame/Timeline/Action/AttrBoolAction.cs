@@ -29,7 +29,7 @@ namespace highlight.tl
         {
             if (data == null)
                 return false;
-            obj.attrs.AddBoolAttr(this.data.attrType, this);
+            obj.attrs.AddBool(this.data.attrType, this);
             //else
             //{
             //attr.Add(this);
@@ -39,7 +39,7 @@ namespace highlight.tl
         }
         public override void OnFinish()
         {
-            obj.attrs.RemoveBoolAttr(this.data.attrType, this);
+            obj.attrs.RemoveBool(this.data.attrType, this);
             //if(attr != null)
             //{
             //    attr.Remove(this);

@@ -112,6 +112,7 @@ namespace highlight.tl
                 return;
             _isInit = true;
             base.Init();
+            //this.Reset();
         }
         public override void Destroy()
         {
@@ -126,14 +127,14 @@ namespace highlight.tl
             nodeDic.Clear();
             actionDic.Clear();
         }
-        public override void Stop()
+        public override void Stop(bool reset = false)
         {
             if (IsStopped)
                 return;
             _isPlaying = false;
             _isPlayingForward = true;
             _currentFrame = -1;
-            base.Stop();
+            base.Stop(reset);
         }
         public override void Pause()
         {
@@ -181,13 +182,11 @@ namespace highlight.tl
 
             if (_currentFrame == this.Length)
             {
-                if(this.lStyle.loop)
+                Stop(this.lStyle.loop);
+                if (this.lStyle.loop)
                 {
-                    _currentFrame = 0;
-                    base.Init();
-                    return;
+                    this.Play(0, 0);
                 }
-                Stop();
             }
         }
 #if UNITY_EDITOR

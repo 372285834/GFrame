@@ -94,7 +94,7 @@ namespace highlight
         }
     }
 
-    public class ObserverV<T> : IObserver
+    public class Observer<T> : IObserver
     {
         //event AcHandler ac;
         protected List<AcHandler<T>> mList = new List<AcHandler<T>>();
@@ -162,6 +162,86 @@ namespace highlight
             for (int i = mList.Count - 1; i >= 0; i--)
             {
                 mList[i](t);
+            }
+            //if (ac != null)
+            //    ac();
+            isLock = false;
+        }
+        public void Clear()
+        {
+            mList.Clear();
+            lockList.Clear();
+        }
+    }
+
+    public class Observer<T1,T2> : IObserver
+    {
+        //event AcHandler ac;
+        protected List<AcHandler<T1, T2>> mList = new List<AcHandler<T1, T2>>();
+        bool isLock = false;
+        List<AcHandler<T1, T2>> lockList = new List<AcHandler<T1, T2>>();
+        public virtual void AddObserver(AcHandler<T1, T2> _func)
+        {
+            for (int i = 0; i < lockList.Count; i++)
+            {
+                if (_func == lockList[i])
+                {
+                    lockList.RemoveAt(i);
+                    return;
+                }
+            }
+            for (int i = 0; i < mList.Count; i++)
+            {
+                if (_func == mList[i])
+                {
+                    return;
+                }
+            }
+            mList.Add(_func);
+            //ac -= _func;
+            //ac += _func;
+        }
+        public virtual void RemoveObserver(AcHandler<T1, T2> _func)
+        {
+            if (isLock)
+            {
+                lockList.Add(_func);
+                return;
+            }
+            for (int i = 0; i < mList.Count; i++)
+            {
+                if (_func == mList[i])
+                {
+                    mList.RemoveAt(i);
+                    return;
+                }
+            }
+            //int idx = mList.FindIndex(x => x == _func);
+            //if (idx > -1)
+            //{
+            //    mList.RemoveAt(idx);
+            //}
+            //ac -= _func;
+        }
+        public void Change(T1 t1, T2 t2)
+        {
+            isLock = true;
+            if (lockList.Count > 0)
+            {
+                for (int j = 0; j < lockList.Count; j++)
+                {
+                    for (int i = mList.Count - 1; i >= 0; i--)
+                    {
+                        if (lockList[j] == mList[i])
+                            mList.RemoveAt(i);
+                    }
+                }
+                lockList.Clear();
+            }
+
+            for (int i = mList.Count - 1; i >= 0; i--)
+            {
+                mList[i](t1,t2);
             }
             //if (ac != null)
             //    ac();

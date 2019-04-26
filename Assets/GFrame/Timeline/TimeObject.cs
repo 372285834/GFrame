@@ -134,6 +134,7 @@ namespace highlight.tl
         {
             this.frameRange = this.timeStyle.Range;
         }
+        #region get_add_remove
         public TimeObject GetChild(int index)
         {
             return _childs[index];
@@ -297,6 +298,7 @@ namespace highlight.tl
             }
             return null;
         }
+        #endregion
         public void Rebuild()
         {
             UpdateChildIds();
@@ -313,7 +315,6 @@ namespace highlight.tl
 
         public virtual void Init()
         {
-            Reset();
             OnInit();
             for (int i = 0; i < _childs.Count; i++)
             {
@@ -322,9 +323,11 @@ namespace highlight.tl
         }
         public void Reset()
         {
-            this._status = TriggerStatus.InActive;
-            _hasFinished = false;
-            setProgress(0);
+            this._hasFinished = false;
+            for (int i = 0; i < _childs.Count; i++)
+            {
+                _childs[i]._hasFinished = false;
+            }
         }
         public virtual void Destroy()
         {
@@ -383,13 +386,13 @@ namespace highlight.tl
 #endif
         }
 
-        public virtual void Stop()
+        public virtual void Stop(bool reset = false)
         {
             if (this.IsTrigger && !HasFinished)
                 this.Finish();
             this._status = TriggerStatus.InActive;
             //_hasTriggered = true;
-            _hasFinished = true;
+            _hasFinished = reset ? false : true;
             setProgress(0);
 #if UNITY_EDITOR
             PreEvent();
@@ -397,7 +400,7 @@ namespace highlight.tl
             for (int i = _childs.Count - 1; i >= 0; --i)
             {
                 if (_childs[i].IsTrigger)
-                    _childs[i].Stop();
+                    _childs[i].Stop(reset);
             }
             OnStop();
 

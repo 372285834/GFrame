@@ -35,7 +35,7 @@ namespace highlight
         public RoleCamp camp;//阵营
         private RoleState _state = RoleState.Clear;
         public RoleState state { get { return _state; } }
-        private ObserverV<Role> obs_state = new ObserverV<Role>();
+        private Observer<RoleState,Role> obs_state = new Observer<RoleState,Role>();
         public bool isClear { get { return _state == RoleState.Clear; } }
         public object data;
         public RoleControl entity;
@@ -44,11 +44,11 @@ namespace highlight
         public Skills skills;
         public Buffs buffs;
         public Equips quips;
-        public void AddObs_State(AcHandler<Role> ac)
+        public void AddObs_State(AcHandler<RoleState, Role> ac)
         {
             obs_state.AddObserver(ac);
         }
-        public void RemoveObs_State(AcHandler<Role> ac)
+        public void RemoveObs_State(AcHandler<RoleState, Role> ac)
         {
             obs_state.RemoveObserver(ac);
         }
@@ -57,7 +57,7 @@ namespace highlight
             if (_state != this.state)
             {
                 this._state = _state;
-                obs_state.Change(this);
+                obs_state.Change(_state,this);
             }
         }
         public Transform transform { get { return entity.transform; } }
