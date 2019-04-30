@@ -9,3 +9,5 @@ Client/Assembly-CSharp-Editor.csproj
 Client/Client.sln
 Client/Assembly-CSharp-firstpass.csproj
 Client/Packages/manifest.json
+Client/Assets/Resources/VersionStyle.asset
+Client/Assets/Resources/VersionStyle.asset.meta
