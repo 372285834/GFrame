@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af475ff66b00be04088c5339ecd2a90f, type: 3}
+  m_Name: VersionStyle
+  m_EditorClassIdentifier: 
+  IL2CPP: 0
+  IsEncryLua: 0
+  BuglyIsOpen: 1
+  isDevelopment: 0
+  isCheat: 1
+  logLv: 2
+  isTestLuaAB: 0
+  renderTest: 0
+  ResVersion: 0
+  IsUpdateVersion: 0
+  Publish: 0
+  _Language: 0
+  bundleIdentifier: com.yk.msgame
+  bundleDisplayName: five
+  _bundleName: five
+  appid: 
+  appkey: 
+  privatekey: 
+  bundleTimestamp: 1234567890
+  build: 1
+  GetUrl: 1
+  GetUrl2: -1
