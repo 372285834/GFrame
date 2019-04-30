@@ -92,7 +92,8 @@ namespace highlight.tl
                 Resume();
             _isPlaying = true;
             _lastUpdateTime = curTime;
-            UpdateFrame(startFrame);
+            _currentFrame = startFrame;
+            UpdateFrame(0);
         }
         public TimeObject FindObj(string name)
         {
@@ -159,19 +160,20 @@ namespace highlight.tl
             if (delta >= timePerFrame)
             {
                 int numFrames = RoundToInt(delta * FrameRate);
-                UpdateFrame(_currentFrame + numFrames);
+                UpdateFrame(numFrames);
                 _lastUpdateTime += timePerFrame * numFrames;
             }
         }
-        public void SetCurrentTime(float time)
+        public void SetCurrentTime(float delta)
         {
-            UpdateFrame(RoundToInt(time * lStyle.FrameRate));
+            UpdateFrame(RoundToInt(delta * lStyle.FrameRate));
         }
         /// @brief Sets current frame.
         /// @param frame Frame.
         /// @sa Length, GetCurrentFrame
-        public void UpdateFrame(int frame)
+        public void UpdateFrame(int delta)
         {
+            int frame = delta + _currentFrame;
             if (!_isPlaying)
                 return;
             _currentFrame = Clamp(frame, 0, this.Length);
@@ -180,12 +182,18 @@ namespace highlight.tl
 
             _UpdateFrame(_currentFrame);
 
-            if (_currentFrame == this.Length)
+            if (_currentFrame >= this.Length)
             {
                 Stop(this.lStyle.loop);
                 if (this.lStyle.loop)
                 {
-                    this.Play(0, 0);
+                    _isPlayingForward = true;
+                    _isPlaying = true;
+                    _currentFrame = 0;
+                    if(frame > this.Length)
+                    {
+                        UpdateFrame(frame - this.Length);
+                    }
                 }
             }
         }

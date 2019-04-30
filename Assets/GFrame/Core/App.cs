@@ -8,16 +8,26 @@ namespace highlight
     {
         public static Timer Timer = new Timer();
         public static int deltaFrame { private set; get; }
+        public static int frame;
+        public static float logicDeltaTime = 66.66f;
+        public static float time = 0;
+        public static float nextLogicTime = 0;
+        public static bool stand_alone = true;
         static bool isInit = false;
-        public static Observer obsUpdate = new Observer();
+        public static Observer obs_update = new Observer();
+        public static Observer obs_second = new Observer();
+
         public static void Init()
         {
             if (isInit)
                 return;
             isInit = true;
 #if UNITY_EDITOR
-            UnityEditor.EditorApplication.update -= Update;
-            UnityEditor.EditorApplication.update += Update;
+            if(!Application.isPlaying)
+            {
+                UnityEditor.EditorApplication.update -= Update;
+                UnityEditor.EditorApplication.update += Update;
+            }
 #endif
         }
         public static Vector3 downPos;
@@ -28,20 +38,63 @@ namespace highlight
                 return Vector3.Distance(downPos, Input.mousePosition);
             }
         }
+        public static void UpdateLogic(int delta)
+        {
+            frame += delta;
+            deltaFrame = delta;
+            RoleManager.Update(frame);
+        }
+        public static void UpdateRender(float interpolation)
+        {
+            RoleManager.UpdateRender(interpolation);
+        }
+        static float curTime;
+        public static float interpolationTime;
         public static void Update()
         {
-            deltaFrame += 1;
             if (IsDown())
                 downPos = Input.mousePosition;
             UpdateShaderTime();
-          //  LabelRoll.UpdateMaterila();
+
+            time += Time.deltaTime;
+            bool isUpdateRender = false;
+            if(time > nextLogicTime || Events.Length > 1)
+            {
+                Events.Update();
+                if (Events.Current.Count > 0)
+                {
+                    isUpdateRender = true;
+                    nextLogicTime += logicDeltaTime;
+                    int detalFrame = Mathf.CeilToInt(Application.targetFrameRate * logicDeltaTime * 0.001f);
+                    UpdateLogic(detalFrame);
+                }
+            }
+            if(interpolationTime <= 1f || isUpdateRender)
+            {
+                interpolationTime = (time + logicDeltaTime - nextLogicTime) / logicDeltaTime;
+                if (interpolationTime < 0f)
+                    interpolationTime = 1f;
+                UpdateRender(interpolationTime);
+            }
+            //  LabelRoll.UpdateMaterila();
             Timer.update();
-            obsUpdate.Change();
-           // Text3DShadow.UpdateCommandBuffer();
+            obs_update.Change();
+            curTime += Time.deltaTime;
+            if(curTime >= 1f)
+            {
+                curTime = 0f;
+                obs_second.Change();
+            }
+            // Text3DShadow.UpdateCommandBuffer();
         }
+        public static KeyMoveEvent keyMove = new KeyMoveEvent();
         public static void LateUpdate()
         {
-
+            if(stand_alone)
+            {
+                Events.Enqueue(ListPool<RoleEvent>.Get());
+            }
+            keyMove.Update();
         }
         public static float ShaderTime = 0f;
         public static void UpdateShaderTime()

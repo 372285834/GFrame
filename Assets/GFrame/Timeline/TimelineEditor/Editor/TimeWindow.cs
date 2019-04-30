@@ -77,7 +77,10 @@ namespace highlight.tl
         void SetSelect(TimeNode node)
         {
             if (curNode == node)
+            {
+                Selection.activeGameObject = node.gameObject;
                 return;
+            }
             curNode = node;
             Selection.activeGameObject = node.gameObject;
             this.Repaint();

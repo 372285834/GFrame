@@ -6,21 +6,20 @@ namespace highlight
     public class Skill : Object
     {
         public int id;
-        public Skills ower;
+        public Role ower;
         public Timeline timeline;
-        public Role obj { get { return ower.obj; } }
         public TimelineStyle style { get { return timeline != null ? timeline.lStyle : null; } }
         public bool IsStop { get { return timeline != null ? timeline.IsStopped : false; } }
-        public void UpdateFrame(int frame)
+        public void UpdateFrame(int delta)
         {
             if (timeline != null)
-                timeline.UpdateFrame(frame);
+                timeline.UpdateFrame(delta);
         }
         private readonly static ObjectPool<Skill> pool = new ObjectPool<Skill>();
         public static Skill Get(Skills _ower, TimelineStyle _style)
         {
             Skill skill = pool.Get();
-            skill.ower = _ower;
+            skill.ower = _ower.obj;
             if (_style != null)
             {
                 Timeline tl = TimelineFactory.Creat(_style);
@@ -66,11 +65,11 @@ namespace highlight
             dic.Remove(skill.id);
         }
         static List<Skill> temp = new List<Skill>();
-        public void UpdateFrame(int frame)
+        public void UpdateFrame(int delta)
         {
             for (int i = 0; i < this.Count; i++)
             {
-                this[i].UpdateFrame(frame);
+                this[i].UpdateFrame(delta);
                 if (this[i].IsStop)
                     temp.Add(this[i]);
             }

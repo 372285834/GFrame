@@ -4,7 +4,7 @@ using UnityEngine;
 namespace highlight.tl
 {
     [Action("行为/移动", typeof(MoveAction))]
-    public class MoveAction : TimeAction
+    public class MoveAction : TargetAction
     {
         [Desc("开始挂点")]
         public IPosition start;
@@ -19,7 +19,7 @@ namespace highlight.tl
         public override void OnUpdate()
         {
             Vector3 pos = eva.Evaluate(this.start.pos, this.end.pos, this.timeObject.progress);
-            this.res.obj.SetPos(pos);
+            this.role.SetPos(pos,false);
         }
     }
 }

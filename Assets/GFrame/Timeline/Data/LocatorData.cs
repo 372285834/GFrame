@@ -71,15 +71,15 @@ namespace highlight.tl
                     curPos = loStyle.off;
                     break;
                 case Locator.eType.LT_PARENT:
-                    targetObj = this.timeObject.parent.resData.obj;
+                    targetObj = this.timeObject.parent.role;
                     break;
                 case Locator.eType.LT_PARENT_POS:
-                    targetObj = this.timeObject.parent.resData.obj;
+                    targetObj = this.timeObject.parent.role;
                     if (targetObj == null || targetObj.isClear)
                     {
                         return false;
                     }
-                    curPos = targetObj.getPosition();
+                    curPos = targetObj.position;
                     break;
                 default:
                     break;

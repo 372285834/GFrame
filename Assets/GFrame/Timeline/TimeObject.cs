@@ -51,6 +51,7 @@ namespace highlight.tl
 
         public TimeStyle timeStyle { get; private set; }
         public ResData resData { get; private set; }
+        public Role role{ get { return resData != null ? resData.role : null; } }
         private TriggerStatus _status = TriggerStatus.InActive;// = false;
         public TriggerStatus Status { get { return _status; } }
         public bool IsTrigger { get { return _status != TriggerStatus.InActive; } }
@@ -310,7 +311,7 @@ namespace highlight.tl
         private void UpdateChildIds()
         {
             for (int i = 0; i < _childs.Count; ++i)
-                _childs[i].SetOnlyId(i);
+                _childs[i].SetOnlyId((ulong)i);
         }
 
         public virtual void Init()
@@ -326,7 +327,7 @@ namespace highlight.tl
             this._hasFinished = false;
             for (int i = 0; i < _childs.Count; i++)
             {
-                _childs[i]._hasFinished = false;
+                _childs[i].Reset();
             }
         }
         public virtual void Destroy()

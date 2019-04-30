@@ -6,9 +6,16 @@ using UnityEditor;
 #endif
 namespace highlight.tl
 {
+    public enum TargetType
+    {
+        Self,
+        Target,
+        Parent,
+    }
     [Time("数据/目标", typeof(TargetData))]
     public class TargetStyle : ComponentStyle
     {
+        public TargetType targetType;
         public int index;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
@@ -19,17 +26,28 @@ namespace highlight.tl
     }
     public class TargetData : ComponentData
     {
-        public Role obj;
-        public override bool OnTrigger()
+        public Role obj
         {
-            obj = this.root.target.getObj((this.style as TargetStyle).index);
-            return true;
-            //this.prefabData.transform
-            //this.root.target.getObj
-        }
-        public override void OnStop()
-        {
-            obj = null;
+            get
+            {
+                Role _obj = null;
+                TargetStyle s = this.style as TargetStyle;
+                switch (s.targetType)
+                {
+                    case TargetType.Self:
+                        _obj = this.timeObject.role;
+                        break;
+                    case TargetType.Target:
+                        _obj = this.root.target.getObj(s.index);
+                        break;
+                    case TargetType.Parent:
+                        _obj = this.timeObject.parent.role;
+                        break;
+                    default:
+                        break;
+                }
+                return _obj;
+            }
         }
     }
 }

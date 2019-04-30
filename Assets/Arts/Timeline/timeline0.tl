@@ -50,16 +50,24 @@
             "z": 0.0
           },
           "tType": 0
+        },
+        {
+          "$type": "highlight.tl.TargetStyle, Assembly-CSharp",
+          "targetType": 0,
+          "index": 0,
+          "tType": 0
         }
       ],
       "Actions": [
         {
           "tType": 2,
+          "key": "",
           "name": "highlight.tl.MoveAction",
           "Indexs": [
             1,
             3,
-            2
+            2,
+            4
           ]
         }
       ]

@@ -7,6 +7,7 @@ namespace highlight
 {
     public class Id
     {
+        public static Id Global = new Id();
         protected ulong mCurrentId;
 
         public Id(ulong start = 0)
@@ -22,9 +23,9 @@ namespace highlight
     };
     public abstract class Object
 	{
-		private int _onlyId = -1;
-        public int onlyId { get { return _onlyId; } }
-		internal void SetOnlyId( int id ) { _onlyId = id; }
+		private ulong _onlyId = 0;
+        public ulong onlyId { get { return _onlyId; } }
+		internal void SetOnlyId(ulong id ) { _onlyId = id; }
         public static T DeepCopyWithReflection<T>(T obj)
         {
             Type type = obj.GetType();

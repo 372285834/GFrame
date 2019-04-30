@@ -52,7 +52,7 @@ namespace highlight.tl
     }
     public sealed class ActionStyle : Object
     {
-        public TriggerType tType = TriggerType.Failure;
+        public TriggerType tType = TriggerType.失败后停止;
         public string key;
         public string name;
         public int[] Indexs;
@@ -119,11 +119,11 @@ namespace highlight.tl
         {
             status = TriggerStatus.Success;
             TriggerType tType = style.tType;
-            if (tType == TriggerType.None)
+            if (tType == TriggerType.不触发)
                 return status;
             if (OnTrigger())
                 return status;
-            if (tType == TriggerType.Running)
+            if (tType == TriggerType.失败后继续)
                 status = TriggerStatus.Running;
             else
                 status = TriggerStatus.Failure;

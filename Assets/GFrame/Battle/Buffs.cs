@@ -5,21 +5,20 @@ namespace highlight
 {
     public class Buff : Object
     {
-        public Buffs ower;
+        public Role ower;
         public Timeline timeline;
-        public Role obj { get { return ower.obj; } }
         public TimelineStyle style { get { return timeline != null ? timeline.lStyle : null; } }
         public bool IsStop { get { return timeline != null ? timeline.IsStopped : false; } }
-        public void UpdateFrame(int frame)
+        public void UpdateFrame(int delta)
         {
             if(timeline != null)
-                timeline.UpdateFrame(frame);
+                timeline.UpdateFrame(delta);
         }
         private readonly static ObjectPool<Buff> pool = new ObjectPool<Buff>();
         public static Buff Get(Buffs _ower,TimelineStyle _style)
         {
             Buff buff = pool.Get();
-            buff.ower = _ower;
+            buff.ower = _ower.obj;
             if(_style != null)
             {
                 Timeline tl = TimelineFactory.Creat(_style);
@@ -57,11 +56,11 @@ namespace highlight
             Buff.Release(buff);
         }
         static List<Buff> temp = new List<Buff>();
-        public void UpdateFrame(int frame)
+        public void UpdateFrame(int delta)
         {
             for (int i = 0; i < this.Count; i++)
             {
-                this[i].UpdateFrame(frame);
+                this[i].UpdateFrame(delta);
                 if (this[i].IsStop)
                     temp.Add(this[i]);
             }

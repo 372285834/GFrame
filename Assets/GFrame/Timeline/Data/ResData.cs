@@ -11,6 +11,7 @@ namespace highlight.tl
         Effect,
         Animator,
         Item,
+        Bullet,
         Npc,
     }
     [Time("资源加载", typeof(ResData))]
@@ -30,8 +31,7 @@ namespace highlight.tl
     {
         public System.Object asset;
         public bool isLoaded { get { return asset != null; } }
-        public Role obj { get { return asset as Role; } }
-        public Animator animator { get { return asset as Animator; } }
+        public Role role;
         public override void OnInit()
         {
             switch ((this.style as ResStyle).eType)
@@ -42,11 +42,27 @@ namespace highlight.tl
                     break;
                 case eResType.Item:
                     break;
+                case eResType.Bullet:
+                    break;
                 case eResType.Npc:
                     break;
                 default:
                     break;
             }
+        }
+        public override bool OnTrigger()
+        {
+        //    ResStyle s = this.style as ResStyle;
+        //    role = RoleManager.Creat(RoleType.Bullet);
+            return true;
+        }
+        public override void OnFinish()
+        {
+        //    if(role != null)
+        //    {
+        //        RoleManager.Delete(role.onlyId);
+        //        role = null;
+        //    }
         }
     }
 }

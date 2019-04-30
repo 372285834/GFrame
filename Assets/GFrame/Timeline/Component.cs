@@ -9,9 +9,9 @@ namespace highlight.tl
 {
     public enum TriggerType
     {
-        None = 0,
-        Running = 1,
-        Failure = 2,
+        不触发 = 0,
+        失败后继续 = 1,
+        失败后停止 = 2,
     }
     public enum TriggerStatus
     {
@@ -47,7 +47,6 @@ namespace highlight.tl
         public int index;
         public TriggerStatus status = TriggerStatus.InActive;
         public TimeObject timeObject { protected set; get; }
-        public ResData res { get { return timeObject.resData; } }
         public Timeline root { get { return this.timeObject.root; } }
         public Role owner { get { return this.root.owner; } }
         public TimeStyle timeStyle { get { return this.timeObject.timeStyle; } }
@@ -62,7 +61,7 @@ namespace highlight.tl
     }
     public abstract class ComponentStyle : Object
     {
-        public TriggerType tType = TriggerType.None;
+        public TriggerType tType = TriggerType.不触发;
         // [JsonIgnore]
         public string TypeName
         {
@@ -114,11 +113,11 @@ namespace highlight.tl
         {
             status = TriggerStatus.Success;
             TriggerType tType = style.tType;
-            if (tType == TriggerType.None)
+            if (tType == TriggerType.不触发)
                 return status;
             if (OnTrigger())
                 return status;
-            if (tType == TriggerType.Running)
+            if (tType == TriggerType.失败后继续)
                 status = TriggerStatus.Running;
             else
                 status = TriggerStatus.Failure;

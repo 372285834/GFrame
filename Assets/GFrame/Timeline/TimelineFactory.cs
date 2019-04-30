@@ -83,8 +83,7 @@ namespace highlight.tl
             if (style == null)
                 return null;
             Timeline tl = style.Creat();
-            int id = (int)mIdGenerator.generateNewId();
-            tl.SetOnlyId(id);
+            tl.SetOnlyId(mIdGenerator.generateNewId());
            // mActiveDic.Add(id, tl);
             tl.Init();
             return tl;
