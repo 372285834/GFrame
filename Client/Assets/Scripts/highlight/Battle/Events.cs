@@ -5,43 +5,45 @@ namespace highlight
 {
     public struct RoleEvent
     {
-        public ushort id;
-        public short x;
-        public short z;
-        public int length;
-        public ushort skillId;
-        public short skillX;
-        public short skillZ;
-        public bool isMove
+        public int id;
+        public int selectId;
+        public short dirX;
+        public short dirZ;
+        public int moveX;
+        public int moveZ;
+        public int skillId;
+        public int skillX;
+        public int skillZ;
+        public bool isMove { get { return dirX != 0 || dirZ != 0; } }
+        public bool isDir { get { return dirX != 0 || dirZ != 0; } }
+        public Vector3 pos
         {
-            get { return length > 0; }
+            get
+            {
+                return new Vector3(moveX * 0.001f, 0f, moveZ * 0.001f);
+            }
         }
-        public bool isDir { get { return x != 0 || z != 0; } }
         public Vector3 dir
         {
             get
             {
-                return new Vector3(x * 0.001f, 0f, z * 0.001f);
+                return new Vector3(dirX * 0.001f, 0f, dirZ * 0.001f);
             }
         }
-        public bool isSkillDir { get { return skillX != 0 || skillZ != 0; } }
-        public Vector3 skillDir
+        public bool isSkillPos { get { return skillX != 0 || skillZ != 0; } }
+        public Vector3 skillPos
         {
             get
             {
                 return new Vector3(skillX * 0.001f, 0f, skillZ * 0.001f);
             }
         }
-        public Vector3 GetPos(Vector3 pos)
-        {
-            return pos + dir * length * 0.001f;
-        }
     }
     public static class Events
     {
         public static int Length { get { return Queue.Count; } }
         public static Queue<List<RoleEvent>> Queue = new Queue<List<RoleEvent>>();
-        public static Dictionary<ushort, RoleEvent> Current = new Dictionary<ushort, RoleEvent>();
+        public static Dictionary<int, RoleEvent> Current = new Dictionary<int, RoleEvent>();
         public static void Update()
         {
             Current.Clear();
@@ -60,7 +62,7 @@ namespace highlight
         {
             Queue.Enqueue(list);
         }
-        public static RoleEvent Add(ushort id)
+        public static RoleEvent Add(int id)
         {
             if (Current.ContainsKey(id))
                 return Current[id];
@@ -69,63 +71,48 @@ namespace highlight
             evt.id = id;
             return evt;
         }
-        public static bool Get(short id,out RoleEvent evt)
+        public static bool Get(int id,out RoleEvent evt)
         {
-            if (Current.TryGetValue((ushort)id, out evt))
+            if (Current.TryGetValue((int)id, out evt))
                 return true;
             return false;
         }
-        public static bool Contains(ushort id)
+        public static bool Contains(int id)
         {
             return Current.ContainsKey(id);
         }
         public static RoleEvent Get(this Role role)
         {
             RoleEvent evt;
-            Current.TryGetValue((ushort)role.onlyId, out evt);
+            Current.TryGetValue((int)role.onlyId, out evt);
             return evt;
         }
-        public static void AddDir(ushort id,Vector2 dir)
+        public static void AddDir(int id,Vector2 dir)
         {
             RoleEvent evt = Add(id);
-            evt.x = (short)Mathf.Round(dir.x * 1000);
-            evt.z = (short)Mathf.Round(dir.y * 1000);
+            evt.dirX = (short)Mathf.Round(dir.x * 1000);
+            evt.dirZ = (short)Mathf.Round(dir.y * 1000);
             Current[id] = evt;
         }
-        public static void AddLength(ushort id, float length)
+        public static void AddMove(int id, Vector3 pos)
         {
             RoleEvent evt = Add(id);
-            evt.length = (int)Mathf.Round(length * 1000);
+            evt.moveX = (int)Mathf.Round(pos.x * 1000);
+            evt.moveZ = (int)Mathf.Round(pos.y * 1000);
             Current[id] = evt;
         }
-        public static void AddMove(ushort id, Vector3 cur,Vector3 to)
-        {
-            Vector3 dir3 = to - cur;
-            float length = dir3.sqrMagnitude;
-            Vector2 dir = new Vector2(dir3.x, dir3.z);
-            dir.Normalize();
-            AddMove(id,dir,length);
-        }
-        public static void AddMove(ushort id, Vector2 dir, float length)
-        {
-            RoleEvent evt = Add(id);
-            evt.x = (short)Mathf.Round(dir.x * 1000);
-            evt.z = (short)Mathf.Round(dir.y * 1000);
-            evt.length = (int)Mathf.Round(length * 1000);
-            Current[id] = evt;
-        }
-        public static void AddSkill(ushort id, ushort skillId)
+        public static void AddSkill(int id, ushort skillId)
         {
             RoleEvent evt = Add(id);
             evt.skillId = skillId;
             Current[id] = evt;
         }
-        public static void AddSkill(ushort id, ushort skillId, Vector2 dir)
+        public static void AddSkill(int id, ushort skillId, Vector3 pos)
         {
             RoleEvent evt = Add(id);
             evt.skillId = skillId;
-            evt.skillX = (short)Mathf.Round(dir.x * 1000);
-            evt.skillZ = (short)Mathf.Round(dir.y * 1000);
+            evt.skillX = (int)Mathf.Round(pos.x * 1000);
+            evt.skillZ = (int)Mathf.Round(pos.z * 1000);
             Current[id] = evt;
         }
         public static void Clear()

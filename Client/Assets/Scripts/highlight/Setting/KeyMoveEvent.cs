@@ -38,6 +38,7 @@ namespace highlight
             }
             if(isKey)
             {
+                dir.Normalize();
                 Events.AddDir((ushort)RoleManager.ChiefId, dir);
             }
         }

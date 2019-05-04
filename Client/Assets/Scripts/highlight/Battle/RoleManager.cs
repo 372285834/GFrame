@@ -21,6 +21,7 @@ namespace highlight
         {
             Role role = pool.Get();
             role.SetOnlyId(Id.Global.generateNewId());
+            dic[role.onlyId] = role;
             return role;
         }
 
