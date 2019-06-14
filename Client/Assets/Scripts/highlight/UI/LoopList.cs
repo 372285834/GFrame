@@ -80,11 +80,13 @@ namespace highlight
             }
         }
         bool isInit = false;
+        private string mName;
         void initLoopListData()
         {
             if (isInit)
                 return;
             isInit = true;
+            mName = this.name;
             if (TempList == null || sRect == null)
             {
                 Debug.LogError(string.Format("mTempList == {0} || sRect == {1}", TempList, sRect));
@@ -98,6 +100,7 @@ namespace highlight
             TempList.FixItemSize = true;
             this.Grid.enabled = false;
             scrollSize = new Vector2(Grid.cellSize.x + Grid.spacing.x, Grid.cellSize.y + Grid.spacing.y);
+            sRect.onValueChanged.AddListener(onValueChanged);
         }
         private int mAllNum = 0;
         public int AllNum { get { return mAllNum; } }
@@ -466,7 +469,7 @@ namespace highlight
             this.Content.anchoredPosition = to;
         }
         // Update is called once per frame
-        void Update()
+        void onValueChanged(Vector2 pos)
         {
             //if (!isInit)
             //    return;
@@ -538,6 +541,7 @@ namespace highlight
         }
         protected override void OnDestroy()
         {
+            sRect.onValueChanged.RemoveAllListeners();
             sRect = null;
             this.TempList = null;
             this.cacheMoveList.Clear();

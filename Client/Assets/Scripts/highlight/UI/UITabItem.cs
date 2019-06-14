@@ -70,7 +70,7 @@ public class UITabItem : IUIItem, IPointerClickHandler, IPointerDownHandler,IPoi
     }
     public override void ChangeColor(bool instant = true)
     {
-        if (Checkmark != null)
+        if (Checkmark != null && Checkmark.gameObject.activeSelf != IsSelected)
             Checkmark.gameObject.SetActive(IsSelected);
         if (TabList == null)
             return;

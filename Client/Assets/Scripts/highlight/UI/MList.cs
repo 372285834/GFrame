@@ -28,6 +28,7 @@ namespace highlight
         private IList dataArr;
         public bool AutoSize = false;
         public bool FixItemSize = true;
+        public bool IsMultipleSelect = false;
         GridLayoutGroup grid;
         public GridLayoutGroup Grid
         {
@@ -411,6 +412,8 @@ namespace highlight
         {
             get
             {
+                if (IsMultipleSelect)
+                    return null;
                 IUIItem item = GetItemByIndex(mCurIndex);
                 return item != null && item.Visible ? item : null;
             }
@@ -420,6 +423,8 @@ namespace highlight
         {
             get
             {
+                if (IsMultipleSelect)
+                    return null;
                 IUIItem item = GetItemByIndex(mLastIndex);
                 return item != null && item.Visible ? item : null;
             }
@@ -444,12 +449,14 @@ namespace highlight
                 bool isUpdateNew = force;
                 if (_lastItem != item)
                 {
-                    UpdateLuaItem(_lastItem);
+                    if(!IsMultipleSelect)
+                        UpdateLuaItem(_lastItem);
                     isUpdateNew = true;
                 }
                 if (isUpdateNew && item != null)
                 {
-                    UpdateLuaItem(item);
+                    if (!IsMultipleSelect)
+                        UpdateLuaItem(item);
                     if (onSelectItem != null)
                     {
                         onSelectItem(this, item, item.param);
@@ -498,6 +505,27 @@ namespace highlight
                 //visible = value;
                 if (this.gameObject.activeInHierarchy == value) return;
                 this.gameObject.SetActive(value);
+            }
+        }
+
+        public int nextIdx
+        {
+            get
+            {
+                int idx = this.CurIndex + 1;
+                if (idx >= this.Count)
+                    idx = 0;
+                return idx;
+            }
+        }
+        public int lastIdx
+        {
+            get
+            {
+                int idx = this.CurIndex - 1;
+                if (idx < 0)
+                    idx = this.Count - 1;
+                return idx;
             }
         }
         protected virtual void OnDestroy()

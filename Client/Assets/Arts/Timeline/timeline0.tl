@@ -7,9 +7,44 @@
   "Childs": [
     {
       "name": "node0",
-      "x": 0,
-      "y": 120,
-      "Childs": [],
+      "x": 12,
+      "y": 112,
+      "Childs": [
+        {
+          "name": "node1",
+          "x": 51,
+          "y": 112,
+          "Childs": [
+            {
+              "name": "node2",
+              "x": 51,
+              "y": 112,
+              "Childs": [],
+              "Components": [],
+              "Actions": []
+            }
+          ],
+          "Components": [],
+          "Actions": []
+        },
+        {
+          "name": "node3",
+          "x": 18,
+          "y": 102,
+          "Childs": [
+            {
+              "name": "node4",
+              "x": 50,
+              "y": 102,
+              "Childs": [],
+              "Components": [],
+              "Actions": []
+            }
+          ],
+          "Components": [],
+          "Actions": []
+        }
+      ],
       "Components": [
         {
           "$type": "highlight.tl.ResStyle, Assembly-CSharp",

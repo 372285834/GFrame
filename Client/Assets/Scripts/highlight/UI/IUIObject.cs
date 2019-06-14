@@ -269,11 +269,19 @@ namespace UnityEngine.UI
             get { return this.dCurveCenterOffset; }
             set { dCurveCenterOffset = value; }
         }
+        private bool _IsSelected;
         public bool IsSelected
         {
             get
             {
-                return mList == null ? false : mList.CurIndex == this.Index;
+                if(mList != null && !mList.IsMultipleSelect)
+                    return mList.CurIndex == this.Index;
+                return _IsSelected;
+            }
+            set
+            {
+                this._IsSelected = value;
+                this.ChangeColor();
             }
         }
         protected void SetSelect()
@@ -296,6 +304,8 @@ namespace UnityEngine.UI
         public override void SerializeFieldInfo()
         {
             base.SerializeFieldInfo();
+            if (this.transform.parent == null)
+                return;
             MList list = this.transform.parent.GetComponent<MList>();
             if(list != null)
             {
