@@ -14,9 +14,9 @@ namespace highlight.tl
         public TimeStyle[] Childs = new TimeStyle[0];
         public ComponentStyle[] Components = new ComponentStyle[0];
         public ActionStyle[] Actions = new ActionStyle[0];
-        // [JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public int Length { set { y = x + value; } get { return y - x; } }
-        // [JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public FrameRange Range
         {
             get { return new FrameRange(x, y); }

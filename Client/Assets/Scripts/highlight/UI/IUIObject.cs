@@ -284,7 +284,7 @@ namespace UnityEngine.UI
                 this.ChangeColor();
             }
         }
-        protected void SetSelect()
+        public void SetSelect()
         {
             if (mList != null)
                 mList.ClickItem(this);

@@ -4,32 +4,30 @@ using System.Collections.Generic;
 using System;
 using UnityEngine.Networking;
 using System.Text;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
+using System.Net.Security;
 
 public class WWWHttpData
 {
-    public static string MD5_KEY(bool isToGet)
+    // Based on https://www.owasp.org/index.php/Certificate_and_Public_Key_Pinning#.Net
+    //https://answers.unity.com/questions/1479862/unitywebrequest-tomcat-redirect-and-self-signed-ss.html
+    class AcceptAllCertificatesSignedWithASpecificPublicKey : CertificateHandler
     {
-        if (!isToGet)
+        // Encoded RSAPublicKey
+        //private static string PUB_KEY = "mypublickey";
+        protected override bool ValidateCertificate(byte[] certificateData)
         {
-            string md5SK = VersionManager.Instance.mStyle.GetJsonInfo("md5key");
-            if (!string.IsNullOrEmpty(md5SK))
-                return md5SK;
+            //X509Certificate2 certificate = new X509Certificate2(certificateData);
+            //string pk = certificate.GetPublicKeyString();
+            //if (pk.ToLower().Equals(PUB_KEY.ToLower()))
+            //{
+            //    return true;
+            //}
+            //return false;
+            Debug.Log("验证强制通过：" + certificateData.Length);
+            return true;
         }
-        int v = (int)WWWKeyType.MD;
-        string k = WWWKeyType.MD.ToString() + v + "-" + WWWKeyType.MD5_KEY.ToString();
-        return k;
-    }
-    public static string SECRET_KEY(bool isToGet)
-    {
-        if(!isToGet)
-        {
-            string infoSK = VersionManager.Instance.mStyle.GetJsonInfo("infokey");
-            if (!string.IsNullOrEmpty(infoSK))
-                return infoSK;
-        }
-        int v = (int)WWWKeyType.YOUKA;
-        string k = "!" + v + WWWKeyType.YOUKA.ToString() + "@" + WWWKeyType.KP.ToString();
-        return k;
     }
     public enum WWWKeyType
     {
@@ -83,10 +81,7 @@ public class WWWHttpData
         }
         else
         {
-            string m = MUtil.DesEncrypt(json, SECRET_KEY(isToGet));
-            string s = MUtil.md5(m + MD5_KEY(isToGet)).ToUpper();
-            form.AddField("m", m);
-            form.AddField("s", s);
+            form.AddField("data", json, System.Text.Encoding.UTF8);
         }
         return form;
     }
@@ -100,6 +95,7 @@ public class WWWHttpData
         {
             mWWW = UnityWebRequest.Post(_url, GetFrom());
         }
+        mWWW.certificateHandler = new AcceptAllCertificatesSignedWithASpecificPublicKey();
         mWWW.timeout = (int)this.TimeOut;
         mWWW.SendWebRequest();
         return mWWW;
@@ -131,6 +127,9 @@ public class WWWHttpData
                // GoogleAnsSdk.LogEvent("短连Start", ping.finalUrl, json, 0, ping.dnsIp);
                 //GoogleAnsSdk.LogEvent("Start", ipUrl, ping.dnsIp);
                 CreatWWW(ping.finalUrl);
+              //  RequestInfo reInfo = new RequestInfo(ping.finalUrl);
+              //  reInfo.CompleteFun = delegate (RequestInfo rif) { Debug.Log(rif.text); };
+              //  reInfo.request();
             }
             catch(Exception e)
             {
@@ -146,6 +145,7 @@ public class WWWHttpData
         bool isEnd = false;
         if (mWWW.isHttpError || mWWW.isNetworkError || !string.IsNullOrEmpty(mWWW.error))
         {
+            Debug.LogError("responseCode:" + mWWW.responseCode);
             if (IsTimeOut())
             {
                 if (!string.IsNullOrEmpty(ping.defIp) && ping.finalUrl != ping.defIp)
@@ -164,7 +164,7 @@ public class WWWHttpData
             else
             {
                 isEnd = true;
-                this.SetMessage(mWWW.error, true);
+                this.SetMessage("error:" + mWWW.error, true);
             }
         }
         else if (mWWW.isDone)
@@ -173,6 +173,8 @@ public class WWWHttpData
             //System.IO.MemoryStream ms = new System.IO.MemoryStream(mWWW.bytes);
             //this.mBinary = new MBinaryReader(ms);
             string msg = GetUTF8String(mWWW.downloadHandler.data);
+            if (string.IsNullOrEmpty(msg))
+                msg = "error_ok:" + mWWW.downloadHandler.text;
             this.SetMessage(msg, false);
         }
         if(isEnd)
@@ -203,7 +205,7 @@ public class WWWHttpData
     
     public void SetMessage(string content, bool _isError)
     {
-        if (_isError || content.StartsWith("error") || string.IsNullOrEmpty(content))
+        if (_isError || content.Contains("return_message") || string.IsNullOrEmpty(content))
         {
           //  ping.ClearPrefs();
             content = SendEvent(content);
@@ -221,7 +223,7 @@ public class WWWHttpData
             try
             {
                 //解密
-                string responseJson = MUtil.DesDecrypt(content, SECRET_KEY(isToGet));
+                string responseJson = content;// MUtil.DesDecrypt(content, SECRET_KEY(isToGet));
                 //Debug.Log(responseJson);
                 msg = responseJson;
             }

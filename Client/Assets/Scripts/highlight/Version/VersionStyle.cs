@@ -72,11 +72,10 @@ public class VersionStyle : ScriptableObject
             else if (Instance.Publish == ePublish.BETA)
                 return "0.2";
             else
-                return "1.0";
+                return "0.3";
         }
     }
-
-    public static string hotFixVersion = "";
+    
     public string defGetUrl { get { return MPrefs.GetString("DefGet", ""); } set { MPrefs.SetString("DefGet", value); } }
     public enum eServerState
     {
@@ -97,11 +96,13 @@ public class VersionStyle : ScriptableObject
     public bool renderTest = false;
     public string Version { get { return FrameVersion + "." + this.ResVersion; } }
     public int ResVersion = 0;
+    [NonSerialized]
+    private bool needClearVersion = false;
+    public bool isNeedClearVersion { get { return needClearVersion && this.ResVersion != this.SourceResVersion; } }
+    private Dictionary<int, int> resVersionDic = new Dictionary<int, int>();
     [Tooltip("是否为检测版本号并使用热更新功能")]
     public bool IsUpdateVersion = false;
 
-    [NonSerialized]
-    public eChannel Channel = eChannel.YJ;
     [Tooltip("发布类型，用于获取get服指定发布类型数据")]
     public ePublish Publish = ePublish.Debug;
     public eLanguage _Language = eLanguage.auto;
@@ -121,9 +122,6 @@ public class VersionStyle : ScriptableObject
             return _bundleName;
         }
     }
-    public string appid;
-    public string appkey;
-    public string privatekey;
     public string bundleTimestamp = "1234567890";
     public int build = 1;
     [Tooltip("get服地址")]
@@ -141,8 +139,9 @@ public class VersionStyle : ScriptableObject
     }
     [NonSerialized]
     public eLoginSDK eLoginSDK = eLoginSDK.None;
-    [NonSerialized]
-    public bool IsSDKLogin = true;
+    public ChannelData channelData;
+    // [NonSerialized]
+    public eChannel Channel { get { return channelData != null ? channelData.Channel : eChannel.None; } }
     [NonSerialized]
     public int NetResVersion = 0;
     public string CDNVersions { get { return GetJsonInfo("cdn", "0"); } }
@@ -155,14 +154,6 @@ public class VersionStyle : ScriptableObject
     public string StartTime = ""; // 时间
     [NonSerialized]
     public string EndTime = ""; // 时间
-                                //长连
-    [NonSerialized]
-    public string SocketIp = "192.168.0.55";
-    [NonSerialized]
-    public string SocketPort = "8888";
-    //短连
-    [NonSerialized]
-    public string HttpIp = "http://192.168.0.55:90/";
     /// <summary>
     /// 服务器当前状态
     /// </summary>
@@ -174,6 +165,9 @@ public class VersionStyle : ScriptableObject
     public string ip = "";
     [NonSerialized]
     public string country = "";
+    [NonSerialized]
+    public string RecodUrl = "https://msgame.rzcdz2.com/yoka_device_recod";//https://msgame.rzcdz2.com/yoka_device_recod   http://10.225.14.43:8080/yoka_device_recod
+    public bool IsGM { get; private set; }
     public Action<string, bool> mCallBack = null;
     //Dictionary<string, string> jsonDic = new Dictionary<string, string>();
     private IniData iniData;
@@ -203,13 +197,20 @@ public class VersionStyle : ScriptableObject
         }
         set { m_getUrl = value; }
     }
+    private bool _isSDK = true;
     public bool IsSDK
     {
         get
         {
-            bool b = IsSDKLogin && this.IsUpdateVersion;
+            bool b = _isSDK;
+            if (channelData != null)
+                b &= channelData.IsSDKLogin;
             //Debug.Log("IsSDKLogin"+ IsSDKLogin+ "this.IsUpdateVersion"+this.IsUpdateVersion +"QGameSDK.Instance.isSupportedLogin()" + QGameSDK.Instance.isSupportedLogin());
             return b;
+        }
+        set
+        {
+            _isSDK = value;
         }
     }
     public bool IsNormal()
@@ -220,21 +221,21 @@ public class VersionStyle : ScriptableObject
     {
         string id = this.GetJsonInfo("appid");
         if (string.IsNullOrEmpty(id))
-            id = this.appid;
+            id = channelData != null ? channelData.appid : "";
         return id;
     }
     public string getAppKey()
     {
         string key = this.GetJsonInfo("appkey");
         if (string.IsNullOrEmpty(key))
-            key = this.appkey;
+            key = channelData != null ? channelData.appkey : "";
         return key;
     }
     public string getPrivateKey()
     {
         string key = this.GetJsonInfo("privatekey");
         if (string.IsNullOrEmpty(key))
-            key = this.privatekey;
+            key = channelData != null ? channelData.privatekey : "";
         return key;
     }
     public bool IsShowUpdateConfirm { get; set; }
@@ -244,8 +245,11 @@ public class VersionStyle : ScriptableObject
     public bool IsFirstStart = false;
     [NonSerialized]
     public int SourceResVersion = 0;
+    //持久数据目录下版本路径;
+    protected string localVersionPath;
     public string Init(string path)
     {
+        localVersionPath = path;
         curGetCall = 1;
         SourceResVersion = this.ResVersion;
         //PluginMsgHandler.Init();
@@ -262,7 +266,8 @@ public class VersionStyle : ScriptableObject
                 if (File.Exists(path))
                 {
                     string str = File.ReadAllText(path);// Util.GetFileText(persistentVersionPath);
-                    Int32.TryParse(str, out this.ResVersion);
+                    string[] vs = str.Split(',');
+                    Int32.TryParse(vs[0], out this.ResVersion);
                     Debug.Log("version:" + str + ", " + path);
                 }
             }
@@ -284,7 +289,7 @@ public class VersionStyle : ScriptableObject
         //初始化bugly
         if (BuglyIsOpen)
         {
-         //   BuglyInit.Init();
+          //  BuglyInit.Init();
         }
         //MtaSDK.InitByStyle(this);
         //#if UNITY_IOS
@@ -420,10 +425,35 @@ public class VersionStyle : ScriptableObject
             {
                 serverTimeTick = serverTime.Ticks - System.DateTime.Now.Ticks;//UnityEngine.Time.realtimeSinceStartup;
             }
+            resVersionDic.Clear();
+            int curResFlag = PlayerPrefs.GetInt("_ResVersionFlag_" + this.Version, 0);
+            string resInfos = GetJsonInfo("ResInfos");
+            if (!string.IsNullOrEmpty(resInfos))
+            {
+                string[] resInfoArr = resInfos.Split('|');
+                for(int i=0;i< resInfoArr.Length;i++)
+                {
+                    string[] resInfo = resInfoArr[i].Split(',');
+                    if(resInfo.Length == 2)
+                    {
+                        int _resVsersion = Int32.Parse(resInfo[0]);
+                        int _resFlag = Int32.Parse(resInfo[1]);
+                        resVersionDic[_resVsersion] = _resFlag;
+                        if (_resVsersion == this.ResVersion && _resFlag != curResFlag)
+                        {
+                            if(curResFlag > 0)
+                                needClearVersion = true;
+                            Debug.Log("资源版本出现过回退，该设备本地需要回退1个版本,ResKey:" + resInfoArr[i]);
+                        }
+                    }
+                    else
+                        throw new Exception("错误的ResKey:" + resInfoArr[i]);
+                }
+            }
             QQCloudMgr.Init(this);
             Log = GetJsonInfo("Log");
-            Log = Log.Replace("|", "\n");
             Log = Log.Replace("\\n", "\n");
+            RecodUrl = GetJsonInfo("RecodUrl", RecodUrl);
             string defGet = GetJsonInfo("DefGet");
             if (!string.IsNullOrEmpty(defGet))
                 defGetUrl = defGet;
@@ -436,29 +466,16 @@ public class VersionStyle : ScriptableObject
             if (!string.IsNullOrEmpty(money))
                 Log = Log.Replace("[Money]", money);
 
-
             if (!Int32.TryParse(GetJsonInfo("PatchVersion"), out this.NetResVersion))
                 NetResVersion = this.ResVersion;
             //NetResVersion = 1;
-            hotFixVersion = GetJsonInfo("hotFixVersion");
-            SocketIp = GetJsonInfo("SocketIp");
-            SocketPort = GetJsonInfo("SocketPort");
-            HttpIp = GetJsonInfo("HttpIp");
             string CheatCode = "";
             if (TryGetJsonInfo("CheatCode", out CheatCode))
             {
                 MResUpdate.cheatCode = CheatCode;
             }
             IsShowUpdateConfirm = GetJsonInfo("ShowConfirm") == "1" ? true : false;
-            string ChangeChannel = "";
-            if (TryGetJsonInfo("ChangeChannel", out ChangeChannel))
-            {
-                int newChannel = 0;
-                if (Int32.TryParse(ChangeChannel, out newChannel))
-                {
-                    this.Channel = (eChannel)newChannel;
-                }
-            }
+
             string allCheat = GetJsonInfo("AllCheat");
             if (allCheat == "1")
                 this.isCheat = true;
@@ -469,6 +486,8 @@ public class VersionStyle : ScriptableObject
             {
                 if (testIdfa.IndexOf(SystemInfoUtil.deviceUniqueIdentifier) > -1)
                 {
+                    IsGM = true;
+                    logLv = GetJsonInfo("logLv", logLv);
                     string testPatch = "";
                     if (TryGetJsonInfo("testPatch", out testPatch))
                     {
@@ -494,6 +513,35 @@ public class VersionStyle : ScriptableObject
         //string a2 = arr[1].asDict()["2"].AsString();
         //string a3 = arr[2].asDict()["3"].AsString();
     }
+    public void SetResVersion(int resV)
+    {
+        SaveResVersionFlag();
+        this.ResVersion = resV;
+        SaveResVersionFlag();
+        this.saveResVersion(resV);
+    }
+    public void SaveResVersionFlag()
+    {
+        int resFlag = GetResFlag(ResVersion);
+        PlayerPrefs.SetInt("_ResVersionFlag_" + this.Version, resFlag);
+    }
+    /// <summary>
+    /// 存储版本号;
+    /// </summary>
+    protected void saveResVersion(int resV)
+    {
+        StreamWriter sw = new StreamWriter(localVersionPath, false);
+        sw.Write(resV);
+        sw.Flush();
+        sw.Close();
+        sw.Dispose();
+    }
+    public int GetResFlag(int resV)
+    {
+        int resFlag = 0;
+        this.resVersionDic.TryGetValue(resV, out resFlag);
+        return resFlag;
+    }
     void excCallBakc(string msg, bool isError)
     {
         if (mCallBack != null)
@@ -508,6 +556,8 @@ public class VersionStyle : ScriptableObject
     /// <returns></returns>
     public string GetJsonInfo(string key, string def = "")
     {
+        if (this.iniData == null)
+            return def;
         string info = "";
         this.iniData.TryGetKey(key, out info);
         if (string.IsNullOrEmpty(info))
@@ -551,10 +601,9 @@ public class VersionStyle : ScriptableObject
             return backOff == 1;
         }
     }
-}
-    public class UserInfo
+    public static void SendEvent(string key,string value="")
     {
-        public string password = "";
-        public bool success = true;
-        public string username = "";
+        string getUrl = Instance.RecodUrl + "?data={\"idfa\":\"" + SystemInfoUtil.deviceUniqueIdentifier + "\",\"key\":\"" + key + "\",\"value\":\"" + value + "\"}";
+        WWWHttpHelper.ToGet(getUrl, null);
     }
+}

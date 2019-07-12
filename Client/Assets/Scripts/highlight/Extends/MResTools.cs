@@ -270,9 +270,12 @@ public static class MResTools
         {
             if(Application.platform == RuntimePlatform.OSXEditor)
             {
-				System.Diagnostics.Process pNew = new System.Diagnostics.Process();
-				pNew.StartInfo.FileName = Application.dataPath + @"\..\..\Other\Tools\7-Zip-linux\p7zip_16.02\bin\7za"; ;
-				pNew.StartInfo.Arguments = string.Format(" a -t7z {0} {1} -m0=LZMA2:d=26 ", mOutPut, mInPut);
+                string fName = Application.dataPath + "/../../Other/Tools/7-Zip-linux/p7zip_16.02/bin/7za";
+                SetChmodXProcess(fName);
+                System.Diagnostics.Process pNew = new System.Diagnostics.Process();
+                pNew.StartInfo.FileName = fName;
+
+                pNew.StartInfo.Arguments = string.Format(" a -t7z {0} {1} -m0=LZMA2:d=26 ", mOutPut, mInPut);
              //   pNew.StartInfo.UserName = "yk";
             //    pNew.StartInfo.Password = new System.Security.SecureString() "123";
 
@@ -293,7 +296,7 @@ public static class MResTools
             {
  
                 System.Diagnostics.Process pNew = new System.Diagnostics.Process();
-			    pNew.StartInfo.FileName = Application.dataPath + @"\..\..\Other\Tools\7-Zip\7z.exe"; ;
+			    pNew.StartInfo.FileName = Application.dataPath + "/../../Other/Tools/7-Zip/7z.exe"; ;
 				 
                 
                 pNew.StartInfo.Arguments = string.Format(" a -t7z {0} {1} -m0=LZMA2:d=26 ", mOutPut, mInPut);
@@ -311,7 +314,23 @@ public static class MResTools
         }
 
     }
-
+    public static void SetChmodXProcess(string fileName)
+    {
+        Debug.Log("设置权限：" + fileName);
+        System.Diagnostics.Process pNew = new System.Diagnostics.Process();
+        pNew.StartInfo.FileName = "/bin/chmod";
+        pNew.StartInfo.Arguments = "+x " + fileName;
+        //   pNew.StartInfo.UserName = "yk";
+        //    pNew.StartInfo.Password = new System.Security.SecureString() "123";
+        pNew.StartInfo.CreateNoWindow = true;
+        pNew.StartInfo.UseShellExecute = false;
+        pNew.StartInfo.RedirectStandardError = true;
+        pNew.StartInfo.RedirectStandardOutput = true;
+        pNew.Start();
+        //一定要等待完成后，才能删除。
+        pNew.WaitForExit();
+        pNew.Close();
+    }
     #region 递归读取路径下所有文件
     /// <summary>
     /// 获取指定路径下的所有文件名

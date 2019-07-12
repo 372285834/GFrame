@@ -28,6 +28,7 @@ public class GameObjectPool<T> where T : Component
         T element;
         if (m_Stack.Count == 0)
         {
+            //Debug.Log("Instantiate:" + Temp.name);
             GameObject go = GameObject.Instantiate(Temp, parent);
             //go.name = Temp.name + "_" + countAll;
             element = go.GetComponent<T>();

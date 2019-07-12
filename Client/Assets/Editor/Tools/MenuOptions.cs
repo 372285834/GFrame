@@ -16,6 +16,7 @@ namespace Frame
             Selection.activeObject = vs;
             return vs;
         }
+
         [UnityEditor.MenuItem("Style/MapDataStyle", false, 1)]
         public static void EditorCreateMapDataStyle()
         {
@@ -38,6 +39,11 @@ namespace Frame
         public static MapDataStyle Create_MapDataStyle()
         {
             return AssetDatabaseX.CreateNewAssetInCurrentProjectFolder<MapDataStyle>();
+        }
+        [MenuItem("Assets/Create/Scriptalbe/ChannelData", false, 100)]
+        public static ChannelData Create_ChannelData()
+        {
+            return AssetDatabaseX.CreateNewAssetInCurrentProjectFolder<ChannelData>();
         }
         //[MenuItem("Assets/Create/Scriptalbe/SpriteAsset", false, 100)]
         //public static SpriteAsset Create_SpriteAsset()

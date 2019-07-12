@@ -32,8 +32,9 @@ public static class EditorPath
 
     public static string SDKDir
     {
-        get { return Application.dataPath + "/../../Other/BuildPackage"; }/// 获取SDK目录
+        get { return Application.dataPath + "/../../Other/SDKPlugins/" + PlatformDir + "/"; }/// 获取SDK目录
     }
+    public static string SDKToDir { get { return Application.dataPath + "/Plugins/" + EditorPath.PlatformDir + "/"; } }
     public static string MainScenePath = Application.dataPath + "/Game.unity";
     public static string ApkPath = Application.dataPath + "/../../Other/Publish/";
     public static string HotFixPath = Application.dataPath + "/../../../msgame_assetbundle/Publish/";
@@ -191,6 +192,13 @@ public static class EditorPath
         //string sec = now.Second.ToString();
         //return year + month + day + hour + min;
     }
+
+    public static List<ChannelData> GetChannelList()
+    {
+        List<ChannelData> list = AssetDatabaseX.LoadAssets<ChannelData>("Assets/Channels/");
+        list.RemoveAll(x => x.platform != VersionStyle.Platform || x.isHide);
+        return list;
+    }
     public delegate string AcCopyFile(string name);
     /// <summary>
     /// 路径以 / 结尾
@@ -285,6 +293,10 @@ public static class EditorPath
     public static bool IsDeleteFileDir(string path)
     {
         return path.EndsWith("Delete");
+    }
+    public static void Log(string str, string color = "00ff00")
+    {
+        Debug.Log(UIUtil.GetRichText(str, color));
     }
     public static string GetAnimatorDirName(string path)
     {

@@ -76,6 +76,8 @@ public class UITabItem : IUIItem, IPointerClickHandler, IPointerDownHandler,IPoi
             return;
         for (int i = 0; i < TabList.Count; i++)
         {
+            if (TabList[i] == null)
+                continue;
             TabList[i].Init(this, instant);
         }
     }

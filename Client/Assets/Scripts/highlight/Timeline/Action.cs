@@ -70,6 +70,7 @@ namespace highlight.tl
             }
         }
         private Type _type;
+        [Newtonsoft.Json.JsonIgnore]
         public Type type
         {
             get
@@ -82,7 +83,7 @@ namespace highlight.tl
 
         public readonly static Dictionary<Type, ActionAttribute> actionAttrDic = new Dictionary<Type, ActionAttribute>();
         private ActionAttribute mAttr;
-        // [JsonIgnore]
+         [Newtonsoft.Json.JsonIgnore]
         public ActionAttribute Attr
         {
             get

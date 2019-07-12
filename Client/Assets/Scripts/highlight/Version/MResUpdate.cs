@@ -212,6 +212,10 @@ public class MResUpdate : MonoBehaviour {
         //}
         if (!string.IsNullOrEmpty(curInpuCode))
         {
+            if(curInpuCode == "clear")
+            {
+                VersionManager.DeleteLocalCache();
+            }
             if (curInpuCode == cheatCode || curInpuCode == "nosdk")
             {
                 bool noSDK = curInpuCode == "nosdk";

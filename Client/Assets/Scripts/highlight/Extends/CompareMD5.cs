@@ -85,8 +85,13 @@ namespace highlight
         {
             if (!mIsInit)
                 return false;
+            int idx = file.FullName.LastIndexOf(tag);
+            if(idx < 0)
+            {
+                throw new Exception("idx == -1  url:" + file.FullName + "    tag:" + tag);
+            }
             bool b = false;
-            string url = file.FullName.Substring(file.FullName.LastIndexOf(tag) + tag.Length + 1).Replace("\\", "/");
+            string url = file.FullName.Substring(idx + tag.Length + 1).Replace("\\", "/");
             string md5 = CompareMD5.GetMD5HashFromFile(file.FullName);
             if (dicOldMD5Info.ContainsKey(url))
             {
@@ -138,7 +143,7 @@ namespace highlight
             if (isSort)
                 tempMD5.Sort();
             saveStr = saveStr == null ? tempMD5.ToArray() : saveStr;
-            FileUtils.WriteTxt(md5Name, saveStr);
+            MFileUtils.WriteTxt(md5Name, saveStr);
           //  string save = string.Join("\r\n", saveStr);
             //Debug.Log("保存md5>>>" + save);
             //save = Util.Compress(save);

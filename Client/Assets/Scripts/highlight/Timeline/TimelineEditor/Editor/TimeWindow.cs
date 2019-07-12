@@ -497,6 +497,7 @@ namespace highlight.tl
         public static JsonSerializerSettings getSetting()
         {
             JsonSerializerSettings setting = new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Auto, DefaultValueHandling = DefaultValueHandling.Ignore, NullValueHandling = NullValueHandling.Ignore};
+           // setting.Formatting = Formatting.None;
             return setting;
         }
 

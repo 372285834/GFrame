@@ -54,12 +54,7 @@ namespace highlight
         //public string 版本号 { get { return GetValue("31"); } }
 
         public string 提交问题 { get { return GetValue("32"); } }
-        public string 进入 { get { return GetValue("33"); } }
-        public string 退出 { get { return GetValue("34"); } }
-        public string 确定 { get { return GetValue("35"); } }
-        public string wifi { get { return GetValue("36"); } }
-        public string 没有网络 { get { return GetValue("37"); } }
-        public string 累计补偿 { get { return GetValue("38"); } }
+        public string 没有网络 { get { return GetValue("33"); } }
 
 
         static Dictionary<string, string[]> dic = new Dictionary<string, string[]>();

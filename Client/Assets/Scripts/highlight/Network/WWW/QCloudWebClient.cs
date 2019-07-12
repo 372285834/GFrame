@@ -95,6 +95,13 @@ public class RequestInfo
             return lbts;
         }
     }
+    public string text
+    {
+        get
+        {
+            return System.Text.Encoding.Default.GetString(loadBytes);
+        }
+    }
     public int downloadSize
     {
         get
@@ -121,7 +128,18 @@ public class RequestInfo
             {//文件是完整的，直接结束下载任务
                 return true;
             }
-            FStream.Seek(rangPoint, SeekOrigin.Current);
+            if(rangPoint > all)
+            {
+                File.Delete(saveUrl);
+                //文件不保存创建一个文件
+                FStream = new FileStream(_url, FileMode.Create);
+                rangPoint = 0;
+            }
+            else
+            {
+                FStream.Seek(rangPoint, SeekOrigin.Current);
+            }
+            
         }
         else
         {
@@ -136,7 +154,7 @@ public class RequestInfo
     public void Save()
     {
         if (FStream == null)
-            highlight.FileUtils.WriteFileStream(loadBytes, saveUrl);
+            MFileUtils.WriteFileStream(loadBytes, saveUrl);
         Dispose();
     }
     public void Dispose()

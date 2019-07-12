@@ -1,4 +1,5 @@
 ﻿using highlight;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -66,15 +67,36 @@ public class UIWindow : EditorWindow
                 }
             }
         }
-        
+        if (GUILayout.Button("Load AB", GUILayout.MaxWidth(100), GUILayout.MinHeight(20)))
+        {
+            if (!string.IsNullOrEmpty(inputStr))
+            {
+                AssetBundle ab = AssetBundle.LoadFromFile(inputStr);
+                UnityEngine.Object[] objs = ab.LoadAllAssets();
+                if(objs.Length == 1)
+                {
+                    UnityEngine.Object obj = objs[0];
+                    if (obj is GameObject)
+                    {
+                        GameObject go = GameObject.Instantiate(obj as GameObject);
+                        Selection.activeObject = go;
+                    }
+                }
+            }
+        }
         GUILayout.Space(20f);
         GUILayout.EndVertical();
     }
     enum eTextType
     {
         None,
-        Style1,
-        c_1e7598,
+        n_28_94e1f7,
+        n_28_1e7598,
+        b_36_71c7ec,
+        b_36_96ffdb,
+        b_36_ffcbcc,
+        b_36_fffdc2,
+        n_28_257d9f,
     }
     static eTextType curTextType = eTextType.None;
     static void OnText(GameObject go)
@@ -85,21 +107,20 @@ public class UIWindow : EditorWindow
         curTextType = (eTextType)EditorGUILayout.EnumPopup("TextStyle", curTextType);
         if(curTextType != eTextType.None)
         {
-            switch (curTextType)
-            {
-                case eTextType.None:
-                    break;
-                case eTextType.Style1:
-                    tf.fontSize = 28;
-                    tf.color = ColorUtil.GetColor(0x94e1f7);
-                    break;
-                case eTextType.c_1e7598:
-                    tf.fontSize = 28;
-                    tf.color = ColorUtil.GetColor(0x1e7598);
-                    break;
-                default:
-                    break;
-            }
+            string[] fms = curTextType.ToString().Split('_');
+            string style = fms[0];
+            int size = Int32.Parse(fms[1]);
+            uint colorV = System.Convert.ToUInt32(fms[2], 16);
+            if (style == "n")
+                tf.fontStyle = FontStyle.Normal;
+            else if (style == "b")
+                tf.fontStyle = FontStyle.Bold;
+            else if(style == "i")
+                tf.fontStyle = FontStyle.Italic;
+            else if (style == "bi")
+                tf.fontStyle = FontStyle.BoldAndItalic;
+            tf.fontSize = size;
+            tf.color = ColorUtil.GetColor(colorV);
         }
         curTextType = eTextType.None;
     }

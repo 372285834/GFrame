@@ -9,9 +9,6 @@ using System.Threading;
 
 public class GenVersion : EditorWindow
 {
-    public static string AccessKey = "eJzgFEEPoSXySi-Y7M-hOZHhju1_djMj_Bu6-9sY";
-    public static string SecretKey = "cmNJJ3aGkMx0qQnYPC-R4JDgKVYEg4liCuGUuKX-";
-    public static string Bucket = "five4";
     public static string GenVersionHelpInfo = "一，注释A（1.2.3）,B（3）为上传七牛工具。\n" +
         "1.检测当前版本md5与[当前assetbundle资源]做对比，如果有新资源则继续，否则无更新。\n" +
         "2.获取所有版本md5，分别与[当前assetbundle资源]做对比，复制差异文件并压缩成7z包。\n" +
@@ -49,6 +46,11 @@ public class GenVersion : EditorWindow
         {
             EditorUtility.DisplayProgressBar("上传七牛", "正在上传..." + QQCloudMgr.curNum + "/" + QQCloudMgr.AllNum, (float)QQCloudMgr.curNum / QQCloudMgr.AllNum);
         }
+    }
+    [MenuItem("GameTools/CloseUpLoading")]
+    static void CloseUpLoading()
+    {
+    //    QQCloudMgr.isUpLoading = false;
     }
     [MenuItem("GameTools/发新版本")]
         static void Execute()
@@ -192,6 +194,23 @@ public class GenVersion : EditorWindow
         VersionData v = new VersionData(path + "version.txt");
         return v;
     }
+    public static void BackOneHotFix()
+    {
+        if (!string.IsNullOrEmpty(vData.LastVersion))
+        {
+            CompareMD5 old = new CompareMD5(publishPath + "md5/", vData.Version + "_files" + ".txt");
+            if (File.Exists(old.md5Name))
+            {
+                File.Delete(old.md5Name);
+            }
+            vData.SetVersion(vData.LastVersion);
+            Debug.Log("回退一个版本重新热更：" + vData.Version);
+        }
+        else
+        {
+            Debug.Log("没有可回退的版本：" + vData.Version);
+        }
+    }
     public static void ClearHotFix(string version)
     {
         if (Directory.Exists(publishPath))
@@ -201,11 +220,11 @@ public class GenVersion : EditorWindow
         vData.SetVersion(version);
         BuildHotFixByMd5();
     }
-    public static string splitABFlag { get{ return "Product\\" + EditorPath.PlatformDir; } }
+    public static string splitABFlag { get{ return "Product" + Path.DirectorySeparatorChar + EditorPath.PlatformDir; } }  // Path.GetDirectoryName(EditorPath.StreamingAssetsPath);
     /// <summary>
     /// 分析差量文件
     /// </summary>
-    public static void BuildHotFixByMd5(bool backOneVersion = false)
+    public static void BuildHotFixByMd5()
     {
         if (!Directory.Exists(publishPath))
             Directory.CreateDirectory(publishPath);
@@ -233,8 +252,8 @@ public class GenVersion : EditorWindow
         foreach (FileInfo file in fls)
         {
             index++;
-          //  if (file.Name == "Android" || file.Name == "Android.manifest")
-          //      continue;
+            if (file.Name == Util.PlatformDir || file.Name == ".DS_Store")
+                continue;
             if (EditorPath.CheckFileExtensionInvalid(file))
                 continue;
             if (file.Name.Contains(PatchResData.Split.ToString()))
@@ -257,16 +276,16 @@ public class GenVersion : EditorWindow
             vData.Save(vData.Version);
             if(vData.index > 1)
                 uploadQiNiu(Publish);
-            Debug.Log("清理版本回退到:" + vData.Version + ",  num:" + diffList.Count);
+            Debug.Log("没有初始化版本，清理版本回退到:" + vData.Version + ",  num:" + diffList.Count);
         } 
         else if (haveNew)
         {//有可更新文件
-            if (backOneVersion && !string.IsNullOrEmpty(vData.LastVersion))
-            {
-                vData.SetVersion(vData.LastVersion);
-                old.SaveMD5(curMd5.getTempMD5List.ToArray());
-            }
-            else
+            //if (backOneVersion && !string.IsNullOrEmpty(vData.LastVersion))
+            //{
+            //    vData.SetVersion(vData.LastVersion);
+            //    old.SaveMD5(curMd5.getTempMD5List.ToArray());
+            //}
+            //else
                 curMd5.Clear();
             string str = "";
             str = copyFile2(fls, diffList);
@@ -276,7 +295,7 @@ public class GenVersion : EditorWindow
             vData.Save(vData.NextVersion);
             uploadQiNiu(Publish);
 
-            Debug.Log("完成版本号：" + vData.Version + "，生成数量：" + str);
+            Debug.Log(UIUtil.GetRichText("完成版本号：" + vData.Version + "，生成数量：" + str, "00ff00"));
         }
         else
         {
@@ -318,7 +337,7 @@ public class GenVersion : EditorWindow
                 Debug.LogError(file.FullName + "\n" + outFile);
                 throw new System.Exception("复制差异文件报错");
             }
-            EditorUtility.DisplayProgressBar("复制差量", "正在复制差量..." + i + " /" + (diffList.Count), (float)i / (float)(diffList.Count));
+            EditorUtility.DisplayProgressBar("复制差量:" + diffList.Count, "正在复制差量..." + i + " /" + (diffList.Count), (float)i / (float)(diffList.Count));
         }
         Dictionary<string, List<PatchResData>> listDic = new Dictionary<string, List<PatchResData>>(); 
         string nextPatchName = VersionStyle.PatchTag + "_" + vData.Version + "_" + vData.NextVersion;
@@ -335,7 +354,7 @@ public class GenVersion : EditorWindow
                 string patchPath = curPatchDir + patchName + ".txt";
                 string toPatchName = VersionStyle.PatchTag + "_" + VersionStyle.FrameVersion + "." + i + "_" + vData.NextVersion;
                 string toPatchPath = to + toPatchName + ".txt";
-                EditorUtility.DisplayProgressBar("生成patchTxt", toPatchName + "..." + index + " /" + vData.index, (float)index / (float)vData.index);
+                EditorUtility.DisplayProgressBar("生成patchTxt:" + toPatchName, toPatchName + "..." + index + " /" + vData.index, (float)index / (float)vData.index);
                 if(File.Exists(patchPath))
                 {
                     string txt = File.ReadAllText(patchPath);
@@ -369,6 +388,7 @@ public class GenVersion : EditorWindow
                 continue;
             allFls[file.Name] = file;
         }
+        int curIndex = 0;
         foreach(var key in listDic.Keys)
         {
             List<PatchResData> list = listDic[key];
@@ -397,6 +417,8 @@ public class GenVersion : EditorWindow
                 else
                     Debug.LogError("不存在资源a：" + resName);
             }
+            curIndex++;
+            EditorUtility.DisplayProgressBar("生成压缩文件:" + toDir + " ,num:" + list.Count, toDir + curIndex + " /" + (listDic.Count), (float)curIndex / (float)(listDic.Count));
             MResTools.FileCompression(toDir, toDir + ".7z");
 
             FileInfo fi = new FileInfo(toDir + ".7z");
@@ -414,6 +436,7 @@ public class GenVersion : EditorWindow
             else
                 File.Move(data.curName, data.sourceName);
         }
+        EditorUtility.ClearProgressBar();
         //list.Add(vData.mPath);
         //return list;
     }
@@ -451,9 +474,6 @@ public class GenVersion : EditorWindow
         }
         else
         {
-            QQCloudMgr.AccessKey = AccessKey;
-            QQCloudMgr.SecretKey = SecretKey;
-            QQCloudMgr.Bucket = Bucket;
             List<string> list = QQCloudMgr.uploadStartUp();
             //StringBuilder sb = new StringBuilder();
             //for (int i = 0; i < list.Count; i++)

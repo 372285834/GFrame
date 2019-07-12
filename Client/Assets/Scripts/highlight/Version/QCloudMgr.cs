@@ -294,15 +294,16 @@ public class QQCloudMgr
         }
     }
     public static bool IsQiniu { get { return CloudState == "0"; } }
-    public static bool IsQCloud { get { return CloudState == "1"; } }
-    public static bool IsAWS { get { return CloudState == "2"; } }
-    public static string HotUpdateUrl = "http://plbi5f0xz.bkt.clouddn.com/";//"http://o6ssva6nz.bkt.clouddn.com/";// + Util.PlatformDir; 
+    public static bool IsAliyun { get { return CloudState == "1"; } }
+    public static bool IsQCloud { get { return CloudState == "2"; } }
+    public static bool IsAWS { get { return CloudState == "3"; } }
+    public static string HotUpdateUrl = "http://jzoss.sanguosha.com/";//"http://o6ssva6nz.bkt.clouddn.com/";// + Util.PlatformDir; 
     public static string NetPNGUrl = "http://7xrnqw.com2.z0.glb.qiniucdn.com/";
     public static string AWSHotUrl = "https://d3vzdazntu2cw4.cloudfront.net/";
-    public static string CloudState = "0";
+    public static string CloudState = "1";
     public static void Init(VersionStyle style)
     {
-        CloudState = style.GetJsonInfo("IsQCloud", CloudState);
+        CloudState = style.GetJsonInfo("CloudState", CloudState);
         HotUpdateUrl = style.GetJsonInfo("HotUpdateUrl", HotUpdateUrl);
         AWSHotUrl = style.GetJsonInfo("HotUpdateUrl", AWSHotUrl);
         uploadHost = style.GetJsonInfo("uploadHost", uploadHost);
@@ -605,6 +606,7 @@ public class QQCloudMgr
             return null;
         }
         List<string> list = new List<string>();
+        StringBuilder sb = new StringBuilder();
         //path = string.IsNullOrEmpty(path) ? publishPath + vData.Version + "/" : path;
         if (Directory.Exists(path))
         {
@@ -615,6 +617,7 @@ public class QQCloudMgr
                 if (fls[i].FullName.Contains(".DS_Store"))
                     continue;
                 list.Add(fls[i].FullName);
+                sb.AppendLine(fls[i].FullName + "  ,size:" + fls[i].Length * 0.000001f);
             }
         }
         else
@@ -623,7 +626,7 @@ public class QQCloudMgr
             return null;
         }
         AllNum = list.Count;
-        Debug.Log("【start upload】：" + AllNum);
+        Debug.Log("【start upload】：" + AllNum + "\n" + sb.ToString());
         uploadQiNiuIndex(list);
         return list;
     }
@@ -645,8 +648,11 @@ public class QQCloudMgr
         if (file.Exists)
         {
             curFl = file;
-
-            if (QQCloudMgr.IsQiniu)
+            if(QQCloudMgr.IsAliyun)
+            {
+                UpLoadAliyun(file, list, index);
+            }
+            else if (QQCloudMgr.IsQiniu)
                 UpLoadQiniuCDN(file, list, index);
             else
             {
@@ -695,13 +701,9 @@ public class QQCloudMgr
         };
         QQCloudMgr.DoUpload(info);
     }
-    public static string AccessKey;
-    public static string SecretKey;
-    public static string Bucket;
     static void UpLoadQiniuCDN(FileInfo file, List<string> list, int index)
     {
-
-        Qiniu.Http.HttpCode code = QiniuCSharpSDK.UploadFileTest(file.FullName,file.Name,Bucket, AccessKey,SecretKey);
+        Qiniu.Http.HttpCode code = QiniuCSharpSDK.UploadFileTest(file.FullName,file.Name);
         index++;
         if (code != Qiniu.Http.HttpCode.OK)
         {
@@ -712,8 +714,18 @@ public class QQCloudMgr
             Debug.Log("上传成功：" + file.Name + "   " + AllNum + "/ " + index);
         }
         if (index >= list.Count)
-            Debug.Log("上传完毕。" + AllNum + "  " + Bucket);
+            Debug.Log("上传完毕。" + AllNum + "  " + QiniuCSharpSDK.Bucket);
         uploadQiNiuIndex(list, index);
+    }
+    public static void UpLoadAliyun(FileInfo file, List<string> list, int index)
+    {
+        AliyunMgr.UploadFile(file.FullName, file.Name,delegate() {
+            index++;
+            if (index >= list.Count)
+                Debug.Log("上传完毕。" + AllNum + "  " + AliyunMgr.Bucket);
+            uploadQiNiuIndex(list, index);
+        });
+        
     }
 }
 

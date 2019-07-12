@@ -11,6 +11,7 @@ namespace highlight.tl
         public int FrameRate = DEFAULT_FRAMES_PER_SECOND;
         public const int DEFAULT_FRAMES_PER_SECOND = 60;
         public const int DEFAULT_LENGTH = 2;
+        [Newtonsoft.Json.JsonIgnore]
         public float LengthTime { get { return (float)Length / FrameRate; } }
         public static TimelineStyle CreatDefault(string name)
         {

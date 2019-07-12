@@ -118,7 +118,7 @@ public class VersionManager : MonoBehaviour
             {
                 string source = saveDir + patchList[i].toName;
                 string to = toDir + patchList[i].toName;
-                bool b = FileUtils.MoveFile(source, to);
+                bool b = MFileUtils.MoveFile(source, to);
                 if (b)
                     num++;
             }
@@ -276,7 +276,7 @@ public class VersionManager : MonoBehaviour
 
         if (!mStyle.IsUpdateVersion)
         {
-            this.end();
+          //  SDK.QGameSDK.Instance.Init(delegate() { this.end(); });
             return;
         }
         //oldMd5 = new CompareMD5(mPath + "/", "resFiles.txt");
@@ -300,20 +300,21 @@ public class VersionManager : MonoBehaviour
             mStyle.InitGet(delegate (string msg, bool IsError)
             {
                 MResUpdate.progressValue = 0f;
-                    // WWWHttpHelper.Log("获取Get服数据，检测版本号");
-                    if (IsError)
+                // WWWHttpHelper.Log("获取Get服数据，检测版本号");
+                if (IsError)
                 {
-                        // GoogleAnsSdk.LogScreen("GetError");
-                        string popupInfo = LangStyle.版本号下载异常info;
+                    // GoogleAnsSdk.LogScreen("GetError");
+                    string popupInfo = LangStyle.版本号下载异常info;
                     if (!mStyle.IsSDK)
                         msg = LangStyle.版本号下载异常info + "idef：" + SystemInfoUtil.deviceUniqueIdentifier + "\n" + msg;
                     MResUpdate.ShowPopup(LangStyle.版本号下载异常, msg, null, QuitGame);
                     return;
                 }
                 SendEvent(mStyle.State.ToString(), this.netVersion);
-                    //   GoogleAnsSdk.LogScreen("GetOK");
-                    //   QGame.QGameSDK.Instance.Init(sdkInitCallBack);
-                    sdkInitCallBack();
+                //   GoogleAnsSdk.LogScreen("GetOK");
+                VersionStyle.SendEvent("Init");
+               // SDK.QGameSDK.Instance.Init(sdkInitCallBack);
+                    //sdkInitCallBack();
             });
             //readNetVersion();
         }
@@ -325,6 +326,8 @@ public class VersionManager : MonoBehaviour
             {
                 string sizeStr = StringX.KBToSizeStr((float)mStyle.Size / 1024f);
                 string patchInfo = mStyle.GetJsonInfo("PatchInfo");
+                patchInfo = patchInfo.Replace("\\n", "\n");
+               // patchInfo = patchInfo.Replace("\\\"", "\"");
                 MResUpdate.ShowPopup(LangStyle.版本更新 + localVersion + "-" + netVersion + " " + "(" + sizeStr + ")", patchInfo, loadNetRes, QuitGame);
             }
             else
@@ -362,12 +365,28 @@ public class VersionManager : MonoBehaviour
     void cheatEnter(bool noSDK)
     {
         if (noSDK)
-            this.mStyle.IsSDKLogin = false;
+            this.mStyle.IsSDK = false;
         this.mStyle.IsGetCheat = true;
         vaildCheck();
     }
     public static int reLoadNum = 3;
     private bool isBackOffResVersion = false;
+    public void backOneCheck(bool force)
+    {
+        isBackOffResVersion = true;
+        int flag = mStyle.GetResFlag(mStyle.ResVersion);
+        if (flag < 0 || force)
+        {
+            DeleteLocalCache();
+            mStyle.SetResVersion(mStyle.SourceResVersion);
+        }
+        else
+        {
+            DeleteLocal7z();
+            mStyle.SetResVersion(mStyle.ResVersion - 1);
+        }
+        vaildCheck();
+    }
     /// <summary>
     /// 版本号有效性检测;
     /// </summary>
@@ -383,38 +402,46 @@ public class VersionManager : MonoBehaviour
         {
             mStyle.SaveBundleTimestamp();
             DeleteLocalCache();
+            mStyle.IsFirstStart = false;
         }
-        if (mStyle.ResVersion == mStyle.NetResVersion)
+        if (mStyle.NetResVersion < mStyle.SourceResVersion)
         {
+            Debug.Log("版本号异常,mStyle.NetResVersion < mStyle.SourceResVersion, local-net-SourceResVersion：" + localVersion + "-" + netVersion + "-" + mStyle.SourceResVersion);
+            end(false);
+            return;
+        }
+        if (mStyle.NetResVersion == mStyle.ResVersion)
+        {
+            if (mStyle.isNeedClearVersion)//问题已解决，回退1个版本，再次热更。
+            {
+                Debug.Log("问题已解决，回退1个版本，再次热更。");
+                backOneCheck(false);
+                return;
+            }
             Debug.Log("版本为最新");
             end();
             return;
         }
-        if (mStyle.NetResVersion < mStyle.SourceResVersion)
+        if (mStyle.NetResVersion < mStyle.ResVersion)//问题未解决，回退到初始版本，从初始版本开始更新。
         {
-            Debug.Log("版本号异常local-net-SourceResVersion：" + localVersion + "-" + netVersion + "-" + mStyle.SourceResVersion);
-            end(false);
+            //if (mStyle.VersionBackOff)
+            Debug.Log("问题未解决，回退到初始版本，从初始版本开始更新 local-net：" + localVersion + "-" + netVersion);
+            backOneCheck(true);
             return;
         }
-        if (mStyle.NetResVersion < mStyle.ResVersion)
+        if (!isBackOffResVersion && mStyle.isNeedClearVersion)//问题已解决，回退1个版本，再次热更。
         {
-            if (mStyle.VersionBackOff)
-            {
-                Debug.Log("版本号回退local-net：" + localVersion + "-" + netVersion);
-                DeleteLocalCache();
-                Instance.mStyle.ResVersion = Instance.mStyle.SourceResVersion;
-                vaildCheck();
-                return;
-            }
-            Debug.Log("版本号异常local-net-SourceResVersion：" + localVersion + "-" + netVersion + "-" + mStyle.SourceResVersion);
-            end(false);
+            Debug.Log("问题已解决，回退1个版本，再次热更。");
+            backOneCheck(false);
             return;
         }
-
         MResUpdate.ShowInitInfo(string.Format(LangStyle.版本更新2, localVersion, netVersion), mStyle.Is7ZPatch ? "....." : "...");
         {
             string rName = mStyle.Is7ZPatch ? resName + "_7z" : resName;
-            string sizeInfo = QQCloudMgr.HotFixUrl + rName + ".txt" + "?v=" + mStyle.CDNVersions;
+            string flag = "?v=" + mStyle.CDNVersions;
+            int resFlag = mStyle.GetResFlag(mStyle.NetResVersion);
+            flag += "." + resFlag;
+            string sizeInfo = QQCloudMgr.HotFixUrl + rName + ".txt" + flag;
             SendEvent(resName + "Start", "");
             WWWHttpHelper.ToGet(sizeInfo, delegate (WWWHttpData data)
             {
@@ -429,15 +456,15 @@ public class VersionManager : MonoBehaviour
                             vaildCheck();
                             return;
                         }
-                        if (!isTimeOut && !isBackOffResVersion && mStyle.ResVersion > 0)
-                        {
-                            isBackOffResVersion = true;
-                            mStyle.ResVersion--;
-                            vaildCheck();
-                            return;
-                        }
+                        //if (!isTimeOut && !isBackOffResVersion && mStyle.ResVersion > 0)
+                        //{
+                        //    isBackOffResVersion = true;
+                        //    mStyle.SetResVersion(mStyle.ResVersion-1);
+                        //    vaildCheck();
+                        //    return;
+                        //}
                     }
-                    isBackOffResVersion = false;
+                    //isBackOffResVersion = false;
                     SendEvent(resName + "Error", data.error);
                     MResUpdate.ShowPopup(LangStyle.下载失败, data.error + "\n" + localVersion + "-" + netVersion, vaildCheck, QuitGame);
                 }
@@ -494,7 +521,6 @@ public class VersionManager : MonoBehaviour
             if (hotFixKey != "Down")
             {
                 mResData.MoveFile();
-                this.saveResVersion(this.mStyle.NetResVersion);
                 IsResUpdateOK = true;
                 return;
             }
@@ -512,7 +538,6 @@ public class VersionManager : MonoBehaviour
             if (hotFixKey == "Force")
             {
                 mResData.MoveFile();
-                this.saveResVersion(this.mStyle.NetResVersion);
                 IsResUpdateOK = true;
             }
             tempTime = (System.DateTime.Now.Ticks - tempTime) / 10000;
@@ -525,6 +550,7 @@ public class VersionManager : MonoBehaviour
     }
     public void SendEvent(string info, string lable = "", long v = 0)
     {
+        VersionStyle.SendEvent(info, lable);
         //     if(VersionEvt == null)
         //          VersionEvt = new GoogleEvent("Version_" + VersionStyle.PatchTag + "_" + this.localVersion + " " + mStyle.HotFixKey, 0, -1);
         //      VersionEvt.SendEvent(info, v, lable);
@@ -609,8 +635,9 @@ public class VersionManager : MonoBehaviour
         SendEvent("结束");
         if (save)
         {
-            this.mStyle.ResVersion = this.mStyle.NetResVersion;
+            mStyle.SetResVersion(this.mStyle.NetResVersion);
         }
+        isBackOffResVersion = false;
         //    BuglyInit.SetScene(this.mStyle.ResVersion);
         if (mCheckComplete != null)
             mCheckComplete();
@@ -650,7 +677,10 @@ public class VersionManager : MonoBehaviour
             
         }
         PlayerPrefs.SetInt(pkg7zUrl, mStyle.Size);
-        string resUrl = resName + ".7z" + "?v=" + mStyle.CDNVersions;
+        string flag = "?v=" + mStyle.CDNVersions;
+        int resFlag = mStyle.GetResFlag(mStyle.NetResVersion);
+        flag += "." + resFlag;
+        string resUrl = resName + ".7z" + flag;
         SendEvent("ResStart7z", resUrl);
         RequestInfo reInfo = new RequestInfo(QQCloudMgr.HotFixUrl + resUrl);
         reInfo.SetSaveUrl(pkg7zUrl, mStyle.Size, true);
@@ -697,8 +727,14 @@ public class VersionManager : MonoBehaviour
         {
             Debug.Log("解压完毕");
             SendEvent("解压完毕");
+            string dirPath = package7zUrl.Replace(".7z", "/");
             MResUpdate.ShowInitInfo(LangStyle.解压完毕, LangStyle.解压完毕);
-            DirectoryInfo pack = new DirectoryInfo(package7zUrl.Replace(".7z", "/"));
+            DirectoryInfo pack = new DirectoryInfo(dirPath);
+            if(!pack.Exists)
+            {
+                Debug.LogError("找不到解压文件夹：" + dirPath);
+                return;
+            }
             string toDir = Application.persistentDataPath + "/" + Util.PlatformDir;
             FileInfo[] fls = pack.GetFiles("*", SearchOption.AllDirectories);
             for (int i = 0; i < fls.Length; i++)
@@ -727,7 +763,6 @@ public class VersionManager : MonoBehaviour
             }
             pack.Delete(true);
             File.Delete(package7zUrl);
-            this.saveResVersion(this.mStyle.NetResVersion);
             SendEvent("MoveFile");
             IsResUpdateOK = true;
             //IsOKDecompression = true;
@@ -862,8 +897,23 @@ public class VersionManager : MonoBehaviour
             System.IO.Directory.CreateDirectory(localUrl);
         }
         Debug.Log("删除本地缓存资源。" + localUrl);
+        DeleteLocal7z();
     }
-
+    public static void DeleteLocal7z()
+    {
+        string localUrl = Application.persistentDataPath + "/";
+        if (System.IO.Directory.Exists(localUrl))
+        {
+            DirectoryInfo dir = new DirectoryInfo(localUrl);
+            FileInfo[] fls = dir.GetFiles("*.7z", SearchOption.TopDirectoryOnly);
+            for (int i = 0; i < fls.Length; i++)
+            {
+                Debug.Log("删除本地7z资源。" + fls[i].FullName);
+                fls[i].Delete();
+            }
+        }
+        
+    }
     /// <summary>
     /// 退出游戏
     /// </summary>

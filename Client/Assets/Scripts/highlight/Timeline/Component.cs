@@ -62,7 +62,7 @@ namespace highlight.tl
     public abstract class ComponentStyle : Object
     {
         public TriggerType tType = TriggerType.不触发;
-        // [JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public string TypeName
         {
             get
@@ -77,7 +77,7 @@ namespace highlight.tl
 
         public readonly static Dictionary<Type, TimeAttribute> compAttrDic = new Dictionary<Type, TimeAttribute>();
         protected TimeAttribute mAttr;
-        // [JsonIgnore]
+        [Newtonsoft.Json.JsonIgnore]
         public TimeAttribute Attr
         {
             get

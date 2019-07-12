@@ -7,17 +7,10 @@ using System.Text;
 
 public enum eChannel
 {
-    YJ = 0,//易接
-    UC_ALI_9YOU = 1,//9游
-    XM = 2,//小米
-    CYY = 3,//
-    IAP = 4,//苹果
-    I31YOU = 5,//31you
-    Galaxy = 6,//银河
-    AOAIOS = 7,
-    IAPP = 101,     //爱贝
-    Google = 102,//谷歌
-    Onestore = 103,// 韩国Onestore
+    None = 0,//
+    YOUKA_Android = 1,
+    YOUKA_iOS = 2,
+    IAP = 3,
 
     SuperSDK = 998,//
     BanShu = 999,//版署
@@ -298,7 +291,7 @@ public class PatchResData
             }
         }
         sb.Append(size.ToString());
-        highlight.FileUtils.WriteTxt(path, sb);
+        MFileUtils.WriteTxt(path, sb);
     }
     public static void SaveFileList(string publishPath, string v,int idx)
     {
@@ -319,7 +312,7 @@ public class PatchResData
             sb.AppendLine(QQCloudMgr.HotFixUrl + list[i].resName);
         }
         string info = sb.ToString();
-        highlight.FileUtils.WriteTxt(publishPath + v + ".txt", info);
+        MFileUtils.WriteTxt(publishPath + v + ".txt", info);
         Debug.Log(info);
     }
     public static List<PatchResData> CreatPatchListByUrl(string url, out long size)

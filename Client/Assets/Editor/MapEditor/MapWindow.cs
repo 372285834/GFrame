@@ -62,6 +62,10 @@ public class MapWindow : EditorWindow
                 mDic[guid].guid = guid;
             }
             MapItemPrefabData data = mDic[guid];
+
+            //import.assetBundleName = "scene/prefab/" + mono.name + ".prefab.k";
+            //import.SaveAndReimport();
+
             data.abName = import.assetBundleName;
             data.prefab = mono;
         }
@@ -160,13 +164,31 @@ public class MapWindow : EditorWindow
         {
             if (data.prefab == null)
                 continue;
-            MapItemMono mono = data.prefab;
+
+            //MapItemMono mono = data.prefab;
+            //Renderer[] rends = mono.GetComponentsInChildren<Renderer>(true);
+            //for (int i = 0; i < rends.Length; i++)
+            //{
+            //    for (int j = 0; j < rends[i].sharedMaterials.Length; j++)
+            //    {
+            //        Material mat = rends[i].sharedMaterials[j];
+            //        if (mat != null)
+            //        {
+            //            string path2 = AssetDatabase.GetAssetPath(mat);
+            //            if (!path2.EndsWith(".mat") || path2.Contains("BundleResources"))
+            //                continue;
+            //            AssetImporter import2 = AssetImporter.GetAtPath(path2);
+            //            import2.assetBundleName = "material/scene/" + mat.name + ".mat.k";
+            //            import2.SaveAndReimport();
+            //        }
+            //    }
+            //}
             if (data.eType == eMapItemType.Mesh)
             {
                 MeshFilter mFilter = data.prefab.GetComponent<MeshFilter>();
                 MeshRenderer mRender = data.prefab.GetComponent<MeshRenderer>();
                 data.mesh = mFilter.sharedMesh;
-                data.materials = mRender.materials;
+                data.materials = mRender.sharedMaterials;
                 // data.prefab = null;
             }
             else
@@ -217,7 +239,18 @@ public class MapWindow : EditorWindow
         return b;
     }
 
-    
+
+    //[MenuItem("WindowTools/showBirthNode")]
+    //public static void showBirthNode()
+    //{
+    //    BirthNode.showGizmos = true;
+    //}
+    //[MenuItem("WindowTools/hideBirthNode")]
+    //public static void hideBirthNode()
+    //{
+    //    BirthNode.showGizmos = false;
+    //}
+
     [UnityEditor.MenuItem("WindowTools/更新shamo数据")]
     public static void EditorCreateMapDataStyle()
     {

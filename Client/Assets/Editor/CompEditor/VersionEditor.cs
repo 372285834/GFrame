@@ -12,11 +12,17 @@ using Frame;
 public class VersionEditor : Editor
 {
     VersionStyle mScript;
-    //public List<SDKStyle> mlist;
+    public List<ChannelData> mlist;
+    public string[] names;
     Vector2 sdkView = Vector2.zero;
     void OnEnable()
     {
-        //mlist = EditorPath.GetSDKStyleList();
+        mlist = EditorPath.GetChannelList();
+        names = new string[mlist.Count];
+        for (int i = 0; i < mlist.Count; i++)
+        {
+            names[i] = mlist[i].Channel.ToString();
+        }
     }
     //在这里方法中就可以绘制面板。
     public override void OnInspectorGUI()
@@ -29,7 +35,7 @@ public class VersionEditor : Editor
         if (GUILayout.Button("删除缓存",GUILayout.Height(35)))
         {
             VersionManager.DeleteLocalCache();
-          //  MPrefs.SetString(Frame.Const.LanguageKey, "");
+            //MPrefs.SetString(Frame.Const.LanguageKey, "");
         }
         //if (GUILayout.Button("Refresh", GUILayout.Height(35)))
         //{
@@ -39,7 +45,7 @@ public class VersionEditor : Editor
         base.OnInspectorGUI();
         //得到Test对象
         mScript = (VersionStyle)target;
-
+        DrawChannel();
         //mScript.GetUrl = EditorGUILayout.EnumPopup("GetUrl", mScript.GetUrl);
         //if (GUILayout.Button("打包"))
         //{
@@ -50,7 +56,54 @@ public class VersionEditor : Editor
         //{
 
         //}
-        
+
+    }
+    void DrawChannel()
+    {
+        if (mlist != null && mlist.Count > 0)
+        {
+            GUILayout.Space(30);
+            int curIdx = mlist.FindIndex(x => x == mScript.channelData);
+            if (curIdx < 0)
+                curIdx = 0;
+            curIdx = EditorGUILayout.Popup(curIdx, names);
+            mScript.channelData = mlist[curIdx];
+            //sdkView = GUILayout.BeginScrollView(sdkView, false, true, GUILayout.Height(mlist.Count * 27f));
+            //for (int i = 0; i < mlist.Count; i++)
+            //{
+            //    ChannelData data = mlist[i];
+            //    GUILayout.BeginHorizontal();
+            //    string tagStr = data.Channel + " " + data.bundleDisplayName + " " + data.bundleName;
+            //    if (GUILayout.Button(tagStr, GUILayout.Height(25)))
+            //    {
+            //        Selection.activeObject = data;
+            //    }
+            //    bool isUse = data == mScript.channelData;
+            //    GUI.enabled = !isUse;
+            //    if (GUILayout.Button("Use", GUILayout.Height(25)))
+            //    {
+            //        mScript.channelData = data;
+            //        //SetFBStyle(sdk);
+            //        EditorUtility.SetDirty(mScript);
+            //    }
+            //    GUI.enabled = true;
+            //    GUILayout.EndHorizontal();
+            //}
+            if (mScript.channelData == null)
+                mScript.channelData = mlist[0];
+        }
+    }
+    public static void SetChannel(eChannel c)
+    {
+        List<ChannelData> mlist = EditorPath.GetChannelList();
+        for (int i = 0; i < mlist.Count; i++)
+        {
+            if(mlist[i].Channel == c)
+            {
+                VersionStyle.Instance.channelData = mlist[i];
+                return;
+            }
+        }
     }
     //public static void SetFBStyle(SDKStyle style)
     //{

@@ -44,9 +44,9 @@ public class WWWHttpHelper : MonoBehaviour
     //{
     //    string json = "";//MUtil.ToJsonLua(lua);
     //    WWWHttpData data = new WWWHttpData(json, url);
-    //   // data.luaCallback = aCallback;
+    //    data.luaCallback = aCallback;
     //    def = string.IsNullOrEmpty(def) ? "DefPay" : def;
-    //    //data.defUrl = VersionManager.Instance.mStyle.GetJsonInfo(def);
+    //    data.defUrl = VersionManager.Instance.mStyle.GetJsonInfo(def);
     //    AddData(url, data);
     //    return data;
     //}

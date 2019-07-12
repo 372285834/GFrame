@@ -46,7 +46,8 @@ namespace highlight.tl
                 for (int i = 0; i < comps.Count; i++)
                 {
                     drawTitle(comps[i].style.Attr.name, comps[i], comps.Count - 1);
-
+                    if (i >= comps.Count)
+                        return;
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(4f);
                     GUILayout.BeginVertical();

@@ -186,8 +186,8 @@ namespace highlight
             //Itemtag = mTag;
             for (int i = this.listItem.Count; i < ListNums; i++)
             {
-                GameObject item = Instantiate(goListPre) as GameObject;
-                item.transform.SetParent(this.gameObject.transform);
+                GameObject item = Instantiate(goListPre, this.gameObject.transform) as GameObject;
+                //item.transform.SetParent(this.gameObject.transform);
                 InitPreGo(item);
                 AddItem(item);
             }
@@ -255,7 +255,7 @@ namespace highlight
             if (this.Grid == null)
                 return;
             //mwhList = list;
-            mSize = Vector2.zero;
+            mSize = new Vector2(Grid.padding.left, Grid.padding.top);
             if (mLuaWHList != null && mLuaWHList.Count > 0)
             {
                 if (mItemPosList == null)
@@ -528,6 +528,28 @@ namespace highlight
                 return idx;
             }
         }
+        public int GetIndexByRect(Vector2 screenPos,Camera ca,float dis)
+        {
+            Vector2 lt = Vector2.zero;
+            float cur = Int32.MaxValue;
+            int result = -1;
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(this.rectTransform, screenPos, ca, out lt);
+            for (int i=0;i<this.listItem.Count;i++)
+            {
+                IUIItem item = this.listItem[i];
+                float value = Vector2.Distance(lt, item.rectTransform.localPosition);
+                if(cur > value && dis > value)
+                {
+                    cur = value;
+                    result = i;
+                }
+            }
+            if(result >= 0)
+            {
+               // Debug.Log("result:" + result + "," + cur);
+            }
+            return result;
+        }
         protected virtual void OnDestroy()
         {
             if (listItem != null)
@@ -579,8 +601,8 @@ namespace highlight
                     goListPre.transform.SetAsFirstSibling();
                 for (int i = this.transform.childCount; i < ListNums; i++)
                 {
-                    GameObject item = Instantiate(goListPre) as GameObject;
-                    item.transform.SetParent(this.gameObject.transform);
+                    GameObject item = Instantiate(goListPre, this.gameObject.transform) as GameObject;
+                    //item.transform.SetParent(this.gameObject.transform);
                     InitPreGo(item);
                     item.hideFlags = HideFlags.DontSave;
                 }
