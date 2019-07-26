@@ -8,7 +8,11 @@ namespace highlight.tl
     public class TimelineStyle : TimeStyle
     {
         public bool loop = false;
-        public int FrameRate = DEFAULT_FRAMES_PER_SECOND;
+        public bool forever = false;
+        public string[] keys;
+        public int[] values;
+        [Newtonsoft.Json.JsonIgnore]
+        public int FrameRate { get { return DEFAULT_FRAMES_PER_SECOND; } }
         public const int DEFAULT_FRAMES_PER_SECOND = 60;
         public const int DEFAULT_LENGTH = 2;
         [Newtonsoft.Json.JsonIgnore]
@@ -39,10 +43,12 @@ namespace highlight.tl
         public TimelineStyle lStyle { get { return timeStyle as TimelineStyle; } }
         public Target target = new Target();
         public Role owner = null;
-        public Buff buff = null;
+       // public Buff buff = null;
         public Skill skill = null;
         public Dictionary<string, TimeObject> nodeDic = new Dictionary<string, TimeObject>();
         public Dictionary<string, TimeAction> actionDic = new Dictionary<string, TimeAction>();
+        public Dictionary<string, object> globalDic = new Dictionary<string, object>();
+        public Observer<string, object> globalObs = new Observer<string, object>();
         public float FrameRate
         {
             get
@@ -108,11 +114,38 @@ namespace highlight.tl
             actionDic.TryGetValue(key, out action);
             return action;
         }
+        public T GetGlobal<T>(string k)
+        {
+            object data = null;
+            this.globalDic.TryGetValue(k, out data);
+            if (data != null)
+                return (T)data;
+            return default(T);
+        }
+        public bool SetGlobalValue(string k,object v)
+        {
+            if(globalDic.ContainsKey(k))
+            {
+                globalDic[k] = v;
+                globalObs.Change(k, v);
+                return true;
+            }
+            return false;
+        }
         public override void Init()
         {
             if (_isInit)
                 return;
             _isInit = true;
+            List<ComponentData> datas = this.ComponentList;
+            for (int i = 0; i < datas.Count; i++)
+            {
+                if (datas[i] is GlobalData)
+                {
+                    GlobalData data = (datas[i] as GlobalData);
+                    this.globalDic[data.key] = data.GetValue();
+                }
+            }
             base.Init();
             //this.Reset();
         }
@@ -123,11 +156,12 @@ namespace highlight.tl
             _isInit = false;
             base.Destroy();
             owner = null;
-            buff = null;
+         //   buff = null;
             skill = null;
             target.Clear();
             nodeDic.Clear();
             actionDic.Clear();
+            globalDic.Clear();
         }
         public override void Stop(bool reset = false)
         {
@@ -183,7 +217,7 @@ namespace highlight.tl
 
             _UpdateFrame(_currentFrame);
 
-            if (_currentFrame >= this.Length)
+            if (!this.lStyle.forever && _currentFrame >= this.Length)
             {
                 Stop(this.lStyle.loop);
                 if (this.lStyle.loop)

@@ -8,9 +8,13 @@ namespace highlight
     {
         public static Timer Timer = new Timer();
         public static int deltaFrame { private set; get; }
+        public static int deltaTime_Mill;
         public static int frame;
-        public static float logicDeltaTime = 66.66f;
-        public static float time = 0;
+        public static int time;//毫秒
+        public static float logicDeltaTime = 0.066f;
+        public static int Acceleration = 1;
+        public static int RenderFrameRate = 60;
+        public static float render_time = 0;
         public static float nextLogicTime = 0;
         public static bool stand_alone = true;
         static bool isInit = false;
@@ -19,16 +23,16 @@ namespace highlight
 
         public static void Init()
         {
-            if (isInit)
-                return;
-            isInit = true;
-#if UNITY_EDITOR
-            if(!Application.isPlaying)
-            {
-                UnityEditor.EditorApplication.update -= Update;
-                UnityEditor.EditorApplication.update += Update;
-            }
-#endif
+            //if (isInit)
+            //    return;
+            //isInit = true;
+//#if UNITY_EDITOR
+//            if(!Application.isPlaying)
+//            {
+//                UnityEditor.EditorApplication.update -= Update;
+//                UnityEditor.EditorApplication.update += Update;
+//            }
+//#endif
         }
         public static Vector3 downPos;
         public static float moveDis
@@ -42,7 +46,7 @@ namespace highlight
         {
             frame += delta;
             deltaFrame = delta;
-            RoleManager.Update(frame);
+            RoleManager.Update(delta);
         }
         public static void UpdateRender(float interpolation)
         {
@@ -50,32 +54,36 @@ namespace highlight
         }
         static float curTime;
         public static float interpolationTime;
+        public static bool excFrame = false;
         public static void Update()
         {
             if (IsDown())
                 downPos = Input.mousePosition;
             UpdateShaderTime();
-
-            time += Time.deltaTime;
-            bool isUpdateRender = false;
-            if(time > nextLogicTime || Events.Length > 1)
+            float delta = Time.deltaTime;
+            render_time += delta;
+            excFrame = false;
+            if (render_time > nextLogicTime)
             {
-                Events.Update();
-                if (Events.Current.Count > 0)
+               // if(Events.Length > 0)
                 {
-                    isUpdateRender = true;
+                    excFrame = true;
+                    Events.Update();
                     nextLogicTime += logicDeltaTime;
-                    int detalFrame = Mathf.CeilToInt(Application.targetFrameRate * logicDeltaTime * 0.001f);
+                    int detalFrame = Mathf.CeilToInt(RenderFrameRate * logicDeltaTime);
+                    deltaTime_Mill = Mathf.RoundToInt(logicDeltaTime * 1000);
+                    time += deltaTime_Mill;
                     UpdateLogic(detalFrame);
                 }
             }
-            if(interpolationTime <= 1f || isUpdateRender)
+            if(interpolationTime <= 1f || excFrame)
             {
-                interpolationTime = (time + logicDeltaTime - nextLogicTime) / logicDeltaTime;
-                if (interpolationTime < 0f)
+                interpolationTime = (render_time + logicDeltaTime - nextLogicTime) / logicDeltaTime;
+                if (interpolationTime < 0f || interpolationTime > 1f)
                     interpolationTime = 1f;
                 UpdateRender(interpolationTime);
             }
+           // Debug.Log(interpolationTime + "," + excFrame);
             //  LabelRoll.UpdateMaterila();
             Timer.update();
             obs_update.Change();
@@ -90,11 +98,12 @@ namespace highlight
         public static KeyMoveEvent keyMove = new KeyMoveEvent();
         public static void LateUpdate()
         {
-            if(stand_alone)
+            if (stand_alone)
             {
-                Events.Enqueue(ListPool<RoleEvent>.Get());
+                keyMove.Update();
+                if (Events.Length == 0)
+                    Events.Enqueue();
             }
-            keyMove.Update();
         }
         public static float ShaderTime = 0f;
         public static void UpdateShaderTime()

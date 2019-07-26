@@ -10,11 +10,11 @@ namespace highlight.tl
         [Desc("目标挂点")]
         public ITransform target;
 
-        public override bool OnTrigger()
+        public override TriggerStatus OnTrigger()
         {
             this.role.SetParent(this.target.transform);
             //this.res.obj.SetLocalPos(this.target.loStyle.off);
-            return true;
+            return TriggerStatus.Success;
         }
         public override void OnUpdate()
         {

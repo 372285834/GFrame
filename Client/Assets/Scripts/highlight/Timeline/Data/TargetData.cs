@@ -38,7 +38,7 @@ namespace highlight.tl
                         _obj = this.timeObject.role;
                         break;
                     case TargetType.Target:
-                        _obj = this.root.target.getObj(s.index);
+                        _obj = this.target.getObj(s.index);
                         break;
                     case TargetType.Parent:
                         _obj = this.timeObject.parent.role;

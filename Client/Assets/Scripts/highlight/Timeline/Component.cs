@@ -12,6 +12,7 @@ namespace highlight.tl
         不触发 = 0,
         失败后继续 = 1,
         失败后停止 = 2,
+        永久触发 = 3,
     }
     public enum TriggerStatus
     {
@@ -48,20 +49,21 @@ namespace highlight.tl
         public TriggerStatus status = TriggerStatus.InActive;
         public TimeObject timeObject { protected set; get; }
         public Timeline root { get { return this.timeObject.root; } }
+        public Target target { get { return this.root.target; } }
         public Role owner { get { return this.root.owner; } }
         public TimeStyle timeStyle { get { return this.timeObject.timeStyle; } }
         public string name { get { return this.timeObject.name; } }
         public List<ComponentData> ComponentList { get { return timeObject.ComponentList; } }
         #region virtual Function
         public virtual void OnInit() { }
-        public virtual bool OnTrigger() { return true; }
         public virtual void OnFinish() { } // event完成
         public virtual void OnStop() { } //timeline 完成
+        public virtual void OnDestroy() { }
         #endregion
     }
     public abstract class ComponentStyle : Object
     {
-        public TriggerType tType = TriggerType.不触发;
+      //  public TriggerType tType = TriggerType.不触发;
         [Newtonsoft.Json.JsonIgnore]
         public string TypeName
         {
@@ -102,26 +104,17 @@ namespace highlight.tl
 #if UNITY_EDITOR
         public virtual void OnInspectorGUI()
         {
-            this.tType = (TriggerType)EditorGUILayout.EnumPopup("触发类型：", tType);
+            //this.tType = (TriggerType)EditorGUILayout.EnumPopup("触发类型：", tType);
         }
 #endif
     }
     public class ComponentData : Component
     {
+        public virtual bool OnTrigger() { return true; }
         public ComponentStyle style { private set; get; }
-        public TriggerStatus Trigger()
+        public T GetStyle<T>() where T : ComponentStyle
         {
-            status = TriggerStatus.Success;
-            TriggerType tType = style.tType;
-            if (tType == TriggerType.不触发)
-                return status;
-            if (OnTrigger())
-                return status;
-            if (tType == TriggerType.失败后继续)
-                status = TriggerStatus.Running;
-            else
-                status = TriggerStatus.Failure;
-            return status;
+            return (T)style;
         }
         private readonly static Dictionary<string, ObjectPool> CompPoolDic = new Dictionary<string, ObjectPool>();
 

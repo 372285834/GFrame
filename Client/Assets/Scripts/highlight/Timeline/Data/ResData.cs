@@ -30,6 +30,7 @@ namespace highlight.tl
     public sealed class ResData : ComponentData
     {
         public System.Object asset;
+        public ResStyle mStyle { get { return this.style as ResStyle; } }
         public bool isLoaded { get { return asset != null; } }
         public Role role;
         public override void OnInit()
@@ -52,17 +53,17 @@ namespace highlight.tl
         }
         public override bool OnTrigger()
         {
-        //    ResStyle s = this.style as ResStyle;
-        //    role = RoleManager.Creat(RoleType.Bullet);
+            //ResStyle s = this.style as ResStyle;
+            //role = RoleManager.Creat(RoleType.Bullet);
             return true;
         }
         public override void OnFinish()
         {
-        //    if(role != null)
-        //    {
-        //        RoleManager.Delete(role.onlyId);
-        //        role = null;
-        //    }
+            //if (role != null)
+            //{
+            //    RoleManager.Delete(role.onlyId);
+            //    role = null;
+            //}
         }
     }
 }

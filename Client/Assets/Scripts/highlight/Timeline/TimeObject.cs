@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -9,7 +9,7 @@ namespace highlight.tl
     {
         public string name = "";
         public int x = 0;
-        public int y = 0;
+        public int y = 60;
         //[NonSerialized]
         public TimeStyle[] Childs = new TimeStyle[0];
         public ComponentStyle[] Components = new ComponentStyle[0];
@@ -104,6 +104,7 @@ namespace highlight.tl
             obj.root = root;
             obj.timeStyle = data;
             obj.frameRange = data.Range;
+            obj._hasFinished = false;
             root.nodeDic[data.name] = obj;
             for (int i = 0; i < data.Components.Length; i++)
             {
@@ -173,16 +174,17 @@ namespace highlight.tl
             obj.Init();
             return obj;
         }
-        public void RemoveChild(TimeObject evt)
+        public void RemoveChild(TimeObject evt,bool destroy = true)
         {
             if (this.timeStyle == null || evt == null)
                 return;
-            evt.Destroy();
             if (_childs.Remove(evt))
             {
                 RemoveArray<TimeStyle>(ref timeStyle.Childs, evt.timeStyle);
                 UpdateChildIds();
             }
+            if(destroy)
+                evt.Destroy();
         }
         public void SetChildIndex(TimeObject obj, int idx)
         {
@@ -311,7 +313,9 @@ namespace highlight.tl
         private void UpdateChildIds()
         {
             for (int i = 0; i < _childs.Count; ++i)
-                _childs[i].SetOnlyId((ulong)i);
+            {
+                _childs[i].index = i;
+            }
         }
 
         public virtual void Init()
@@ -340,11 +344,13 @@ namespace highlight.tl
             for (int i = 0; i < _actions.Count; i++)
             {
                 _actions[i].ClearData();
+                _actions[i].OnDestroy();
                 TimeAction.Release(_actions[i]);
             }
             _actions.Clear();
             for (int i = 0; i < _components.Count; i++)
             {
+                _components[i].OnDestroy();
                 ComponentData.Release(_components[i]);
             }
             _components.Clear();
@@ -386,7 +392,12 @@ namespace highlight.tl
             PostEvent();
 #endif
         }
-
+        public void TryStop()
+        {
+            //if (this._status == TriggerStatus.InActive)
+            //    return;
+            this.Stop();
+        }
         public virtual void Stop(bool reset = false)
         {
             if (this.IsTrigger && !HasFinished)
@@ -428,8 +439,10 @@ namespace highlight.tl
             if (!Trigger())
                 return;
             OnUpdate();
+            if (this.HasFinished)
+                return;
             UpdateChilds(frame);
-            if (frame == Length)
+            if (!this.root.lStyle.forever && frame >= Length)
             {
                 Finish();
             }
@@ -437,11 +450,22 @@ namespace highlight.tl
             PostEvent();
 #endif
         }
+        public void UpdateChilds()
+        {
+            UpdateChilds(this.mFrameSinceTrigger);
+        }
         public virtual void UpdateChilds(int frame)
         {
             int limit = _childs.Count;
+            if (root.lStyle.forever)
+            {
+                for (int i = 0; i < limit; i++)
+                {
+                    _childs[i]._UpdateFrame(frame);
+                }
+                return;
+            }
             int increment = 1;
-
             if (!root.IsPlayingForward)
             {
                 limit = -1;
@@ -467,12 +491,12 @@ namespace highlight.tl
         }
         public bool Trigger()
         {
-            if(_status == TriggerStatus.InActive || _status == TriggerStatus.Running)
-            {
+          //  if(_status == TriggerStatus.InActive || _status == TriggerStatus.Running)
+         //   {
                 _status = OnTrigger();
                 if (_status == TriggerStatus.Failure)
                     this.Stop();
-            }
+       //     }
             return this.Status == TriggerStatus.Success;
         }
         public void Finish()
@@ -488,6 +512,20 @@ namespace highlight.tl
         }
         #region editor
 #if UNITY_EDITOR
+        public void OnDrawGizmos()
+        {
+            if (this.HasFinished)
+                return;
+            for (int i = 0; i < _actions.Count; i++)
+            {
+                if(_actions[i].status == TriggerStatus.Running || _actions[i].status == TriggerStatus.Success)
+                    _actions[i].OnDrawGizmos();
+            }
+            for (int i = 0; i < _childs.Count; i++)
+            {
+                _childs[i].OnDrawGizmos();
+            }
+        }
         protected void UpdateEditor(int frame)
         {
             setProgress(frame);
@@ -498,7 +536,7 @@ namespace highlight.tl
 
             OnUpdateEditor();
             UpdateChildsEditor(frame);
-            if (frame == Length)
+            if (!root.lStyle.forever && frame == Length)
                 Finish();
 
             PostEvent();
@@ -509,7 +547,14 @@ namespace highlight.tl
 
             if (limit == 0)
                 return;
-
+            if (root.lStyle.forever)
+            {
+                for (int i = 0; i < limit; i++)
+                {
+                    _childs[i]._UpdateFrame(frame);
+                }
+                return;
+            }
             int increment = 1;
 
             if (!root.IsPlayingForward)
@@ -644,37 +689,48 @@ namespace highlight.tl
         }
         protected TriggerStatus OnTrigger()
         {
-            TriggerStatus status = TriggerStatus.Success;
             for (int i = 0; i < _components.Count; i++)
             {
-                if(_components[i].status == TriggerStatus.InActive || _components[i].status == TriggerStatus.Running)
+                if(_components[i].status == TriggerStatus.InActive)
                 {
-                    TriggerStatus _status = _components[i].Trigger();
-                    if (_status == TriggerStatus.Failure)
-                        return _status;
-                    if (_status == TriggerStatus.Running)
-                        status = _status;
+                    bool b = _components[i].OnTrigger();
+                    _components[i].status = b ? TriggerStatus.Success : TriggerStatus.Failure;
+                    if (!b)
+                        return TriggerStatus.Failure;
                 }
             }
+            TriggerStatus s = TriggerStatus.Success;
             for (int i = 0; i < _actions.Count; i++)
             {
-                if (_actions[i].status == TriggerStatus.InActive || _actions[i].status == TriggerStatus.Running)
+                TimeAction ac = _actions[i];
+                if (ac.status == TriggerStatus.InActive || ac.status == TriggerStatus.Running)
                 {
-                    TriggerStatus _status = _actions[i].Trigger();
-                    if (_status == TriggerStatus.Failure)
-                        return _status;
-                    if (_status == TriggerStatus.Running)
-                        status = _status;
+                    ac.status = ac.OnTrigger();
+                    if (this.HasFinished)
+                        return TriggerStatus.Failure;
+                    if (ac.status == TriggerStatus.Failure)
+                        return ac.status;
+                    if (ac.status == TriggerStatus.Running)
+                    {
+                        return ac.status;
+                        //s = ac.status;
+                    }
                 }
             }
-            return status;
+            return s;
         }
         protected void OnUpdate()
         {
             //for (int i = 0; i < _components.Count; i++)
             //    _components[i].OnUpdate();
             for (int i = 0; i < _actions.Count; i++)
+            {
+                if (this.HasFinished)
+                    return;
+                ProfilerTest.BeginSample(_actions[i].style.Attr.updateName);
                 _actions[i].OnUpdate();
+                ProfilerTest.EndSample();
+            }
         }
         // event完成
         protected void OnFinish()

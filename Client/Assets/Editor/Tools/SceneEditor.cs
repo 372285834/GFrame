@@ -15,6 +15,28 @@ public class SceneEditor
     static MapItemMono curItem;
     static void Update()
     {
+        if (selectNode != null)
+        {
+            //  Selection.activeGameObject = selectNode.gameObject;
+            selectNode = null;
+
+            UnityEngine.Object[] objects = Selection.objects;
+            for (int i = 0; i < objects.Length; i++)
+            {
+                if (objects[i] is GameObject)
+                {
+                    if ((objects[i] as GameObject).GetComponent<BirthNode>() == null)
+                    {
+                        BirthNode node = (objects[i] as GameObject).GetComponentInParent<BirthNode>();
+                        if (node != null)
+                        {
+                            objects[i] = node.gameObject;
+                        }
+                    }
+                }
+            }
+            Selection.objects = objects;
+        }
 
         GameObject go = Selection.activeGameObject;
         if (go != null)
@@ -36,7 +58,7 @@ public class SceneEditor
         }
     }
     public static bool IsLimitSceneSelectGameObject = true;
-   // static BirthNode selectNode = null;
+    static BirthNode selectNode = null;
     static void SelectionChanged()
     {
         UnityEngine.Object[] objects = Selection.objects;
@@ -44,16 +66,16 @@ public class SceneEditor
         {
             if (objects[i] is GameObject)
             {
-                //if ((objects[i] as GameObject).GetComponent<BirthNode>() == null)
-                //{
-                //    BirthNode node = (objects[i] as GameObject).GetComponentInParent<BirthNode>();
-                //    if (node != null)
-                //    {
-                //        selectNode = node;
+                if ((objects[i] as GameObject).GetComponent<BirthNode>() == null)
+                {
+                    BirthNode node = (objects[i] as GameObject).GetComponentInParent<BirthNode>();
+                    if (node != null)
+                    {
+                        selectNode = node;
 
 
-                //    }
-                //}
+                    }
+                }
             }
         }
     }

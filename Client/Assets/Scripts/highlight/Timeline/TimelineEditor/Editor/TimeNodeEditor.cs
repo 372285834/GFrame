@@ -20,9 +20,7 @@ namespace highlight.tl
         public static bool showAction = true;
         public override void OnInspectorGUI()
         {
-            mScript = target as TimeNode;
-            style = mScript.style;
-            obj = mScript.obj;
+            Init();
             if (obj == null || style == null)
             {
            //     TimeWindow.ShowEditor();
@@ -37,6 +35,21 @@ namespace highlight.tl
             GUILayout.BeginVertical();
             ShowMenu();
             drawRang();
+            DrawComponents();
+            GUILayout.Space(10f);
+            DrawActions();
+            // DrawSeparator(2);
+            // GUILayout.Space(5f);
+            GUILayout.EndVertical();
+        }
+        public void Init()
+        {
+            mScript = target as TimeNode;
+            style = mScript.style;
+            obj = mScript.obj;
+        }
+        public void DrawComponents()
+        {
             string arr2 = showData ? "Hide" : "Show";
             List<ComponentData> comps = mScript.obj.ComponentList;
             if (GUILayout.Button("数据(" + comps.Count + ")" + arr2))
@@ -60,9 +73,9 @@ namespace highlight.tl
 
                 }
             }
-            GUILayout.Space(10f);
-            // DrawSeparator(2);
-            // GUILayout.Space(5f);
+        }
+        public void DrawActions()
+        {
             List<TimeAction> Actions = mScript.obj.ActionList;
             string arr = showAction ? "Hide" : "Show";
             if (GUILayout.Button("行为(" + Actions.Count + ")" + arr))
@@ -72,7 +85,18 @@ namespace highlight.tl
             {
                 for (int i = 0; i < Actions.Count; i++)
                 {
-                    drawTitle(Actions[i].style.Attr.name, Actions[i], Actions.Count - 1);
+                    TimeAction ac = Actions[i];
+                    if (ac.status == TriggerStatus.Success)
+                        GUI.contentColor = Color.red;
+                    else if (ac.status == TriggerStatus.Failure)
+                        GUI.contentColor = Color.black;
+                    else if (ac.status == TriggerStatus.Running)
+                        GUI.contentColor = Color.blue;
+                    else
+                        GUI.contentColor = Color.white;
+                    drawTitle(ac.style.Attr.name, ac, Actions.Count - 1);
+                    if (i >= Actions.Count)
+                        return;
                     GUILayout.BeginHorizontal();
                     GUILayout.Space(4f);
                     GUILayout.BeginVertical();
@@ -83,9 +107,8 @@ namespace highlight.tl
 
                 }
             }
-            GUILayout.EndVertical();
         }
-        void ShowMenu()
+        public void ShowMenu()
         {
             if (Event.current != null && Event.current.button == 1 && Event.current.type <= EventType.MouseUp)
             {
@@ -101,10 +124,14 @@ namespace highlight.tl
                     }
                     menu.AddItem(new GUIContent(kv.Value.menu), false, excMenuComponent, kv);
                 }
-                Dictionary<Type, ActionAttribute> actionAttrDic = ActionStyle.actionAttrDic;
-                foreach (KeyValuePair<Type, ActionAttribute> kv in actionAttrDic)
+
+              //  if (!(mScript is TimelineNode))
                 {
-                    menu.AddItem(new GUIContent(kv.Value.menu), false, excMenuAction, kv);
+                    Dictionary<string, ActionAttribute> actionAttrDic = ActionStyle.actionAttrDic;
+                    foreach ( ActionAttribute attr in actionAttrDic.Values)
+                    {
+                        menu.AddItem(new GUIContent(attr.menu), false, excMenuAction, attr);
+                    }
                 }
 
                 menu.ShowAsContext();
@@ -119,8 +146,8 @@ namespace highlight.tl
         }
         void excMenuAction(object param)
         {
-            KeyValuePair<Type, ActionAttribute> kvp = (KeyValuePair<Type, ActionAttribute>)param;
-            ActionStyle style = new ActionStyle(kvp.Key, kvp.Value);
+            ActionAttribute attr = (ActionAttribute)param;
+            ActionStyle style = new ActionStyle(attr);
             this.mScript.AddAction(style);
         }
         void drawTitle(string name, Object obj, int maxIdx)
@@ -178,8 +205,10 @@ namespace highlight.tl
             }
             GUILayout.Space(20f);
         }
-        void drawRang()
+        public void drawRang()
         {
+            if (obj.root.lStyle.forever)
+                return;
             //GUILayout.Label("id:" + style.id);
             FrameRange rang = style.Range;
             FrameRange validRange = mScript.obj.GetMaxFrameRange();
@@ -235,8 +264,11 @@ namespace highlight.tl
             ActionStyle actionComp = action.style;
             FieldInfo[] fls = actionComp.Attr.Infos;
 
-            actionComp.tType = (TriggerType)EditorGUILayout.EnumPopup("触发类型：", actionComp.tType);
-            actionComp.key = EditorGUILayout.TextField("key：", actionComp.key);
+          //  actionComp.tType = (TriggerType)EditorGUILayout.EnumPopup("触发类型：", actionComp.tType);
+            string k = action.GetDefaultKey();
+            if (string.IsNullOrEmpty(k))
+                k = actionComp.key;
+            actionComp.key = EditorGUILayout.TextField("key：", k);
 
             if (actionComp.Indexs == null || actionComp.Indexs.Length != fls.Length)
             {
@@ -268,6 +300,11 @@ namespace highlight.tl
                 }
                 else
                     actionComp.Indexs[i] = EditorGUILayout.IntPopup(key, actionComp.Indexs[i], tempStrList.ToArray(), tempList.ToArray());
+            }
+            MethodInfo method = action.GetType().GetMethod("OnInspectorGUI");
+            if (method != null)
+            {
+                method.Invoke(action, null);
             }
         }
 

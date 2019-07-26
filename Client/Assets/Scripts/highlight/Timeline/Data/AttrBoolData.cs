@@ -10,26 +10,30 @@ namespace highlight.tl
     [Time("数据/条件属性", typeof(AttrBoolData))]
     public class AttrBoolStyle : ComponentStyle
     {
-        public BoolValue value;
+        public bool value;
+        public int level;
         public AttrType attrType;
+        public int time;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
-            // this.eType = (eResType)EditorGUILayout.EnumPopup("类型：", this.eType);
-            // this.res = EditorGUILayout.TextField("资源名：", this.res);
+            this.attrType = (AttrType)EditorGUILayout.EnumPopup("类型：", this.attrType);
+            this.value = EditorGUILayout.Toggle("value：", this.value);
+            this.level = EditorGUILayout.IntField("level：", this.level);
+            this.time = EditorGUILayout.IntField("level：", this.time);
         }
 #endif
     }
-    public class AttrBoolData : ComponentData, ICondition
+    public class AttrBoolData : ComponentData
     {
+        public AttrBoolStyle mStyle { get { return GetStyle<AttrBoolStyle>(); } }
         public BoolValue value;
-        public AttrType attrType;
-        public override void OnInit()
+        public AttrType attrType { get { return mStyle.attrType; } }
+        public override bool OnTrigger()
         {
-
-        }
-        public bool GetBool()
-        {
+            value = new BoolValue(mStyle.value, mStyle.level);
+            if (mStyle.time > 0)
+                value.cd = new CDData(mStyle.time);
             return true;
         }
     }

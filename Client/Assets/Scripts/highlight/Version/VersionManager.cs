@@ -259,7 +259,7 @@ public class VersionManager : MonoBehaviour
     /// </summary>
     public void CheckVersion(Action callBack)
     {
-        mPath = Application.persistentDataPath + "/" + highlight.Util.PlatformDir;
+        mPath = Application.persistentDataPath + "/" + Util.PlatformDir;
         mStyle.Size = 0;
         Debug.Log("persistentDataPath:" + mPath + ",IsVersionUpdate:" + mStyle.IsUpdateVersion + ",idfa>>>:" + SystemInfoUtil.deviceUniqueIdentifier);
         //            #if UNITY_IPHONE
@@ -890,7 +890,7 @@ public class VersionManager : MonoBehaviour
     }
     public static void DeleteLocalCache(string temp = "")
     {
-        string localUrl = Application.persistentDataPath + "/" + highlight.Util.PlatformDir;
+        string localUrl = Application.persistentDataPath + "/" + Util.PlatformDir;
         if (System.IO.Directory.Exists(localUrl))
         {
             System.IO.Directory.Delete(localUrl, true);

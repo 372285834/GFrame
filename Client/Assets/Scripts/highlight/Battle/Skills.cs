@@ -3,30 +3,43 @@ using System.Collections;
 using System.Collections.Generic;
 namespace highlight
 {
-    public class Skill : Object
+    public class SkillData
     {
         public int id;
+        public string url;
+        public string name;
+        public string desc;
+        public int length;
+        public CDData cd;
+    }
+    public class Skill : Object
+    {
+        public SkillData data;
+        public int id { get { return data.id; } }
         public Role ower;
         public Timeline timeline;
         public TimelineStyle style { get { return timeline != null ? timeline.lStyle : null; } }
         public bool IsStop { get { return timeline != null ? timeline.IsStopped : false; } }
+        public bool DeadDestroy = true;
         public void UpdateFrame(int delta)
         {
             if (timeline != null)
                 timeline.UpdateFrame(delta);
         }
+        public void OnDrawGizmos()
+        {
+            if (timeline != null)
+                timeline.OnDrawGizmos();
+        }
         private readonly static ObjectPool<Skill> pool = new ObjectPool<Skill>();
-        public static Skill Get(Skills _ower, TimelineStyle _style)
+        public static Skill Get(Skills _ower, SkillData data)
         {
             Skill skill = pool.Get();
             skill.ower = _ower.obj;
-            if (_style != null)
-            {
-                Timeline tl = TimelineFactory.Creat(_style);
-                skill.timeline = tl;
-                tl.owner = _ower.obj;
-                tl.skill = skill;
-            }
+            Timeline tl = TimelineFactory.Creat(data.url,_ower.obj);
+            skill.timeline = tl;
+            tl.skill = skill;
+            skill.data = data;
             return skill;
         }
         public static void Release(Skill skill)
@@ -38,6 +51,7 @@ namespace highlight
                 skill.timeline.Destroy();
                 skill.timeline = null;
             }
+            skill.data = null;
             skill.ower = null;
             pool.Release(skill);
         }
@@ -45,24 +59,33 @@ namespace highlight
     public class Skills : List<Skill>
     {
         public Role obj;
+        public List<SkillData> DataList = new List<SkillData>();
         private Dictionary<int, Skill> dic = new Dictionary<int, Skill>();
-        public Skill GetById(int id)
+        public SkillData GetData(int id)
+        {
+            return DataList.Find(x=>x.id == id);
+        }
+        public Skill GetRunById(int id)
         {
             Skill sk = null;
             dic.TryGetValue(id, out sk);
             return sk;
         }
-        public void AddSkill(TimelineStyle style)
+        public Skill Creat(int id)
         {
-            Skill skill = Skill.Get(this, style);
+            SkillData data = DataList.Find(x => x.id == id);
+            if (data == null)
+                return null;
+            Skill skill = Skill.Get(this, data);
             base.Add(skill);
             dic[skill.id] = skill;
+            return skill;
         }
-        public void RemoveSkill(Skill skill)
+        public void StopSkill(Skill skill)
         {
             base.Remove(skill);
-            Skill.Release(skill);
             dic.Remove(skill.id);
+            Skill.Release(skill);
         }
         static List<Skill> temp = new List<Skill>();
         public void UpdateFrame(int delta)
@@ -75,7 +98,7 @@ namespace highlight
             }
             for (int i = 0; i < temp.Count; i++)
             {
-                RemoveSkill(temp[i]);
+                StopSkill(temp[i]);
             }
             temp.Clear();
         }
@@ -95,7 +118,15 @@ namespace highlight
             this.Clear();
             dic.Clear();
             obj = null;
+            DataList.Clear();
             pool.Release(this);
+        }
+        public void OnDrawGizmos()
+        {
+            for (int i = 0; i < this.Count; i++)
+            {
+                this[i].OnDrawGizmos();
+            }
         }
     }
 }

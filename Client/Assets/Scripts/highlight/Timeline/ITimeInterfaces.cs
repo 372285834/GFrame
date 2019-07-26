@@ -6,9 +6,9 @@ using UnityEngine;
 namespace highlight.tl
 {
     public interface ITimeInterface { }
-    public interface IPosition : ITimeInterface
+    public interface IVector3 : ITimeInterface
     {
-        Vector3 pos { get; set; }
+        Vector3 vec3 { get; set; }
     }
     public interface ITransform : ITimeInterface
     {
@@ -27,5 +27,13 @@ namespace highlight.tl
     public interface ICondition : ITimeInterface
     {
         bool GetBool();
+    }
+    public interface IStateValue: ITimeInterface
+    {
+        int GetCurValue();
+        int value { get; }
+        string key { get; }
+        void Switch();
+        void Regist(AcHandler ac);
     }
 }

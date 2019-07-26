@@ -10,38 +10,50 @@ namespace highlight.tl
     public enum StateType
     {
         RoleState,
+        Npc_AI_1,
+    }
+    public enum Npc_AI_1
+    {
+        巡逻=0,
+        战斗,
+        逃跑,//
+        回家,
     }
     [Time("数据/状态", typeof(StateData))]
     public class StateStyle : ComponentStyle
     {
         public StateType type;
-        public int state;
+        public int value;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
-           // this.eType = (eResType)EditorGUILayout.EnumPopup("类型：", this.eType);
-           // this.res = EditorGUILayout.TextField("资源名：", this.res);
+            //eStateType ct;
+            //Enum.TryParse<eStateType>(this.type, out ct);
+            this.type = (StateType)EditorGUILayout.EnumPopup("StateType：", type);
+            switch (type)
+            {
+                case StateType.RoleState:
+                    this.value = (int)drawValue<RoleState>((RoleState)this.value);
+                    //value = (int)(RoleState)EditorGUILayout.EnumPopup("RoleState：", (RoleState)this.value);
+                    break;
+                case StateType.Npc_AI_1:
+                    this.value = (int)drawValue<Npc_AI_1>((Npc_AI_1)this.value);
+                   // value = (int)(Npc_AI_1)EditorGUILayout.EnumPopup("Npc_AI_1：", (Npc_AI_1)this.value);
+                    break;
+                default:
+                    break;
+            }
+        }
+        public T drawValue<T>(Enum t) where T : Enum
+        {
+            System.Type key = typeof(T);
+            return (T) EditorGUILayout.EnumPopup(key.Name, t);
         }
 #endif
     }
     public class StateData : ComponentData
     {
-        private int _curState;
-        public int curState
-        {
-            get
-            {
-                return _curState;
-            }
-            set
-            {
-                _curState = value;
-            }
-        }
-        public StateType stateType { get { return (this.style as StateStyle).type; } }
-        public override void OnInit()
-        {
-            _curState = (this.style as StateStyle).state;// state;
-        }
+        public int value { get { return this.GetStyle<StateStyle>().value; } }
+        public StateType type { get { return GetStyle<StateStyle>().type; } }
     }
 }

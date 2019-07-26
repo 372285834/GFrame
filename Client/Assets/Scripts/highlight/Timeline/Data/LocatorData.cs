@@ -14,28 +14,33 @@ namespace highlight.tl
         public Locator locator;
         public bool isFollow = false;
         public Vector3 off;
+        public bool isRealTime = false;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
+            base.OnInspectorGUI();
             Locator l = this.locator;//, string name
             // GUILayout.Space(10f);
             this.index = EditorGUILayout.IntField("目标index:", this.index);
             l.type = (Locator.eType)EditorGUILayout.EnumPopup("类型：", l.type);
             l.eName = (Locator.eNameType)EditorGUILayout.EnumPopup("挂点名:", l.eName);
             this.off = EditorGUILayout.Vector3Field("偏移：", this.off);
+            this.isRealTime = EditorGUILayout.Toggle("实时计算：", this.isRealTime);
             this.locator = l;
         }
 #endif
     }
-    public class LocatorData : ComponentData, IPosition,ITransform
+    public class LocatorData : ComponentData, IVector3, ITransform
     {
         public LocatorStyle loStyle { get { return this.style as LocatorStyle; } }
         public Locator locator { get { return (this.style as LocatorStyle).locator; } }
         Vector3 curPos;
-        public Vector3 pos
+        public Vector3 vec3
         {
             get
             {
+                if (loStyle.isRealTime)
+                    OnTrigger();
                 if (transform != null && loStyle.isFollow)
                 {
                     curPos = transform.position + loStyle.off;
@@ -58,20 +63,26 @@ namespace highlight.tl
             {
                 case Locator.eType.LT_OWNER:
                     targetObj = this.owner;
+                    if (targetObj == null)
+                        return false;
                     break;
                 case Locator.eType.LT_TARGET:
-                    targetObj = this.root.target.getObj(index);
+                    targetObj = this.target.getObj(loStyle.index);
+                    if (targetObj == null)
+                        return false;
                     break;
                 case Locator.eType.LT_TARGET_POS:
-                    if (!this.root.target.checkIndex(index))
+                    if (!this.target.checkIndex(loStyle.index))
                         return false;
-                    curPos = this.root.target.getPos(index);
+                    curPos = this.target.getPos(loStyle.index);
                     break;
                 case Locator.eType.LT_SCENE:
                     curPos = loStyle.off;
                     break;
                 case Locator.eType.LT_PARENT:
                     targetObj = this.timeObject.parent.role;
+                    if (targetObj == null)
+                        return false;
                     break;
                 case Locator.eType.LT_PARENT_POS:
                     targetObj = this.timeObject.parent.role;
@@ -89,6 +100,13 @@ namespace highlight.tl
                 if (targetObj.isClear)
                 {
                     return false;
+                }
+                if(locator.eName == Locator.eNameType.ROOT )
+                {
+                    curPos = targetObj.position;
+                   // Debug.Log(curPos);
+                    transform = targetObj.transform;
+                    return true;
                 }
                 transform = targetObj.getLocator(locator.parentName);
                 if(transform == null)

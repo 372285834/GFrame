@@ -7,7 +7,7 @@ namespace highlight.tl
     public static class TimelineFactory
     {
         private static Id mIdGenerator = new Id(0);  // Id生成器
-        private readonly static Dictionary<int, Timeline> mActiveDic = new Dictionary<int, Timeline>();
+        public readonly static Dictionary<int, Timeline> mActiveDic = new Dictionary<int, Timeline>();
 
         private readonly static Dictionary<string, Type> typeDic = new Dictionary<string, Type>();
         //public readonly static Dictionary<ActionFlag, ActionAttribute> actionAttrDic = new Dictionary<ActionFlag, ActionAttribute>();
@@ -22,7 +22,7 @@ namespace highlight.tl
                 if (attrs != null && attrs.Length > 0)
                 {
                     //GEventAttribute att = attrs[0];
-                    string tName = t.Name;
+                    string tName = t.FullName;
                     ComponentStyle.compAttrDic[t] = attrs[0];
                     typeDic[tName] = t;
                 }
@@ -30,8 +30,8 @@ namespace highlight.tl
                 if (actionAttrs != null && actionAttrs.Length > 0)
                 {
                     //GEventAttribute att = attrs[0];
-                    string tName = t.Name;
-                    ActionStyle.actionAttrDic[t] = actionAttrs[0];
+                    string tName = t.FullName;
+                    ActionStyle.actionAttrDic[tName] = actionAttrs[0];
                     typeDic[tName] = t;
                 }
             }
@@ -78,13 +78,21 @@ namespace highlight.tl
             return tl;
         }
         */
-        public static Timeline Creat(TimelineStyle style)
+        public static Timeline Creat(string url,Role owner)
+        {
+            TimelineStyle style = LoadTimeStyle.Load(url);
+            return Creat(style, owner);
+        }
+        public static Timeline Creat(TimelineStyle style, Role owner)
         {
             if (style == null)
+            {
                 return null;
+            }
             Timeline tl = style.Creat();
             tl.SetOnlyId(mIdGenerator.generateNewId());
-           // mActiveDic.Add(id, tl);
+            // mActiveDic.Add(id, tl);
+            tl.owner = owner;
             tl.Init();
             return tl;
         }

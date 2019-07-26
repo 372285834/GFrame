@@ -11,14 +11,15 @@ namespace highlight.tl
     {
         public string clip;
         public float speed = 1f;
-        public float duration = 0.1f;
+        public bool loop;
+       // public float duration = 0.1f;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
             base.OnInspectorGUI();
             this.clip = EditorGUILayout.TextField("动画名:", this.clip);
             this.speed = EditorGUILayout.FloatField("速度：", this.speed);
-            this.duration = EditorGUILayout.FloatField("过渡：", this.duration);
+            this.loop = EditorGUILayout.Toggle("loop：", this.loop);
         }
 #endif
     }

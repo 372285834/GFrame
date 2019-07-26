@@ -50,6 +50,7 @@ public class UITabItem : IUIItem, IPointerClickHandler, IPointerDownHandler,IPoi
     }
     public virtual void OnPointerEnter(PointerEventData eventData)
     {
+        DebugFile.UI.LogError(this.name, this.param);
         isPointerInside = true;
         if (!interactable)
             return;

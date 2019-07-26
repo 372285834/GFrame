@@ -21,10 +21,9 @@ namespace highlight
             buff.ower = _ower.obj;
             if(_style != null)
             {
-                Timeline tl = TimelineFactory.Creat(_style);
-                buff.timeline = tl;
-                tl.buff = buff;
-                tl.owner = _ower.obj;
+              //  Timeline tl = TimelineFactory.Creat(_style, _ower.obj);
+             //   buff.timeline = tl;
+             //   tl.buff = buff;
             }
             return buff;
         }

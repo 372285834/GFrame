@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace highlight.tl
 {
@@ -9,16 +10,16 @@ namespace highlight.tl
     {
         [Desc("状态数据")]
         public StateData state;
-        public override bool OnTrigger()
+        public override TriggerStatus OnTrigger()
         {
-            string key = state.stateType.ToString();
-            TimeAction ac = this.root.FindAction(key);
-            if(ac is StateMachineAction)
+            StateMachineAction machine = this.owner.GetState(state.type);
+            if(machine == null)
             {
-                (ac as StateMachineAction).Switch(state.curState);
-                //return TriggerStatus.Success;
+                Debug.LogError("machine == null:" + this.name);
+                return TriggerStatus.Failure;
             }
-            return true;
+            machine.Switch(state.value);
+            return TriggerStatus.Failure;
         }
     }
 }

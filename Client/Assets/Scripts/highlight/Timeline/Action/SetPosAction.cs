@@ -8,14 +8,14 @@ namespace highlight.tl
     public class SetPosAction : TargetAction
     {
         [Desc("目标挂点")]
-        public IPosition target;
-        public override bool OnTrigger()
+        public IVector3 target;
+        public override TriggerStatus OnTrigger()
         {
-            return true;
+            return TriggerStatus.Success;
         }
         public override void OnUpdate()
         {
-            this.role.SetPos(this.target.pos,true);
+            this.role.SetPos(this.target.vec3,true);
         }
     }
 }

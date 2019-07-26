@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 namespace highlight.tl
@@ -17,6 +17,7 @@ namespace highlight.tl
     {
         public string name;
         public string menu;
+        public string updateName;
         public Type type;
         public FieldInfo[] Infos;
         public Dictionary<FieldInfo, string> infoDesDic = new Dictionary<FieldInfo, string>();
@@ -27,6 +28,7 @@ namespace highlight.tl
             if (name.LastIndexOf("/") > -1)
                 this.name = name.Substring(name.LastIndexOf("/") + 1);
             type = _type;
+            this.updateName = type.Name + "_OnUpdate";
             List<FieldInfo> flist = new List<FieldInfo>();
             Type iter = typeof(ComponentData);
             Type inter = typeof(ITimeInterface);
@@ -52,7 +54,7 @@ namespace highlight.tl
     }
     public sealed class ActionStyle : Object
     {
-        public TriggerType tType = TriggerType.失败后停止;
+       // public TriggerType tType = TriggerType.失败后停止;
         public string key;
         public string name;
         public int[] Indexs;
@@ -60,28 +62,16 @@ namespace highlight.tl
         {
 
         }
-        public ActionStyle(Type t, ActionAttribute attr)
+        public ActionStyle(ActionAttribute attr)
         {
-            name = t.FullName;
+            name = attr.type.FullName;
             Indexs = new int[attr.Infos.Length];
             for (int j = 0; j < attr.Infos.Length; j++)
             {
                 Indexs[j] = -1;
             }
         }
-        private Type _type;
-        [Newtonsoft.Json.JsonIgnore]
-        public Type type
-        {
-            get
-            {
-                if(_type == null)
-                    _type = Type.GetType(this.name);
-                return _type;
-            }
-        }
-
-        public readonly static Dictionary<Type, ActionAttribute> actionAttrDic = new Dictionary<Type, ActionAttribute>();
+        public readonly static Dictionary<string, ActionAttribute> actionAttrDic = new Dictionary<string, ActionAttribute>();
         private ActionAttribute mAttr;
          [Newtonsoft.Json.JsonIgnore]
         public ActionAttribute Attr
@@ -90,15 +80,16 @@ namespace highlight.tl
             {
                 if (mAttr == null)
                 {
-                    Type t = this.type;
-                    actionAttrDic.TryGetValue(t, out mAttr);
+                   // Type t = this.type;
+                    actionAttrDic.TryGetValue(name, out mAttr);
                     if (mAttr == null)
                     {
+                        Type t = Type.GetType(this.name);
                         ActionAttribute[] attrs = t.GetCustomAttributes(typeof(ActionAttribute), true) as ActionAttribute[];
                         if (attrs != null && attrs.Length > 0)
                         {
                             mAttr = attrs[0];
-                            actionAttrDic[t] = mAttr;
+                            actionAttrDic[name] = mAttr;
                         }
                     }
                 }
@@ -110,33 +101,26 @@ namespace highlight.tl
     {
         public ActionStyle style { private set; get; }
         #region virtual Function
+        public virtual string GetDefaultKey() { return string.Empty; }
+        public virtual TriggerStatus OnTrigger() { return TriggerStatus.Success; }
         public virtual void OnUpdate() { }
-
         public virtual void OnResume() { }
         public virtual void OnPause() { }
+        public virtual void OnDrawGizmos() { }
+#if UNITY_EDITOR
+        public virtual void OnInspectorGUI()
+        {
+        }
+#endif
         #endregion
 
-        public TriggerStatus Trigger()
-        {
-            status = TriggerStatus.Success;
-            TriggerType tType = style.tType;
-            if (tType == TriggerType.不触发)
-                return status;
-            if (OnTrigger())
-                return status;
-            if (tType == TriggerType.失败后继续)
-                status = TriggerStatus.Running;
-            else
-                status = TriggerStatus.Failure;
-            return status;
-        }
         private readonly static Dictionary<string, ObjectPool> ActionPoolDic = new Dictionary<string, ObjectPool>();
 
         public static TimeAction Get(ActionStyle comp, TimeObject t)
         {
             if (comp == null)
                 return null;
-            TimeAction data = getPool(comp).Get(comp.type) as TimeAction;
+            TimeAction data = getPool(comp).Get(comp.Attr.type) as TimeAction;
             data.timeObject = t;
             data.style = comp;
             return data;
@@ -160,7 +144,7 @@ namespace highlight.tl
             }
             return pool;
         }
-        public void SetData(List<ComponentData> comps)
+        public virtual void SetData(List<ComponentData> comps)
         {
             FieldInfo[] infos = this.style.Attr.Infos;
             if (infos != null && infos.Length > 0)
@@ -180,11 +164,18 @@ namespace highlight.tl
                     if (idx < 0 || idx >= comps.Count)
                         continue;
                     ComponentData comp = comps[idx];
-                    infos[j].SetValue(this, comp);
+                    try
+                    {
+                        infos[j].SetValue(this, comp);
+                    }
+                    catch(Exception e)
+                    {
+                        UnityEngine.Debug.Log(this.timeObject.name  + "," + e);
+                    }
                 }
             }
         }
-        public void ClearData()
+        public virtual void ClearData()
         {
             FieldInfo[] infos = this.style.Attr.Infos;
             if (infos != null && infos.Length > 0)

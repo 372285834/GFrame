@@ -4,32 +4,23 @@ using UnityEngine;
 namespace highlight.tl
 {
     [Action("行为/播放动画", typeof(PlayClipAction))]
-    public class PlayClipAction : TimeAction
+    public class PlayClipAction : TargetAction
     {
         [Desc("动画数据")]
         public AnimatorData data;
-        [Desc("目标")]
-        public TargetData target;
-        public Role obj
-        {
-            get
-            {
-                if (target == null)
-                    return this.owner;
-                return this.target.obj;
-            }
-        }
-        public override bool OnTrigger()
+        public override TriggerStatus OnTrigger()
         {
             if (data == null)
-                return false;
+                return TriggerStatus.Failure;
             AnimatorStyle style = data.style as AnimatorStyle;
-            obj.PlayClip(style.clip, style.duration, style.speed);
-            return true;
+            role.PlayClip(style.clip, style.loop,style.speed);
+            return TriggerStatus.Success;
         }
         public override void OnUpdate()
         {
-
+            AnimatorStyle style = data.style as AnimatorStyle;
+            if(style.loop)
+                role.PlayClip(style.clip, style.loop, style.speed);
         }
     }
 }

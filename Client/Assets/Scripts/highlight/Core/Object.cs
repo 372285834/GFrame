@@ -8,24 +8,24 @@ namespace highlight
     public class Id
     {
         public static Id Global = new Id();
-        protected ulong mCurrentId;
+        protected int mCurrentId;
 
-        public Id(ulong start = 0)
+        public Id(int start = 0)
         {
             mCurrentId = start;
         }
 
         //This function assumes creation of new objects can't be made from multiple threads!!!
-        public ulong generateNewId()
+        public int generateNewId()
         {
             return mCurrentId++;
         }
     };
     public abstract class Object
 	{
-		private ulong _onlyId = 0;
-        public ulong onlyId { get { return _onlyId; } }
-		internal void SetOnlyId(ulong id ) { _onlyId = id; }
+		private int _onlyId = 0;
+        public int onlyId { get { return _onlyId; } }
+		internal void SetOnlyId(int id ) { _onlyId = id; }
         public static T DeepCopyWithReflection<T>(T obj)
         {
             Type type = obj.GetType();

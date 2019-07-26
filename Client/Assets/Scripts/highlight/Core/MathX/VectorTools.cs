@@ -36,6 +36,15 @@ namespace highlight
         {
             return new Vector3(pos.x, h, pos.y);
         }
+        public static Vector3 LerpSpeed(Vector3 start,Vector3 end,float length)
+        {
+            float dis = Vector3.Distance(start, end);
+            if (length > dis)
+                length = dis;
+            Vector3 dir = (end - start).normalized;
+            Vector3 to = start + dir * length;
+            return to;
+        }
         public static Rect AddRectSize(this Rect rect, Vector2 size)
         {
             return new Rect(rect.min - size, rect.size + size * 2f);

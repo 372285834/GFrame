@@ -5,6 +5,7 @@ namespace highlight
 {
     public class RoleControl : MonoBehaviour, ISerializeField
     {
+        public int id;
         public bool Visible
         {
             get
@@ -19,6 +20,7 @@ namespace highlight
         public Dictionary<string, Transform> Nodes = new Dictionary<string, Transform>();
         public Animator mAnimator;
         public GameObject fbx;
+        public string curClip;
         public void Awake()
         {
             Transform[] tfs = this.GetComponentsInChildren<Transform>(true);

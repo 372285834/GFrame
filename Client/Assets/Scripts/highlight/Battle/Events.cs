@@ -14,7 +14,7 @@ namespace highlight
         public int skillId;
         public int skillX;
         public int skillZ;
-        public bool isMove { get { return dirX != 0 || dirZ != 0; } }
+        public bool isMove { get { return moveX != 0 || moveZ != 0; } }
         public bool isDir { get { return dirX != 0 || dirZ != 0; } }
         public Vector3 pos
         {
@@ -44,6 +44,7 @@ namespace highlight
         public static int Length { get { return Queue.Count; } }
         public static Queue<List<RoleEvent>> Queue = new Queue<List<RoleEvent>>();
         public static Dictionary<int, RoleEvent> Current = new Dictionary<int, RoleEvent>();
+        public static Dictionary<int, RoleEvent> LastDic = new Dictionary<int, RoleEvent>();
         public static void Update()
         {
             Current.Clear();
@@ -58,22 +59,28 @@ namespace highlight
                 ListPool<RoleEvent>.Release(list);
             }
         }
-        public static void Enqueue(List<RoleEvent> list)
+        public static void Enqueue()
         {
+            List<RoleEvent> list = ListPool<RoleEvent>.Get();
+            foreach (var evt in LastDic.Values)
+            {
+                list.Add(evt);
+            }
             Queue.Enqueue(list);
+            LastDic.Clear();
         }
         public static RoleEvent Add(int id)
         {
-            if (Current.ContainsKey(id))
-                return Current[id];
+            if (LastDic.ContainsKey(id))
+                return LastDic[id];
             RoleEvent evt = new RoleEvent();
-            Current[id] = evt;
+            LastDic[id] = evt;
             evt.id = id;
             return evt;
         }
         public static bool Get(int id,out RoleEvent evt)
         {
-            if (Current.TryGetValue((int)id, out evt))
+            if (LastDic.TryGetValue((int)id, out evt))
                 return true;
             return false;
         }
@@ -84,7 +91,7 @@ namespace highlight
         public static RoleEvent Get(this Role role)
         {
             RoleEvent evt;
-            Current.TryGetValue((int)role.onlyId, out evt);
+            Current.TryGetValue(role.onlyId, out evt);
             return evt;
         }
         public static void AddDir(int id,Vector2 dir)
@@ -92,28 +99,28 @@ namespace highlight
             RoleEvent evt = Add(id);
             evt.dirX = (short)Mathf.Round(dir.x * 1000);
             evt.dirZ = (short)Mathf.Round(dir.y * 1000);
-            Current[id] = evt;
+            LastDic[id] = evt;
         }
         public static void AddMove(int id, Vector3 pos)
         {
             RoleEvent evt = Add(id);
             evt.moveX = (int)Mathf.Round(pos.x * 1000);
-            evt.moveZ = (int)Mathf.Round(pos.y * 1000);
-            Current[id] = evt;
+            evt.moveZ = (int)Mathf.Round(pos.z * 1000);
+            LastDic[id] = evt;
         }
-        public static void AddSkill(int id, ushort skillId)
+        public static void AddSkill(int id, int skillId)
         {
             RoleEvent evt = Add(id);
             evt.skillId = skillId;
-            Current[id] = evt;
+            LastDic[id] = evt;
         }
-        public static void AddSkill(int id, ushort skillId, Vector3 pos)
+        public static void AddSkill(int id, int skillId, Vector3 pos)
         {
             RoleEvent evt = Add(id);
             evt.skillId = skillId;
             evt.skillX = (int)Mathf.Round(pos.x * 1000);
             evt.skillZ = (int)Mathf.Round(pos.z * 1000);
-            Current[id] = evt;
+            LastDic[id] = evt;
         }
         public static void Clear()
         {

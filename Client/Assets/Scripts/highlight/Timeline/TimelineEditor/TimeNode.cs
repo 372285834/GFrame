@@ -72,14 +72,27 @@ namespace highlight.tl
             node.CreatChild(root);
             return node;
         }
-        public void RemoveChild(TimeNode node)
+        public void RemoveChild(TimeNode node,bool destroy = true)
         {
-            this.obj.RemoveChild(node.obj);
-            GameObject.DestroyImmediate(node.gameObject);
+            this.obj.RemoveChild(node.obj, destroy);
+            if(destroy)
+                GameObject.DestroyImmediate(node.gameObject);
+        }
+        public void AddChild(TimeNode node,int idx)
+        {
+            node.obj = this.obj.AddChild(node.style);
+            node.parent = node.transform.parent.GetComponent<TimeNode>();
+            SetChildIndex(node,idx);
         }
         public void SetChildIndex(TimeNode node, int idx)
         {
+            node.transform.SetSiblingIndex(idx);
             this.obj.SetChildIndex(node.obj, idx);
+            for(int i=0;i<this.transform.childCount;i++)
+            {
+                TimeNode childNode = this.transform.GetChild(i).GetComponent<TimeNode>();
+                childNode.index = i;
+            }
         }
         public void AddComponent(ComponentStyle t)
         {

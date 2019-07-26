@@ -8,7 +8,7 @@ using UnityEditor;
 #endif
 namespace highlight.tl
 {
-    [Time("数据/角色状态", typeof(StringKeyData))]
+    [Time("数据/属性/String", typeof(StringKeyData))]
     public class StringKeyStyle : ComponentStyle
     {
         public string key;
@@ -16,16 +16,12 @@ namespace highlight.tl
         public override void OnInspectorGUI()
         {
             // this.eType = (eResType)EditorGUILayout.EnumPopup("类型：", this.eType);
-            // this.res = EditorGUILayout.TextField("资源名：", this.res);
+             this.key = EditorGUILayout.TextField("key：", this.key);
         }
 #endif
     }
     public class StringKeyData : ComponentData
     {
-        public string key;
-        public override void OnInit()
-        {
-            key = (this.style as StringKeyStyle).key;// state;
-        }
+        public string key { get { return GetStyle<StringKeyStyle>().key; } }
     }
 }

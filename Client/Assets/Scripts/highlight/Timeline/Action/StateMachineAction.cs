@@ -9,41 +9,53 @@ namespace highlight.tl
     {
         [Desc("状态数据")]
         public StateData data;
+        public int curValue;
+        public Observer<StateMachineAction> obs_state = new Observer<StateMachineAction>();
+        public void AddObserver(AcHandler<StateMachineAction> ac)
+        {
+            obs_state.AddObserver(ac);
+        }
+        public void RemoveObserver(AcHandler<StateMachineAction> ac)
+        {
+            obs_state.RemoveObserver(ac);
+        }
         public override void OnInit()
         {
-           // this.owner.StateMachine = this;
+            this.owner.SetStateMachine(data.type, this);
+            curValue = this.data.value;
         }
-        public override bool OnTrigger()
+        public override TriggerStatus OnTrigger()
         {
-           // this.owner.state = this.data.curState;
             for (int i = 0; i < this.timeObject.childCount; i++)
             {
                 TimeObject obj = this.timeObject.GetChild(i);
-                bool isCur = data.curState == i;// obj.name;
+                bool isCur = curValue == i;// obj.name;
                 if (isCur)
                     obj.Reset();
                 else
-                    obj.Stop();
+                    obj.TryStop();
             }
-            // this.owner.animator
-            return true;
+            return TriggerStatus.Success;
         }
-        public override void OnUpdate()
-        {
-        }
-        public int curState { get { return this.data.curState; } }
-        public StateType stateType { get { return this.data.stateType; } }
         public void Switch(int state)
         {
-            if (this.data.curState != state)
+            if (this.curValue != state)
             {
-                this.data.curState = state;
-                TimeObject curObj = this.timeObject.GetChild(this.data.curState);
-                curObj.Stop();
+                TimeObject curObj = this.timeObject.GetChild(curValue);
+                curObj.TryStop();
+                this.curValue = state;
                 TimeObject nextObj = this.timeObject.GetChild(state);
                 nextObj.Reset();
                 nextObj.Trigger();
             }
+        }
+        public override void OnUpdate()
+        {
+        }
+        public override void OnDestroy()
+        {
+            obs_state.Clear();
+            base.OnDestroy();
         }
     }
 }

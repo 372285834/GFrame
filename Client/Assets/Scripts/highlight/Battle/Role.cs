@@ -7,7 +7,7 @@ namespace highlight
 {
     public enum RoleType
     {
-        Player,
+        Player=0,
         Monster,
         Npc,
         Item,
@@ -16,7 +16,7 @@ namespace highlight
     }
     public enum RoleCamp
     {
-        Red,
+        Red = 0,
         Blue,
         Middle,
     }
@@ -25,62 +25,107 @@ namespace highlight
         Clear = 0,
         Idle,
         Move,
+        Fight_Idle,
+        Fight_Move,
         Hit,
         Attack,
         AutoFight,
         Dead,
+        Destroy,
+    }
+    public enum RoleObsType
+    {
+        Hit,//受到攻击
+        Attack,//攻击别人
     }
     public partial class Role : Object
     {
         public RoleType type;
         public RoleCamp camp;//阵营
-        private RoleState _state = RoleState.Clear;
-        public RoleState state { get { return _state; } }
-        private Observer<RoleState,Role> obs_state = new Observer<RoleState,Role>();
-        public bool isClear { get { return _state == RoleState.Clear; } }
+        public bool isClear { get { return this.state >= RoleState.Dead; } }
+        public Dictionary<StateType, StateMachineAction> stateMachineDic = new Dictionary<StateType, StateMachineAction>();
+        public StateMachineAction mainStateMachine { get { return GetState(StateType.RoleState); } }
+        public StateMachineAction GetState(StateType t)
+        {
+            StateMachineAction machine = null;
+            stateMachineDic.TryGetValue(t, out machine);
+            if (machine == null)
+                Debug.LogError("machine == null:" + t.ToString());
+            return machine;
+        }
+        public RoleState state { get
+            {
+                if (mainStateMachine == null)
+                    return RoleState.Clear;
+                return (RoleState)mainStateMachine.curValue;
+            }
+        }
         public object data;
         public RoleControl control;
         public Timeline ai;
         public RoleAttrs attrs;
         public Skills skills;
-        public Buffs buffs;
+        //public Buffs buffs;
         public RoleItems items;
 
-        public bool isInterpolation = true;
+        public float lastInterValue = 0f;
         private VInt3 _location = VInt3.zero;
         private VInt3 _lastlocation = VInt3.zero;
-        private VInt3 _euler = VInt3.forward;
-        private VInt3 _lastEuler = VInt3.forward;
+        private VInt3 _forward = VInt3.forward;
+        //private VInt3 _lastEuler = VInt3.forward;
         public VInt3 location { get { return this._location; } }
         public Vector3 position { get { return (Vector3)location; } }
-        public VInt3 euler { get { return this._euler;  } }
-        public void AddObs_State(AcHandler<RoleState, Role> ac)
+        public VInt3 forward { get { return this._forward;  } }
+        public void SetStateMachine(StateType type, StateMachineAction action)
         {
-            obs_state.AddObserver(ac);
+            stateMachineDic[type] = action;
         }
-        public void RemoveObs_State(AcHandler<RoleState, Role> ac)
+        private Observer<RoleObsType, object> evtObs = new Observer<RoleObsType, object>();
+
+        public void AddEvent(AcHandler<RoleObsType, object> ac)
         {
-            obs_state.RemoveObserver(ac);
+            evtObs.AddObserver(ac);
         }
-        public void Switch(RoleState _state)
+        public void RemoveEvent(AcHandler<RoleObsType, object> ac)
         {
-            if (_state != this.state)
-            {
-                this._state = _state;
-                obs_state.Change(_state,this);
-            }
+            evtObs.RemoveObserver(ac);
         }
+        protected void ChangeEvent(RoleObsType t)
+        {
+            evtObs.Change(t, this);
+        }
+
         public Transform transform { get { return control.transform; } }
         public Animator animator { get { return control.mAnimator; } }
         //public AnimationBox aniBox;
-        public void Init(RoleControl _entity)
+        public void SetControl(GameObject go)
+        {
+            control = RoleControl.Add(go);
+            control.id = this.onlyId;
+        }
+        public void SetControl(RoleControl _entity)
         {
             control = _entity;
+            control.id = this.onlyId;
         }
-        public void PlayClip(string name,float duration,float speed)
+        public static float FixedTransitionDuration = 0.1f;
+        public void PlayClip(string name,bool loop = false, float speed = 1f)
         {
             animator.speed = speed;
-            animator.CrossFadeInFixedTime(name, duration);
+            float off = 0f;
+            if (loop && control.curClip == name)
+            {
+                float len = animator.GetCurrentAnimatorStateInfo(0).length;
+                off = App.render_time % len;
+              //  return;
+            }
+            float dur = speed > 0f ? FixedTransitionDuration / speed : FixedTransitionDuration;
+            animator.CrossFadeInFixedTime(name, dur, -1, off);
+            control.curClip = name;
+        }
+        public void SetClipSpeed(float speed = 1f)
+        {
+            animator.speed = speed;
         }
         public Transform getLocator(string name)
         {
@@ -88,21 +133,31 @@ namespace highlight
         }
         public void SetPos(Vector3 pos,bool force)
         {
-            this._location = (VInt3)pos;
-            if(force)
+            if (force)
             {
                 _lastlocation = this._location;
                 transform.position = pos;
+                lastInterValue = 1f;
             }
-        }
-        public void SetRotate(Vector3 euler, bool force)
-        {
-            this._euler = (VInt3)euler;
-            if (force)
+            else
             {
-                transform.eulerAngles = euler;
-                _lastEuler = this._euler;
+                _lastlocation = this._location;
+                lastInterValue = 0f;
             }
+            this._location = (VInt3)pos;
+        }
+        public void SetQuaternion(Quaternion q)
+        {
+            this.SetForward(q * Vector3.forward);
+        }
+        public void SetForward(Vector3 euler)
+        {
+            this._forward = (VInt3)euler;
+           // if (force)
+          //  {
+                transform.forward = euler;
+           //     _lastEuler = this._euler;
+           // }
         }
         public void SetParent(Transform t,bool reset = true)
         {
@@ -116,50 +171,135 @@ namespace highlight
         }
         public virtual void UpdateFrame(int delta)
         {
+            PlayEvent();
             if (ai != null)
                 ai.UpdateFrame(delta);
+            if(attrs != null)
+                attrs.UpdateFrame(delta);
             if (skills != null)
                 skills.UpdateFrame(delta);
-            if (buffs != null)
-                buffs.UpdateFrame(delta);
+            //if (buffs != null)
+            //    buffs.UpdateFrame(delta);
         }
         public virtual void UpdateRender(float interpolation)
         {
-            if (!isInterpolation)
+            if (lastInterValue >= 1f)
                 return;
-            if(this._lastlocation != this._location)
+            if (this._lastlocation != this._location)
             {
+            if (lastInterValue > interpolation)
+                interpolation = 1f;
                 transform.position = Vector3.Lerp((Vector3)this._lastlocation, (Vector3)this._location, interpolation);
                 if (interpolation >= 1f)
                     this._lastlocation = this._location;
+                lastInterValue = interpolation;
             }
-            if (this._lastEuler != this._euler)
+            //if (this._lastEuler != this._euler)
+            //{
+            //    transform.forward = Vector3.Lerp((Vector3)this._lastEuler, (Vector3)this._euler, interpolation);
+            //    if (interpolation >= 1f)
+            //        this._lastEuler = this._euler;
+            //}
+        }
+        public void PlayEvent()
+        {
+            if (this.type != RoleType.Player)
+                return;
+            ProfilerTest.BeginSample("PlayEvent");
+            if (!Events.Contains(this.onlyId))
             {
-                transform.forward = Vector3.Lerp((Vector3)this._lastEuler, (Vector3)this._euler, interpolation);
-                if (interpolation >= 1f)
-                    this._lastEuler = this._euler;
+                if(this.control != null && this.control.curClip == "run")
+                    this.PlayClip("wait_1",true);
             }
-            
+            else
+            {
+                RoleEvent evts = Events.Get(this);
+                if (evts.isMove)
+                {
+                    this.PlayClip("run", true);
+                    this.SetPos(evts.pos, false);
+                }
+                if (evts.isDir)
+                {
+                    this.SetForward(evts.dir);
+                }
+                if (evts.skillId > 0)
+                {
+                    //   Debug.Log("CreatSkill:" + evts.skillId);
+                    Skill skill = this.skills.Creat(evts.skillId);
+                    if (evts.isSkillPos)
+                        skill.timeline.target.setPosition(evts.skillPos);
+                    skill.timeline.Play(0);
+                }
+            }
+            ProfilerTest.EndSample();
+        }
+        public bool CanDestroy
+        {
+            get
+            {
+                if (this.state != RoleState.Destroy)
+                    return false;
+                bool b = true;
+                if(skills != null && skills.Count > 0)
+                {
+                    for(int i=0;i<skills.Count;i++)
+                    {
+                        if(!skills[i].DeadDestroy)
+                        {
+                            b = false;
+                            break;
+                        }
+                    }
+                }
+                return b;
+            }
         }
         public virtual void Clear()
         {
-            this.Switch(RoleState.Clear);
+            SetOnlyId(-1);
             if (skills != null)
                 skills.Release();
-            if (buffs != null)
-                buffs.Release();
+            //if (buffs != null)
+            //    buffs.Release();
             if (attrs != null)
                 attrs.Release();
             if (ai != null)
                 ai.Destroy();
-
-            obs_state.Clear();
+            stateMachineDic.Clear();
+            evtObs.Clear();
             attrs = null;
             skills = null;
-            buffs = null;
+            //buffs = null;
             ai = null;
             control = null;
             items = null;
+        }
+        public void OnDrawGizmos()
+        {
+            if (!Application.isPlaying)
+                return;
+            if (ai != null)
+            {
+                ai.OnDrawGizmos();
+            }
+            if (skills != null)
+                skills.OnDrawGizmos();
+        }
+        public List<Timeline> GetAllTimeline()
+        {
+            List<Timeline> tls = new List<Timeline>();
+            if(this.ai != null)
+                tls.Add(this.ai);
+            if(this.skills != null)
+            {
+                for(int i=0;i<this.skills.Count;i++)
+                { 
+                    if (skills[i].timeline != null)
+                        tls.Add(skills[i].timeline);
+                }
+            }
+            return tls;
         }
     }
 }

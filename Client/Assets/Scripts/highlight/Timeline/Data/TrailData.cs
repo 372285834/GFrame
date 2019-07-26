@@ -21,11 +21,12 @@ namespace highlight.tl
     {
         public Vector3 Evaluate(Vector3 start, Vector3 end, float time)
         {
+            MTweenEase.EaseType type = (this.style as TrailStyle).type;
             Vector3 pos = Vector3.zero;
-            float p = MTweenEase.ease((this.style as TrailStyle).type, 0f, 1f, time);
-          //      pos = Vector3.Lerp(start, end, p);
-          //  else
-           //     Vector3 dir = end - start;
+            float p = MTweenEase.ease(type, 0f, 1f, time);
+            //      pos = Vector3.Lerp(start, end, p);
+            //  else
+            //     Vector3 dir = end - start;
             return Vector3.Lerp(start, end, p);
         }
     }

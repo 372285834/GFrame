@@ -18,10 +18,10 @@ namespace highlight.tl
         }
         static TimeWindow _Inst;
         static string Suffix = ".tl";
-        static string timelineDir = "Assets/Arts/Timeline/";
+        static string timelineDir { get { return LoadTimeStyle.editor_timeline_dir; } }
         //List<GTimeline> tList = new List<GTimeline>();
         static List<TimelineStyle> allStyleList;
-        static Dictionary<string, TimelineStyle> allDic = new Dictionary<string, TimelineStyle>();
+        //static Dictionary<string, TimelineStyle> allDic = new Dictionary<string, TimelineStyle>();
         static string[] allStyleNames;
         static int[] allStyleNamesIndexs;
         //List<GTimelineStyle> showList = new List<GTimelineStyle>();
@@ -48,34 +48,58 @@ namespace highlight.tl
             TimelineFactory.Init();
             allStyleList = LoadAssets(timelineDir, "*" + Suffix);
             InitStyles();
-            curSelectIdx = 0;
+            if(curSelectIdx == -1)
+                curSelectIdx = 0;
             UpdateSelectSkill();
         }
         void InitStyles()
         {
-            allDic.Clear();
+           // allDic.Clear();
             allStyleNames = new string[allStyleList.Count];
             allStyleNamesIndexs = new int[allStyleList.Count];
             for (int i = 0; i < allStyleList.Count; i++)
             {
-                allDic[allStyleList[i].name] = allStyleList[i];
+                //allDic[allStyleList[i].name] = allStyleList[i];
                 allStyleNames[i] = allStyleList[i].name;
                 allStyleNamesIndexs[i] = i;
             }
         }
         void UpdateSelectSkill()
         {
-            if (allStyleList.Count == 0)
+            if (allStyleList == null || allStyleList.Count == 0)
                 return;
-            if(root != null)
+            //if(RootGo != null)
+            //{
+            //    GameObject.DestroyImmediate(RootGo);
+            //}
+            GameObject[] errGos = GameObject.FindGameObjectsWithTag("Timeline");
+            for(int i=0;i<errGos.Length;i++)
             {
-                GameObject.DestroyImmediate(root.gameObject);
+                GameObject.DestroyImmediate(errGos[i]);
             }
-            TimeNode node = TimelineNode.Creat(allStyleList[curSelectIdx]);
-            SetSelect(node);
+            Timeline tl = null;
+            if(role != null)
+            {
+                if (curSelectIdx >= runtimeList.Count)
+                    return;
+                tl = runtimeList[curSelectIdx];
+            }
+            else
+            {
+                tl = allStyleList[curSelectIdx].Creat();
+            }
+            TimeNode node = TimelineNode.Creat(tl);
+            RootGo = node.root.gameObject;
+                SetSelect(node);
         }
-        void SetSelect(TimeNode node)
+        void SetSelect(TimeNode node,bool force = false)
         {
+            if (role != null && !force)
+            {
+                curNode = node;
+               // this.Repaint();
+                return;
+            }
             if (curNode == node)
             {
                 Selection.activeGameObject = node.gameObject;
@@ -88,7 +112,10 @@ namespace highlight.tl
         static UnityEngine.Object selectObj;
         public static TimeNode curNode;
         public static TimelineNode root { get { return curNode == null ? null : curNode.root; } }
+        public static GameObject RootGo;
         public static Timeline timeline { get { return root == null ? null : root.timeline; } }
+        public Role role;
+        public List<Timeline> runtimeList = new List<Timeline>();
         [InitializeOnLoadMethod]
         static void Start()
         {
@@ -97,26 +124,26 @@ namespace highlight.tl
         }
         static void Update()
         {
-            if (Selection.objects != null && Selection.objects.Length == 1 && selectObj != Selection.objects[0])
-            {
-                selectObj = Selection.objects[0];
-                string path = AssetDatabase.GetAssetPath(Selection.objects[0]);
-                if (path.EndsWith(".tl") && Inst != null && allStyleList != null)
-                {
-                    int idx = allStyleList.FindIndex(x => x.name == Selection.objects[0].name);
-                    if (idx > -1)
-                    {
-                        Inst.curSelectIdx = idx;
-                        Inst.UpdateSelectSkill();
-                        Inst.Repaint();
-                    }
-                }
-            }
+            //if (Selection.objects != null && Selection.objects.Length == 1 && selectObj != Selection.objects[0])
+            //{
+            //    selectObj = Selection.objects[0];
+            //    string path = AssetDatabase.GetAssetPath(Selection.objects[0]);
+            //    if (path.EndsWith(".tl") && Inst != null && allStyleList != null)
+            //    {
+            //        int idx = allStyleList.FindIndex(x => x.name == Selection.objects[0].name);
+            //        if (idx > -1)
+            //        {
+            //            Inst.curSelectIdx = idx;
+            //            Inst.UpdateSelectSkill();
+            //            Inst.Repaint();
+            //        }
+            //    }
+            //}
             if (Inst == null)
             {
-                if (root != null)
+                if (RootGo != null)
                 {
-                    GameObject.DestroyImmediate(root.gameObject);
+                    GameObject.DestroyImmediate(RootGo);
                 }
             }
             else
@@ -126,7 +153,7 @@ namespace highlight.tl
                     TimeNode node = Selection.activeGameObject.GetComponent<TimeNode>();
                     if (node.obj == null)
                     {
-                        GameObject.DestroyImmediate(node.gameObject);
+                       // GameObject.DestroyImmediate(node.gameObject);
                     }
                     else if(node != curNode)
                     {
@@ -138,10 +165,37 @@ namespace highlight.tl
             {
                 curNode.UpdateData();
             }
-            if(timeline != null && timeline.IsPlaying)
+            if (timeline != null)
             {
-                timeline.Update(Time.realtimeSinceStartup);
+                AITest aiTest = GameObject.FindObjectOfType<AITest>();
+                if (aiTest != null)
+                {
+                    aiTest.SetTimeline(timeline);
+                }
+                   
+              //  else
+               // if (Application.isPlaying && timeline.IsPlaying)
+              //  {
+                   // timeline.Update(Time.realtimeSinceStartup);
+              //  }
                 Inst.Repaint();
+            }
+            if(Inst != null && Application.isPlaying && Selection.activeGameObject != null)
+            {
+                GameObject go = Selection.activeGameObject;
+                RoleControl ctl = go.GetComponent<RoleControl>();
+                if(ctl != null)
+                {
+                    Role r = RoleManager.Get(ctl.id);
+                    if(r != Inst.role)
+                    {
+                        Inst.curSelectIdx = 0;
+                        Inst.role = r;
+                        Inst.runtimeList = r.GetAllTimeline();
+                        Inst.UpdateSelectSkill();
+                    }
+                    Selection.activeGameObject = go;
+                }
             }
         }
         public static bool EnableCustomHierarchy = true;
@@ -158,17 +212,30 @@ namespace highlight.tl
                 // 通过ID获得Obj
                 var obj = EditorUtility.InstanceIDToObject(instanceId);
                 var go = (GameObject)obj;// as GameObject;
-                if(go.GetComponent<TimeNode>() != null)
+                TimeNode node = go.GetComponent<TimeNode>();
+                if (node != null)
                 {
                     EventType eType = Event.current.type;
                     if (eType == EventType.ContextClick)
                     {
                         if (selectionRect.Contains(Event.current.mousePosition))
                         {
-                            TimeNode node = go.GetComponent<TimeNode>();
-                            Inst.SetSelect(node);
+                            Inst.SetSelect(node,true);
                             Inst.ShowTimelineMenu(node);
                             Event.current.Use();
+                        }
+                    }
+                    if(eType == EventType.DragExited)
+                    {
+                        TimeNode parent = node.transform.parent.GetComponent<TimeNode>();
+                        if (node.parent != parent)
+                        {
+                            node.parent.RemoveChild(node,false);
+                            parent.AddChild(node, node.transform.GetSiblingIndex());
+                        }
+                        else if(node.Depth != node.transform.GetSiblingIndex())
+                        {
+                            parent.SetChildIndex(node, node.transform.GetSiblingIndex());
                         }
                     }
                 }
@@ -198,7 +265,11 @@ namespace highlight.tl
             scrollPos = GUILayout.BeginScrollView(scrollPos);
             GUILayout.Space(5f);
             //    GUILayout.BeginVertical();
+
+            EditorGUILayout.BeginHorizontal();
             drawTitle();
+            EditorGUILayout.EndHorizontal();
+
             GUILayout.Space(5f);
             drawRoot();
             GUILayout.Space(5f);
@@ -215,39 +286,85 @@ namespace highlight.tl
         int curSelectIdx = 0;
         void drawTitle()
         {
-            EditorGUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Refresh", GUILayout.MaxHeight(25f), GUILayout.MaxWidth(100f)))
+
+            if (Application.isPlaying && role != null)
             {
-                 LoadData();
-            }
-            if (allStyleNames != null)
-            {
-                int newIdx = EditorGUILayout.IntPopup(curSelectIdx, allStyleNames, allStyleNamesIndexs, GUILayout.MaxHeight(25f), GUILayout.MaxWidth(150f)); //(rt, curSelectIdx, allStyleNames);
-                if (newIdx != curSelectIdx)
+                runtimeList = role.GetAllTimeline();
+                if (runtimeList.Count > 0)
                 {
-                    curSelectIdx = newIdx;
-                    UpdateSelectSkill();
+                    if(root == null || root.timelineStyle == null)
+                    {
+                        curSelectIdx = 0;
+                        UpdateSelectSkill();
+                        return;
+                    }
+                    else
+                    {
+                        GUILayout.Label("role:" + role.onlyId, GUILayout.MaxHeight(25f), GUILayout.MaxWidth(50f));
+                        string[] names = new string[runtimeList.Count];
+                        int[] nameIdxs = new int[runtimeList.Count];
+                        for (int i = 0; i < runtimeList.Count; i++)
+                        {
+                            names[i] = runtimeList[i].name + "_" + runtimeList[i].onlyId;
+                            nameIdxs[i] = i;
+                        }
+                        bool _needUpdate = false;
+                        if (curSelectIdx == -1)
+                        {
+                            _needUpdate = true;
+                            curSelectIdx = 0;
+                        }
+                        int newIdx = EditorGUILayout.IntPopup(curSelectIdx, names, nameIdxs, GUILayout.MaxHeight(25f), GUILayout.MaxWidth(150f)); //(rt, curSelectIdx, allStyleNames);
+                        if (newIdx != curSelectIdx || _needUpdate)
+                        {
+                            curSelectIdx = newIdx;
+                            UpdateSelectSkill();
+                        }
+                    }
+                    
                 }
+                else
+                    curSelectIdx = -1;
             }
-            
-            if (GUILayout.Button("+", GUILayout.MaxHeight(25f), GUILayout.MaxWidth(50f))) 
+            else
             {
-                creatTimeline();
+                if (GUILayout.Button("Refresh", GUILayout.MaxHeight(25f), GUILayout.MaxWidth(100f)))
+                {
+                    LoadTimeStyle.styleDic.Clear();
+                    LoadData();
+                }
+                if (allStyleNames != null)
+                {
+                    int newIdx = EditorGUILayout.IntPopup(curSelectIdx, allStyleNames, allStyleNamesIndexs, GUILayout.MaxHeight(25f), GUILayout.MaxWidth(150f)); //(rt, curSelectIdx, allStyleNames);
+                    if (newIdx != curSelectIdx)
+                    {
+                        curSelectIdx = newIdx;
+                        UpdateSelectSkill();
+                    }
+                }
+                if (!Application.isPlaying)
+                {
+                    if (GUILayout.Button("+", GUILayout.MaxHeight(25f), GUILayout.MaxWidth(50f)))
+                    {
+                        creatTimeline();
+                    }
+                }
+
             }
+
             if (root != null && root.timelineStyle != null)
             {
                 TimelineStyle style = root.timelineStyle;
                 string rName = "保存-" + root.name;
                 if (root.isChange)
                     rName += "*";
-                if (GUILayout.Button(rName, GUILayout.MaxHeight(25f), GUILayout.MaxWidth(200f)))
+                if (GUILayout.Button(rName, GUILayout.MaxHeight(25f), GUILayout.MaxWidth(150f)))
                 {
                     Save(style);
                 }
             }
-            EditorGUILayout.EndHorizontal();
-            
+
         }
 
         public enum NodeType
@@ -291,24 +408,52 @@ namespace highlight.tl
         {
             if (node == null || node.obj == null)
                 return;
-            EditorGUILayout.BeginHorizontal();
             if (node == curNode)
             {
-                GUI.contentColor = Color.green;
+                Rect rect = GUILayoutUtility.GetLastRect();
+                Color co = GUI.color;
+                GUI.color = new Color(1f, 1f, 1f, 0.2f);
+                rect.y += 21f;
+                rect.width += 2f;
+                Texture2D tex = EditorGUIUtility.whiteTexture;
+                GUI.DrawTexture(rect, tex);
+               GUI.color = co;
             }
-            else
+          //  else
             {
-                GUI.contentColor = Color.white;
+                if (node.obj.HasFinished)
+                    GUI.contentColor = Color.grey * 1.5f;
+                else
+                {
+                    if (node.obj.Status == TriggerStatus.Success)
+                        GUI.contentColor = Color.red;
+                    else if (node.obj.Status == TriggerStatus.Failure)
+                        GUI.contentColor = Color.black;
+                    else if (node.obj.Status == TriggerStatus.Running)
+                        GUI.contentColor = Color.blue;
+                    else
+                        GUI.contentColor = Color.white;
+                }
+
             }
             TimeStyle style = node.style;
+            if(style == null)
+            {
+                node = null;
+                curSelectIdx = -1;
+                return;
+            }
+            EditorGUILayout.BeginHorizontal();
             FrameRange validRange = node.obj.GetMaxFrameRange();
             FrameRange rang = style.Range;
             float sliderStartFrame = rang.Start;
             float sliderEndFrame = rang.End;
             EditorGUI.BeginChangeCheck();
-            float allW = position.width - 170f;
+            float allW = position.width - 220f;
             float evtW = allW * (float)validRange.Length / node.root.obj.Length;
             float startX = allW * (float)validRange.Start / node.root.obj.Length;
+            if (timeline.lStyle.forever)
+                startX += node.Depth * 25f;
             GUILayout.Space(startX);
             if (GUILayout.Button("+",GUILayout.MaxWidth(20f)))
             {
@@ -316,24 +461,31 @@ namespace highlight.tl
             }
             if (GUILayout.Button(node.name, GUILayout.Width(70f)))
             {
-                SetSelect(node);
+                SetSelect(node, true);
             }
-            GUILayout.Label(validRange.Start.ToString(), GUILayout.Width(20f));
-            GUI.enabled = !node.isRoot;
-            EditorGUILayout.MinMaxSlider(ref sliderStartFrame, ref sliderEndFrame, validRange.Start, validRange.End, GUILayout.Width(evtW));
-            GUI.enabled = true;
-            GUILayout.Label(validRange.End.ToString(), GUILayout.Width(30f));
-            if (!node.isRoot)
+            if(!timeline.lStyle.forever)
             {
-                rang = FrameRange.Resize((int)sliderStartFrame, (int)sliderEndFrame, validRange);
-                if (rang != style.Range)
-                    root.isChange = true;
-                style.Range = rang;
-                node.obj.OnStyleChange();
+                GUILayout.Label(validRange.Start.ToString(), GUILayout.Width(50f));
+                GUI.enabled = !node.isRoot;
+                EditorGUILayout.MinMaxSlider(ref sliderStartFrame, ref sliderEndFrame, validRange.Start, validRange.End, GUILayout.Width(evtW));
+                GUI.enabled = true;
+                GUILayout.Label(validRange.End.ToString(), GUILayout.Width(80f));
+                if (!node.isRoot)
+                {
+                    rang = FrameRange.Resize((int)sliderStartFrame, (int)sliderEndFrame, validRange);
+                    if (rang != style.Range)
+                        root.isChange = true;
+                    style.Range = rang;
+                    node.obj.OnStyleChange();
+                }
+                if (EditorGUI.EndChangeCheck())
+                {
+                    SetSelect(node, true);
+                }
             }
-            if (EditorGUI.EndChangeCheck())
+            else
             {
-                SetSelect(node);
+                style.Range = new FrameRange(0, 60);
             }
             EditorGUILayout.EndHorizontal();
 
@@ -344,26 +496,28 @@ namespace highlight.tl
         }
         void drawRoot()
         {
-            if (root == null)
+            if (root == null || root.timelineStyle == null)
                 return;
             TimelineStyle style = root.timelineStyle;
-            if (style == null)
-                return;
             EditorGUILayout.BeginHorizontal();
             // root.name = EditorGUILayout.TextField(root.name);
-            GUILayout.Label("帧率:", EditorStyles.label, GUILayout.Width(35f));
-            style.FrameRate = EditorGUILayout.IntField(style.FrameRate, GUILayout.Width(100f));
+            GUILayout.Label("帧率:" + style.FrameRate, EditorStyles.label, GUILayout.Width(100f));
+            //style.FrameRate = EditorGUILayout.IntField(style.FrameRate, GUILayout.Width(100f));
             GUILayout.Label("总帧数:", EditorStyles.label, GUILayout.Width(45f));
             style.x = 0;
-            style.y = EditorGUILayout.IntField(style.y, GUILayout.Width(100f));
+            style.y = EditorGUILayout.IntField(style.y, GUILayout.Width(150f));
             if (style.y < 1)
                 style.y = 1;
-            GUILayout.Label("t:" + style.LengthTime + "s", GUILayout.Width(30f));
+            GUILayout.Label("t:" + style.LengthTime + "s", GUILayout.Width(100f));
+            GUILayout.Label("循环：", GUILayout.Width(30f));
+            style.loop = EditorGUILayout.Toggle(style.loop);
+            GUILayout.Label("永久：", GUILayout.Width(30f));
+            style.forever = EditorGUILayout.Toggle(style.forever);
             EditorGUILayout.EndHorizontal();
         }
         void drawControl()
         {
-            if (timeline == null)
+            if (timeline == null )
                 return;
             EditorGUILayout.BeginHorizontal();
             GUI.enabled = Application.isPlaying;
@@ -386,6 +540,12 @@ namespace highlight.tl
                 {
                     timeline.Pause();
                 }
+            }
+            if (root == null || root.style == null)
+            {
+                curSelectIdx = -1;
+                EditorGUILayout.EndHorizontal();
+                return;
             }
             int frame = EditorGUILayout.IntSlider(curFrame, -1, root.style.y);
             if (frame != curFrame)
@@ -420,6 +580,8 @@ namespace highlight.tl
             {
                 menu.AddItem(new GUIContent("复制"), false, DuplicateMenu, node);
                 menu.AddItem(new GUIContent("删除"), false, DeleteEvent, node);
+                menu.AddItem(new GUIContent("上移"), false, SetIndexChildEvent1, node);
+                menu.AddItem(new GUIContent("下移"), false, SetIndexChildEvent2, node);
             }
             menu.ShowAsContext();
         }
@@ -442,15 +604,25 @@ namespace highlight.tl
             parent.RemoveChild(node);
             SetSelect(parent);
         }
+        void SetIndexChildEvent1(object param)
+        {
+            TimeNode node = (TimeNode)param;
+            node.parent.SetChildIndex(node, node.obj.index - 1);
+        }
+        void SetIndexChildEvent2(object param)
+        {
+            TimeNode node = (TimeNode)param;
+            node.parent.SetChildIndex(node, node.obj.index + 1);
+        }
         public static TimeStyle CloneStyle(TimeStyle source)
         {
-            string json = JsonConvert.SerializeObject(source, Newtonsoft.Json.Formatting.Indented, getSetting());
-            TimeStyle to = JsonConvert.DeserializeObject(json, typeof(TimeStyle), getSetting()) as TimeStyle;
+            string json = JsonConvert.SerializeObject(source, Newtonsoft.Json.Formatting.Indented, LoadTimeStyle.getSetting());
+            TimeStyle to = JsonConvert.DeserializeObject(json, typeof(TimeStyle), LoadTimeStyle.getSetting()) as TimeStyle;
             return to;
         }
         public static void Save(TimelineStyle tls)
         {
-            string json = JsonConvert.SerializeObject(tls, Newtonsoft.Json.Formatting.Indented, getSetting());
+            string json = JsonConvert.SerializeObject(tls, Newtonsoft.Json.Formatting.Indented, LoadTimeStyle.getSetting());
             //string json = GJsonInfo.Serialize(tls);
             System.IO.StreamWriter sw = new System.IO.StreamWriter(timelineDir + tls.name + Suffix, false, new System.Text.UTF8Encoding(false));
             sw.Write(json);
@@ -474,31 +646,21 @@ namespace highlight.tl
             FileInfo[] fls = dirInfo.GetFiles(pattern, SearchOption.AllDirectories);
             foreach (var file in fls)
             {
-                string json = File.ReadAllText(file.FullName);
                 try
                 {
-                    TimelineStyle ps = JsonConvert.DeserializeObject(json, typeof(TimelineStyle), getSetting()) as TimelineStyle;// GJsonInfo.DeSerialize(json) as GTimelineStyle;
-                    if (ps != null)
-                        list.Add(ps);
-                    //bool b = RefreshStyle(ps, false);
-                  //  if (b)
-                   // {
-                   //     Save(ps);
-                  //  }
+                    if (file.Extension == ".tl")
+                    {
+                        TimelineStyle ps = LoadTimeStyle.Load(Path.GetFileNameWithoutExtension(file.Name));
+                        if (ps != null)
+                            list.Add(ps);
+                    }
                 }
                 catch (Exception e)
                 {
                     Debug.LogError(e.Message + "\n" + e.StackTrace);
-                    Debug.LogError(json);
                 }
             }
             return list;
-        }
-        public static JsonSerializerSettings getSetting()
-        {
-            JsonSerializerSettings setting = new JsonSerializerSettings() { TypeNameHandling = TypeNameHandling.Auto, DefaultValueHandling = DefaultValueHandling.Ignore, NullValueHandling = NullValueHandling.Ignore};
-           // setting.Formatting = Formatting.None;
-            return setting;
         }
 
     }
