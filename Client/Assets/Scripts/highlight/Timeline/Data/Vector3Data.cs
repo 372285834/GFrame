@@ -19,12 +19,12 @@ namespace highlight.tl
         }
 #endif
     }
-    public class Vector3Data : ComponentData, IVector3
+    public class Vector3Data : ComponentData<Vector3Style>, IVector3
     {
         public Vector3 vec3 { get; set; }
         public override void OnInit()
         {
-            vec3 = (this.style as Vector3Style).vec3;// state;
+            vec3 = mStyle.vec3;// state;
         }
     }
 }

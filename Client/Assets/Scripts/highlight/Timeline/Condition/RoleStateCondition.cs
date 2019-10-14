@@ -17,23 +17,13 @@ namespace highlight.tl
         }
 #endif
     }
-    public class RoleStateCondition : ConditionData
+    public class RoleStateCondition : ComponentData<RoleStateConditionStyle>, IConditionData
     {
-        public override void OnInit()
-        {
-            base.OnInit();
-        }
-        public override bool OnCheck()
-        {
-            return this.owner.state == (this.style as RoleStateConditionStyle).state;
-        }
-        public override void OnRegister()
-        {
+        public LogicType logicType { get { return mStyle.logicType; } }
 
-        }
-        public override void OnRemove()
+        public bool OnCheck()
         {
-
+            return this.owner.state == mStyle.state;
         }
     }
 }

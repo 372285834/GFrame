@@ -8,21 +8,16 @@ namespace highlight.tl
     {
         [Desc("TimelineStyle")]
         public StringKeyData data;
-        Timeline mTimeline;
-        public override TriggerStatus OnTrigger()
-        {
-            mTimeline = TimelineFactory.Creat(data.key,this.role);
-            if(mTimeline == null)
-            {
-                return TriggerStatus.Failure;
-            }
-            mTimeline.skill = this.root.skill;
-            mTimeline.Play(0);
-            return TriggerStatus.Success;
-        }
+        public Timeline mTimeline;
         public override void OnUpdate()
         {
-            if (mTimeline != null)
+            if (mTimeline == null)
+            {
+                mTimeline = TimelineFactory.Creat(data.key, this.role);
+                mTimeline.skill = this.root.skill;
+                mTimeline.Play(0);
+            }
+            else
                 mTimeline.UpdateFrame(App.deltaFrame);
         }
         public override void OnStop()
@@ -33,8 +28,7 @@ namespace highlight.tl
         }
         public override void OnDestroy()
         {
-            if (mTimeline != null)
-                mTimeline.Destroy();
+            TimelineFactory.Destroy(mTimeline);
             mTimeline = null;
         }
     }

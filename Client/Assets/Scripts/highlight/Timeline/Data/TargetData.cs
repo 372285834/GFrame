@@ -24,14 +24,14 @@ namespace highlight.tl
         }
 #endif
     }
-    public class TargetData : ComponentData
+    public class TargetData : ComponentData<TargetStyle>
     {
         public Role obj
         {
             get
             {
                 Role _obj = null;
-                TargetStyle s = this.style as TargetStyle;
+                TargetStyle s = this.mStyle as TargetStyle;
                 switch (s.targetType)
                 {
                     case TargetType.Self:

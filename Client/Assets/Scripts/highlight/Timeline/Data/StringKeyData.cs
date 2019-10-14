@@ -20,8 +20,8 @@ namespace highlight.tl
         }
 #endif
     }
-    public class StringKeyData : ComponentData
+    public class StringKeyData : ComponentData<StringKeyStyle>
     {
-        public string key { get { return GetStyle<StringKeyStyle>().key; } }
+        public string key { get { return mStyle.key; } }
     }
 }

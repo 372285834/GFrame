@@ -27,15 +27,14 @@ namespace highlight.tl
         }
 #endif
     }
-    public sealed class ResData : ComponentData
+    public sealed class ResData : ComponentData<ResStyle>
     {
         public System.Object asset;
-        public ResStyle mStyle { get { return this.style as ResStyle; } }
         public bool isLoaded { get { return asset != null; } }
         public Role role;
         public override void OnInit()
         {
-            switch ((this.style as ResStyle).eType)
+            switch (mStyle.eType)
             {
                 case eResType.Effect:
                     break;

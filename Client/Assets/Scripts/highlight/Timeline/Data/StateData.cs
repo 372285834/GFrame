@@ -9,7 +9,7 @@ namespace highlight.tl
 {
     public enum StateType
     {
-        RoleState,
+        RoleState=0,
         Npc_AI_1,
     }
     public enum Npc_AI_1
@@ -24,6 +24,7 @@ namespace highlight.tl
     {
         public StateType type;
         public int value;
+       // public bool IsFinish = false;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
@@ -43,6 +44,7 @@ namespace highlight.tl
                 default:
                     break;
             }
+           // this.IsFinish = EditorGUILayout.Toggle("IsFinish：", IsFinish);
         }
         public T drawValue<T>(Enum t) where T : Enum
         {
@@ -51,9 +53,11 @@ namespace highlight.tl
         }
 #endif
     }
-    public class StateData : ComponentData
+    public class StateData : ComponentData<StateStyle>
     {
-        public int value { get { return this.GetStyle<StateStyle>().value; } }
-        public StateType type { get { return GetStyle<StateStyle>().type; } }
+        //public StateStyle mStyle;
+        public int value { get { return mStyle.value; } }
+        public StateType type { get { return mStyle.type; } }
+        //public bool IsFinish { get { return GetStyle<StateStyle>().IsFinish; } }
     }
 }

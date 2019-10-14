@@ -11,17 +11,17 @@ namespace highlight.tl
         public int curId;
         public override TriggerStatus OnTrigger()
         {
-            if (data == null)
-                return TriggerStatus.Failure;
-            if (this.owner.items == null)
-                return TriggerStatus.Failure;
-            curId = this.owner.items.weaponId;
-            this.owner.items.SwitchWeapon(data.value);
+            //if (data == null)
+            //    return TriggerStatus.Failure;
+            //if (this.owner.items == null)
+            //    return TriggerStatus.Failure;
+            //curId = this.owner.items.weaponId;
+            //this.owner.items.SwitchWeapon(data.value);
             return TriggerStatus.Success;
         }
         public override void OnFinish()
         {
-            this.owner.items.SwitchWeapon(curId);
+            //this.owner.items.SwitchWeapon(curId);
             base.OnFinish();
         }
     }

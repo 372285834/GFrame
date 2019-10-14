@@ -12,14 +12,28 @@ namespace highlight.tl
         public StateData state;
         public override TriggerStatus OnTrigger()
         {
+           // if (!state.IsFinish)
+          //  {
+                Switch();
+                return TriggerStatus.Failure;
+           // }
+           // return TriggerStatus.Running;
+        }
+
+        //public override void OnFinish()
+        //{
+        //    if (state.IsFinish)
+        //        Switch();
+        //    base.OnFinish();
+        //}
+        void Switch()
+        {
             StateMachineAction machine = this.owner.GetState(state.type);
-            if(machine == null)
+            if (machine == null)
             {
                 Debug.LogError("machine == null:" + this.name);
-                return TriggerStatus.Failure;
             }
             machine.Switch(state.value);
-            return TriggerStatus.Failure;
         }
     }
 }

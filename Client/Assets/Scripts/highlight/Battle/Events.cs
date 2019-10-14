@@ -27,7 +27,7 @@ namespace highlight
         {
             get
             {
-                return new Vector3(dirX * 0.001f, 0f, dirZ * 0.001f);
+                return new Vector3(dirX * 0.01f, 0f, dirZ * 0.01f);
             }
         }
         public bool isSkillPos { get { return skillX != 0 || skillZ != 0; } }
@@ -97,8 +97,8 @@ namespace highlight
         public static void AddDir(int id,Vector2 dir)
         {
             RoleEvent evt = Add(id);
-            evt.dirX = (short)Mathf.Round(dir.x * 1000);
-            evt.dirZ = (short)Mathf.Round(dir.y * 1000);
+            evt.dirX = (short)Mathf.Round(dir.x * 100);
+            evt.dirZ = (short)Mathf.Round(dir.y * 100);
             LastDic[id] = evt;
         }
         public static void AddMove(int id, Vector3 pos)

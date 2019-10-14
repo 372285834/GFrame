@@ -29,6 +29,7 @@ namespace highlight.tl
         public int capacity;
         public string name;
         public bool obsolete = false;
+        public FieldInfo styleField;
         public TimeAttribute(string menu, Type dType = null) : this(menu, 100, dType, false) { }
         public TimeAttribute(string _menu, int _capacity, Type dType, bool _obsolete)
         {
@@ -41,6 +42,7 @@ namespace highlight.tl
             if (dType == null)
                 dType = typeof(ComponentData);
             this.dataType = dType;
+            styleField = dType.GetField("mStyle");
         }
     }
     public abstract class Component : Object
@@ -49,8 +51,8 @@ namespace highlight.tl
         public TriggerStatus status = TriggerStatus.InActive;
         public TimeObject timeObject { protected set; get; }
         public Timeline root { get { return this.timeObject.root; } }
-        public Target target { get { return this.root.target; } }
-        public Role owner { get { return this.root.owner; } }
+        public Target target { get { return this.timeObject.root.target; } }
+        public Role owner { get { return this.timeObject.root.owner; } }
         public TimeStyle timeStyle { get { return this.timeObject.timeStyle; } }
         public string name { get { return this.timeObject.name; } }
         public List<ComponentData> ComponentList { get { return timeObject.ComponentList; } }
@@ -108,14 +110,29 @@ namespace highlight.tl
         }
 #endif
     }
+    public interface IComponentData
+    {
+        ComponentStyle style { get; }
+        void SetStyle(ComponentStyle _style);
+    }
+    public class ComponentData<T> : ComponentData, IComponentData where T : ComponentStyle
+    {
+        public T mStyle;
+        public virtual void SetStyle(ComponentStyle _style)
+        {
+            if(_style == null)
+            {
+                mStyle = null;
+                return;
+            }
+            mStyle = (T)_style;
+        }
+        public ComponentStyle style { get { return mStyle; } }
+    }
     public class ComponentData : Component
     {
         public virtual bool OnTrigger() { return true; }
-        public ComponentStyle style { private set; get; }
-        public T GetStyle<T>() where T : ComponentStyle
-        {
-            return (T)style;
-        }
+        //public ComponentStyle style { set; get; }
         private readonly static Dictionary<string, ObjectPool> CompPoolDic = new Dictionary<string, ObjectPool>();
 
         public static ComponentData Get(ComponentStyle comp, TimeObject t)
@@ -124,16 +141,19 @@ namespace highlight.tl
                 return null;
             ComponentData data = getPool(comp).Get(comp.Attr.dataType) as ComponentData;
             data.timeObject = t;
-            data.style = comp;
+            (data as IComponentData).SetStyle(comp);
+            if (comp.Attr.styleField != null)
+                comp.Attr.styleField.SetValue(data, comp);
             return data;
         }
         public static void Release(ComponentData logic)
         {
             if (logic == null)
                 return;
-            getPool(logic.style).Release(logic);
+            IComponentData data = logic as IComponentData;
+            getPool(data.style).Release(logic);
             logic.timeObject = null;
-            logic.style = null;
+            data.SetStyle(null);
         }
         static ObjectPool getPool(ComponentStyle data)
         {

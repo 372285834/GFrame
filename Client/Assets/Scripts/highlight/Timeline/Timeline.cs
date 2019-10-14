@@ -9,8 +9,6 @@ namespace highlight.tl
     {
         public bool loop = false;
         public bool forever = false;
-        public string[] keys;
-        public int[] values;
         [Newtonsoft.Json.JsonIgnore]
         public int FrameRate { get { return DEFAULT_FRAMES_PER_SECOND; } }
         public const int DEFAULT_FRAMES_PER_SECOND = 60;
@@ -41,6 +39,8 @@ namespace highlight.tl
     public class Timeline : TimeObject
     {
         public TimelineStyle lStyle { get { return timeStyle as TimelineStyle; } }
+        public bool forever = false;
+        public float FrameRate { get { return TimelineStyle.DEFAULT_FRAMES_PER_SECOND; } }
         public Target target = new Target();
         public Role owner = null;
        // public Buff buff = null;
@@ -49,13 +49,6 @@ namespace highlight.tl
         public Dictionary<string, TimeAction> actionDic = new Dictionary<string, TimeAction>();
         public Dictionary<string, object> globalDic = new Dictionary<string, object>();
         public Observer<string, object> globalObs = new Observer<string, object>();
-        public float FrameRate
-        {
-            get
-            {
-                return lStyle.FrameRate;
-            }
-        }
         // has it been initialized?
         private bool _isInit = false;
         /// @brief Is the sequence initialized?
@@ -88,7 +81,7 @@ namespace highlight.tl
         }
         public void Play(float curTime, float startTime = 0f)
         {
-            Play(curTime, RoundToInt(startTime * lStyle.FrameRate));
+            Play(curTime, RoundToInt(startTime * FrameRate));
         }
         public void Play(float curTime, int startFrame)
         {
@@ -114,6 +107,10 @@ namespace highlight.tl
             actionDic.TryGetValue(key, out action);
             return action;
         }
+        public T FindAction<T>(string name) where T: TimeAction
+        {
+            return FindAction(name) as T;
+        }
         public T GetGlobal<T>(string k)
         {
             object data = null;
@@ -137,12 +134,14 @@ namespace highlight.tl
             if (_isInit)
                 return;
             _isInit = true;
+            this.forever = this.lStyle.forever;
+           // this.FrameRate = this.lStyle.FrameRate;
             List<ComponentData> datas = this.ComponentList;
             for (int i = 0; i < datas.Count; i++)
             {
-                if (datas[i] is GlobalData)
+                if (datas[i] is IGlobalData)
                 {
-                    GlobalData data = (datas[i] as GlobalData);
+                    IGlobalData data = (datas[i] as IGlobalData);
                     this.globalDic[data.key] = data.GetValue();
                 }
             }
@@ -162,6 +161,7 @@ namespace highlight.tl
             nodeDic.Clear();
             actionDic.Clear();
             globalDic.Clear();
+            globalObs.Clear();
         }
         public override void Stop(bool reset = false)
         {
@@ -201,23 +201,30 @@ namespace highlight.tl
         }
         public void SetCurrentTime(float delta)
         {
-            UpdateFrame(RoundToInt(delta * lStyle.FrameRate));
+            UpdateFrame(RoundToInt(delta * FrameRate));
         }
         /// @brief Sets current frame.
         /// @param frame Frame.
         /// @sa Length, GetCurrentFrame
-        public void UpdateFrame(int delta)
+        public override void UpdateFrame(int delta)
         {
             int frame = delta + _currentFrame;
             if (!_isPlaying)
                 return;
-            _currentFrame = Clamp(frame, 0, this.Length);
-
-            _isPlayingForward = _currentFrame >= frame;
+            ProfilerTest.BeginSample(this.name);
+            if(this.forever)
+            {
+                _currentFrame = 0;
+            }
+            else
+            {
+                _currentFrame = Clamp(frame, 0, this.Length);
+                _isPlayingForward = _currentFrame >= frame;
+            }
 
             _UpdateFrame(_currentFrame);
 
-            if (!this.lStyle.forever && _currentFrame >= this.Length)
+            if (!this.forever && _currentFrame >= this.Length)
             {
                 Stop(this.lStyle.loop);
                 if (this.lStyle.loop)
@@ -231,15 +238,16 @@ namespace highlight.tl
                     }
                 }
             }
+            ProfilerTest.EndSample();
         }
-#if UNITY_EDITOR
-        public void SetCurrentFrameEditor(int frame)
-        {
-            _isPlayingForward = frame >= _currentFrame;
-            _currentFrame = Clamp(frame, 0, this.Length);
-            UpdateEditor(_currentFrame);
-        }
-#endif
+//#if UNITY_EDITOR
+//        public void SetCurrentFrameEditor(int frame)
+//        {
+//            _isPlayingForward = frame >= _currentFrame;
+//            _currentFrame = Clamp(frame, 0, this.Length);
+//            UpdateEditor(_currentFrame);
+//        }
+//#endif
         int RoundToInt(float f)
         {
             return (int)Math.Floor(f + 0.5f);

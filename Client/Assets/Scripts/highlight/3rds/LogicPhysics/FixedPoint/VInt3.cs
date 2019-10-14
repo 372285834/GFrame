@@ -185,7 +185,12 @@ public struct VInt3
         this.y = (int)Math.Round((double)(position.y * 1000f));
         this.z = (int)Math.Round((double)(position.z * 1000f));
     }
-
+    public VInt3(float _x, float _y, float _z)
+    {
+        this.x = (int)Math.Round((double)(_x * 1000f));
+        this.y = (int)Math.Round((double)(_y * 1000f));
+        this.z = (int)Math.Round((double)(_z * 1000f));
+    }
     public VInt3(int _x, int _y, int _z)
     {
         this.x = _x;

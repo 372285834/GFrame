@@ -33,7 +33,7 @@ namespace highlight
                 return;
             if(buff.timeline != null)
             {
-                buff.timeline.Destroy();
+                TimelineFactory.Destroy(buff.timeline);
                 buff.timeline = null;
             }
             buff.ower = null;

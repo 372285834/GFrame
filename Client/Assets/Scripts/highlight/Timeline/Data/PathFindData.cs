@@ -16,14 +16,15 @@ namespace highlight.tl
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
-
+            this.isAll = EditorGUILayout.Toggle("isAll：", isAll);
+            this.areaMask = EditorGUILayout.IntField("areaMask：", areaMask);
+            this.agentTypeID = EditorGUILayout.IntField("agentTypeID：", agentTypeID);
         }
 #endif
     }
-    public class PathFindData : ComponentData
+    public class PathFindData : ComponentData<PathFindStyle>
     {
         public NavMeshPath path = new NavMeshPath();
-        public PathFindStyle mStyle { get { return this.style as PathFindStyle; } }
         public int curIndex = 0;
         public override bool OnTrigger()
         {
@@ -35,7 +36,7 @@ namespace highlight.tl
         {
             get
             {
-                PathFindStyle s = this.style as PathFindStyle;
+                PathFindStyle s = mStyle;
                 return new NavMeshQueryFilter() { areaMask = s.areaMask, agentTypeID = s.agentTypeID };
             }
         }

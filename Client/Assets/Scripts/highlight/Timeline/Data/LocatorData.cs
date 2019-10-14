@@ -30,20 +30,19 @@ namespace highlight.tl
         }
 #endif
     }
-    public class LocatorData : ComponentData, IVector3, ITransform
+    public class LocatorData : ComponentData<LocatorStyle>, IVector3, ITransform
     {
-        public LocatorStyle loStyle { get { return this.style as LocatorStyle; } }
-        public Locator locator { get { return (this.style as LocatorStyle).locator; } }
+        public Locator locator { get { return mStyle.locator; } }
         Vector3 curPos;
         public Vector3 vec3
         {
             get
             {
-                if (loStyle.isRealTime)
+                if (mStyle.isRealTime)
                     OnTrigger();
-                if (transform != null && loStyle.isFollow)
+                if (transform != null && mStyle.isFollow)
                 {
-                    curPos = transform.position + loStyle.off;
+                    curPos = transform.position + mStyle.off;
                 }
                 return curPos;
             }
@@ -67,17 +66,17 @@ namespace highlight.tl
                         return false;
                     break;
                 case Locator.eType.LT_TARGET:
-                    targetObj = this.target.getObj(loStyle.index);
+                    targetObj = this.target.getObj(mStyle.index);
                     if (targetObj == null)
                         return false;
                     break;
                 case Locator.eType.LT_TARGET_POS:
-                    if (!this.target.checkIndex(loStyle.index))
+                    if (!this.target.checkIndex(mStyle.index))
                         return false;
-                    curPos = this.target.getPos(loStyle.index);
+                    curPos = this.target.getPos(mStyle.index);
                     break;
                 case Locator.eType.LT_SCENE:
-                    curPos = loStyle.off;
+                    curPos = mStyle.off;
                     break;
                 case Locator.eType.LT_PARENT:
                     targetObj = this.timeObject.parent.role;
@@ -113,7 +112,7 @@ namespace highlight.tl
                 {
                     return false;
                 }
-                curPos = transform.position + loStyle.off;
+                curPos = transform.position + mStyle.off;
             }
             return true;
             //this.prefabData.transform

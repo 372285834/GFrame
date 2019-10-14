@@ -10,7 +10,8 @@ namespace highlight.tl
         public PathFindData data;
         [Desc("pos")]
         public IVector3 pos;
-
+        [Desc("目标坐标")]
+        public IVector3 to;
         public override TriggerStatus OnTrigger()
         {
             return TriggerStatus.Success;
@@ -22,17 +23,26 @@ namespace highlight.tl
         {
             if ((App.frame + this.owner.onlyId) % FindPathFrameLength != 0)
                 return;
-            Role t = this.target.getObj(0);
-            if (t == null)
-                return;
+            Vector3 toPos = Vector3.zero;
+            if(to != null)
+            {
+                toPos = to.vec3;
+            }
+            else
+            {
+                Role t = this.target.getObj(0);
+                if (t == null)
+                    return;
+                toPos = t.position;
+            }
           //  ProfilerTest.BeginSample("PathFindAction.OnUpdate");
-            pos.vec3 = t.position;
+            //pos.vec3 = t.position;
             Vector3 start = this.owner.position;
             bool b = false;
             if (data.mStyle.isAll)
-                b = UnityEngine.AI.NavMesh.CalculatePath(start, t.position, UnityEngine.AI.NavMesh.AllAreas, data.path);
+                b = UnityEngine.AI.NavMesh.CalculatePath(start, toPos, UnityEngine.AI.NavMesh.AllAreas, data.path);
             else
-                b = UnityEngine.AI.NavMesh.CalculatePath(start, t.position, data.filter, data.path);
+                b = UnityEngine.AI.NavMesh.CalculatePath(start, toPos, data.filter, data.path);
             if(!b || data.path.status != UnityEngine.AI.NavMeshPathStatus.PathComplete)
             {
                 //ProfilerTest.EndSample();

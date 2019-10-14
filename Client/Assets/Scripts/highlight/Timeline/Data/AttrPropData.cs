@@ -21,7 +21,7 @@ namespace highlight.tl
             this.isBuff = EditorGUILayout.Toggle("isBuff：", this.isBuff);
             this.attrType = (AttrType)EditorGUILayout.EnumPopup("类型：", this.attrType);
             this.value = EditorGUILayout.IntField("value：", this.value);
-            this.time = EditorGUILayout.IntField("length：", this.time);
+            this.time = EditorGUILayout.IntField("time：", this.time);
             //    this.count = EditorGUILayout.IntField("count：", this.count);
         }
 #endif
@@ -42,15 +42,15 @@ namespace highlight.tl
         }
 #endif
     }
-    public class AttrPropData : ComponentData
+    public class AttrPropData : ComponentData<AttrPropStyle>
     {
         public PropValue value;
-        public AttrType attrType { get { return GetStyle<AttrPropStyle>().attrType; } }
+        public AttrType attrType { get { return mStyle.attrType; } }
        // public int count { get { return GetStyle<AttrPropStyle>().count; } }
-        public bool isBuff { get { return GetStyle<AttrPropStyle>().isBuff; } }
+        public bool isBuff { get { return mStyle.isBuff; } }
         public override bool OnTrigger()
         {
-            AttrPropStyle s = GetStyle<AttrPropStyle>();
+            AttrPropStyle s = mStyle;
             if (s is AttrPropAllStyle)
             {
                 AttrPropAllStyle sa = s as AttrPropAllStyle;

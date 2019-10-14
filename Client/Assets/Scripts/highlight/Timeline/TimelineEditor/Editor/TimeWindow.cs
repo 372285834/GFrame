@@ -191,7 +191,7 @@ namespace highlight.tl
                     {
                         Inst.curSelectIdx = 0;
                         Inst.role = r;
-                        Inst.runtimeList = r.GetAllTimeline();
+                        TimelineFactory.GetByRole(Inst.runtimeList, r);
                         Inst.UpdateSelectSkill();
                     }
                     Selection.activeGameObject = go;
@@ -286,11 +286,9 @@ namespace highlight.tl
         int curSelectIdx = 0;
         void drawTitle()
         {
-
-
             if (Application.isPlaying && role != null)
             {
-                runtimeList = role.GetAllTimeline();
+                TimelineFactory.GetByRole(Inst.runtimeList, role); //runtimeList = role.GetAllTimeline();
                 if (runtimeList.Count > 0)
                 {
                     if(root == null || root.timelineStyle == null)
@@ -326,6 +324,11 @@ namespace highlight.tl
                 }
                 else
                     curSelectIdx = -1;
+                if (GUILayout.Button("ShowAll", GUILayout.MaxHeight(25f), GUILayout.MaxWidth(100f)))
+                {
+                    Selection.activeGameObject = null;
+                    role = null;
+                }
             }
             else
             {
@@ -548,23 +551,23 @@ namespace highlight.tl
                 return;
             }
             int frame = EditorGUILayout.IntSlider(curFrame, -1, root.style.y);
-            if (frame != curFrame)
-            {
-                timeline.Pause();
-                timeline.SetCurrentFrameEditor(frame);
-            }
-            GUI.enabled &= curFrame < timeline.Length;
-            if (GUILayout.Button("下一帧", GUILayout.Width(45f)))
-            {
-                timeline.Pause();
-                timeline.SetCurrentFrameEditor(curFrame + 1);
-            }
-            GUI.enabled &= curFrame > 0;
-            if (GUILayout.Button("上一帧", GUILayout.Width(45f)))
-            {
-                timeline.Pause();
-                timeline.SetCurrentFrameEditor(curFrame - 1);
-            }
+            //if (frame != curFrame)
+            //{
+            //    timeline.Pause();
+            //    timeline.SetCurrentFrameEditor(frame);
+            //}
+            //GUI.enabled &= curFrame < timeline.Length;
+            //if (GUILayout.Button("下一帧", GUILayout.Width(45f)))
+            //{
+            //    timeline.Pause();
+            //    timeline.SetCurrentFrameEditor(curFrame + 1);
+            //}
+            //GUI.enabled &= curFrame > 0;
+            //if (GUILayout.Button("上一帧", GUILayout.Width(45f)))
+            //{
+            //    timeline.Pause();
+            //    timeline.SetCurrentFrameEditor(curFrame - 1);
+            //}
             EditorGUILayout.EndHorizontal();
             GUI.enabled = true;
         }

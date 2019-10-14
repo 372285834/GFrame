@@ -20,7 +20,7 @@ namespace highlight
         public Timeline timeline;
         public TimelineStyle style { get { return timeline != null ? timeline.lStyle : null; } }
         public bool IsStop { get { return timeline != null ? timeline.IsStopped : false; } }
-        public bool DeadDestroy = true;
+        //public bool DeadDestroy = true;
         public void UpdateFrame(int delta)
         {
             if (timeline != null)
@@ -28,8 +28,10 @@ namespace highlight
         }
         public void OnDrawGizmos()
         {
+#if UNITY_EDITOR
             if (timeline != null)
                 timeline.OnDrawGizmos();
+#endif
         }
         private readonly static ObjectPool<Skill> pool = new ObjectPool<Skill>();
         public static Skill Get(Skills _ower, SkillData data)
@@ -46,11 +48,8 @@ namespace highlight
         {
             if (skill == null)
                 return;
-            if (skill.timeline != null)
-            {
-                skill.timeline.Destroy();
-                skill.timeline = null;
-            }
+            TimelineFactory.Destroy(skill.timeline);
+            skill.timeline = null;
             skill.data = null;
             skill.ower = null;
             pool.Release(skill);
@@ -65,6 +64,15 @@ namespace highlight
         {
             return DataList.Find(x=>x.id == id);
         }
+        public bool CanPlaySkill(SkillData data)
+        {
+            if (!data.cd.IsComplete)
+                return false;
+            RoleState state = this.obj.state;
+            if (state != RoleState.Idle && state != RoleState.Move && state != RoleState.Hit)
+                return false;
+            return !obj.attrs.GetBoolV(AttrType.non_skill);
+        }
         public Skill GetRunById(int id)
         {
             Skill sk = null;
@@ -76,6 +84,9 @@ namespace highlight
             SkillData data = DataList.Find(x => x.id == id);
             if (data == null)
                 return null;
+            if (!CanPlaySkill(data))
+                return null;
+            data.cd.Reset();
             Skill skill = Skill.Get(this, data);
             base.Add(skill);
             dic[skill.id] = skill;

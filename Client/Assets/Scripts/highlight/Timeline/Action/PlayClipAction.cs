@@ -8,19 +8,58 @@ namespace highlight.tl
     {
         [Desc("动画数据")]
         public AnimatorData data;
+        public CDData cd = CDData.Min;
+        public float clipLength = 0;
+        float _speed;
+        public float speed
+        {
+            get
+            {
+                return _speed;
+            }
+            set
+            {
+                if (_speed == value)
+                    return;
+                _speed = value;
+                cd.length = VInt.Round(clipLength / speed);
+            }
+        }
         public override TriggerStatus OnTrigger()
         {
             if (data == null)
                 return TriggerStatus.Failure;
-            AnimatorStyle style = data.style as AnimatorStyle;
-            role.PlayClip(style.clip, style.loop,style.speed);
-            return TriggerStatus.Success;
+            AnimatorStyle style = data.mStyle;
+            if (this.status == TriggerStatus.InActive)
+            {
+                cd = new CDData(1);
+                clipLength = this.role.GetClipLength(style.clip);
+                speed = style.speed;
+                cd.length = VInt.Round(clipLength / speed);
+                role.PlayClip(style.clip, style.loop, speed, cd.length);
+                return TriggerStatus.Running;
+            }
+
+            if (style.loop)
+            {
+                speed = style.speed * role.ClipSpeed;
+                //role.SetClipSpeed(speed);
+                role.PlayClip(style.clip, style.loop, speed, cd.length);
+                //if (cd.IsComplete)
+                //{
+                //    cd.Reset();
+                //    cd.length = VInt.Round(PlayClip());
+                //}
+            }
+            else
+            {
+                if (cd.IsComplete)
+                {
+                    return TriggerStatus.Success;
+                }
+            }
+            return TriggerStatus.Running;
         }
-        public override void OnUpdate()
-        {
-            AnimatorStyle style = data.style as AnimatorStyle;
-            if(style.loop)
-                role.PlayClip(style.clip, style.loop, style.speed);
-        }
+
     }
 }

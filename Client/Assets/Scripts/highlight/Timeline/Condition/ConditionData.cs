@@ -29,48 +29,6 @@ namespace highlight.tl
         }
 #endif
     }
-    public class ConditionData : ComponentData
-    {
-        public LogicType logicType { get { return this.GetStyle<ConditionStyle>().logicType; } }
-        public bool result;
-        public AcHandler OnChangeFunc;
-        public bool Check()
-        {
-            result = OnCheck();
-            return result;
-        }
-        public virtual bool OnCheck()
-        {
-            return false;
-        }
-        public void Register(AcHandler ac)
-        {
-            OnChangeFunc = ac;
-            OnRegister();
-        }
-        public void OnChange()
-        {
-            if (OnChangeFunc != null)
-                OnChangeFunc();
-        }
-        public void Remove()
-        {
-            if (OnChangeFunc != null)
-            {
-                OnChangeFunc = null;
-                OnRemove();
-            }
-        }
-        public virtual void OnRegister()
-        {
-
-        }
-        public virtual void OnRemove()
-        {
-
-        }
-
-    }
     public enum ConditionType
     {
         失败后停止,
@@ -81,20 +39,20 @@ namespace highlight.tl
     public class ConditionBaseStyle : ComponentStyle
     {
         public ConditionType conditionType;
-        public bool isObs;
+        //public bool isObs;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
             this.conditionType = (ConditionType)EditorGUILayout.EnumPopup("条件_类型：", this.conditionType);
-            this.isObs = EditorGUILayout.Toggle("注册事件：", this.isObs);
+          //  this.isObs = EditorGUILayout.Toggle("注册事件：", this.isObs);
             base.OnInspectorGUI();
         }
 #endif
     }
-    public class ConditionBaseData : ComponentData
+    public class ConditionBaseData : ComponentData<ConditionBaseStyle>
     {
-        public ConditionType conditionType { get { return this.GetStyle<ConditionBaseStyle>().conditionType; } }
-        public bool isObs { get { return this.GetStyle<ConditionBaseStyle>().isObs; } }
+        public ConditionType conditionType { get { return mStyle.conditionType; } }
+       // public bool isObs { get { return mStyle.isObs; } }
 
         public TriggerStatus GetStatus(bool b)
         {

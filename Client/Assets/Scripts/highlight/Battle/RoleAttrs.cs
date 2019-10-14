@@ -17,8 +17,11 @@ namespace highlight
     //}
     public interface IAttrValue
     {
+        AttrType type{get;set;}
+        Observer<RoleAttrs> obs { get; set; }
         void ClearValue();
         bool UpdateValue();
+        int Count { get; }
     }
     //public interface IPropAttrValue
     //{
@@ -113,6 +116,8 @@ namespace highlight
     }
     public class AttrValue<T> : List<T>, IAttrValue
     {
+        public AttrType type {get;set;}
+        public Observer<RoleAttrs> obs { get; set; }
         public T value;
         public T result;
         public virtual bool UpdateValue()
@@ -131,6 +136,8 @@ namespace highlight
         }
         public virtual void ClearValue()
         {
+            if (obs != null)
+                obs.Clear();
             this.Clear();
         }
     }
@@ -316,6 +323,7 @@ namespace highlight
         force_visible,//强制显形
         cross_solider,//穿过小兵
         non_obstacle,//无视障碍
+        non_skill,//不能放技能
 
         ///----------------扩展属性 非真实存在---------------
         Extend_Attr = 400,
@@ -325,50 +333,62 @@ namespace highlight
         have_target,
         target_in_rang,
         target_dis_pos,
+        fighting,//战斗中
     }
     public class RoleAttrs
     {
         public Role role;
-        private Dictionary<int, object> dic = new Dictionary<int, object>();
-        private Dictionary<AttrType, Observer<RoleAttrs>> attrObsDic = new Dictionary<AttrType, Observer<RoleAttrs>>();
+        private Dictionary<int, IAttrValue> dic = new Dictionary<int, IAttrValue>();
+        private List<IAttrValue> buffList = new List<IAttrValue>();
 
         private readonly static ObjectPool<PropAttr> intPool = new ObjectPool<PropAttr>();
         private readonly static ObjectPool<BoolAttr> boolPool = new ObjectPool<BoolAttr>();
-        private readonly static ObjectPool<Observer<RoleAttrs>> attrObsPool = new ObjectPool<Observer<RoleAttrs>>();
+        //private readonly static ObjectPool<Observer<RoleAttrs>> attrObsPool = new ObjectPool<Observer<RoleAttrs>>();
         public void UpdateFrame(int delta)
         {
-            foreach (var k in dic.Keys)
+            int count = buffList.Count;
+            if (count == 0)
+                return;
+            for(int i= count-1; i>=0; i--)
             {
-                IAttrValue attr = dic[k] as IAttrValue;
-                if (attr.UpdateValue())
+                IAttrValue attr = buffList[i];
+                if(attr.UpdateValue())
                 {
-                    this.Change((AttrType)k);
+                    this.Change(attr.type);
+                    if (attr.Count == 0)
+                        buffList.RemoveAt(i);
                 }
             }
         }
         public void AddObs(AttrType t,AcHandler<RoleAttrs> ac)
         {
-            Observer<RoleAttrs> obs = null;
-            attrObsDic.TryGetValue(t, out obs);
-            if (obs == null)
-                obs = attrObsPool.Get();
-            obs.AddObserver(ac);
+            int k = (int)t;
+            if (!dic.ContainsKey(k))
+                return;
+            IAttrValue attr = dic[k];
+            if (attr.obs == null)
+                attr.obs = new Observer<RoleAttrs>();
+            attr.obs.AddObserver(ac);
         }
         public void RemoveObs(AttrType t, AcHandler<RoleAttrs> ac)
         {
-            Observer<RoleAttrs> obs = null;
-            attrObsDic.TryGetValue(t, out obs);
-            if (obs == null)
+            int k = (int)t;
+            if (!dic.ContainsKey(k))
                 return;
-            obs.RemoveObserver(ac);
+            IAttrValue attr = dic[k];
+            if (attr.obs == null)
+                return;
+            attr.obs.RemoveObserver(ac);
         }
         protected void Change(AttrType t)
         {
-            Observer<RoleAttrs> obs = null;
-            attrObsDic.TryGetValue(t, out obs);
-            if (obs == null)
+            int k = (int)t;
+            if (!dic.ContainsKey(k))
                 return;
-            obs.Change(this);
+            IAttrValue attr = dic[k];
+            if (attr.obs == null)
+                return;
+            attr.obs.Change(this);
         }
         public float GetFloat(AttrType t, bool add = false, int min = 0)
         {
@@ -385,15 +405,18 @@ namespace highlight
         }
         public PropAttr GetProp(AttrType t, bool add = false)
         {
-            object v = null;
-            dic.TryGetValue((int)t, out v);
-            if (v == null && add)
+            int k = (int)t;
+            if (dic.ContainsKey(k))
+            {
+                return (PropAttr)dic[k];
+            }
+            else if (add)
             {
                 PropAttr iv = intPool.Get();
-                v = iv;
-                dic[(int)t] = v;
+                dic[k] = iv;
+                return iv;
             }
-            return (PropAttr)v;
+            return null;
         }
         public void SetProp(AttrType t, int v, bool isAdd = false)
         {
@@ -413,6 +436,7 @@ namespace highlight
         {
             PropAttr list = GetProp(t, true);
             list.AddValue(v);
+            buffList.Add(list);
             this.Change(t);
         }
         public bool RemoveProp(AttrType t, int id)
@@ -430,31 +454,38 @@ namespace highlight
         }
         public BoolAttr GetBool(AttrType t, bool add = false)
         {
-            object v = null;
-            dic.TryGetValue((int)t, out v);
-            if (v == null && add)
+            int k = (int)t;
+            if (dic.ContainsKey(k))
+            {
+                return (BoolAttr)dic[k];
+            }
+            else if(add)
             {
                 BoolAttr iv = boolPool.Get();
-                v = iv;
-                dic[(int)t] = v;
+                dic[k] = iv;
+                return iv;
             }
-            return (BoolAttr)v;
+            return null;
         }
-        public void SetBool(AttrType t, bool b)
+        public bool SetBool(AttrType t, bool b,int lv = 0)
         {
-            SetBool(t, new BoolValue(b));
+            return SetBool(t, new BoolValue(b, lv));
         }
-        public void SetBool(AttrType t, BoolValue v)
+        public bool SetBool(AttrType t, BoolValue v)
         {
             BoolAttr list = GetBool(t, true);
+            if (v.level < list.value.level)
+                return false;
             list.value = v;
             list.UpdateValue();
             this.Change(t);
+            return true;
         }
         public void AddBool(AttrType t, BoolValue v)
         {
             BoolAttr list = GetBool(t, true);
             list.AddValue(v);
+            buffList.Add(list);
             this.Change(t);
         }
         public bool RemoveBool(AttrType t, int id)
@@ -476,20 +507,14 @@ namespace highlight
         {
             foreach (var v in dic.Values)
             {
-                if(v is IAttrValue)
-                    (v as IAttrValue).ClearValue();
+                v.ClearValue();
                 if (v is PropAttr)
                     intPool.Release((PropAttr)v);
                 else if (v is BoolAttr)
                     boolPool.Release((BoolAttr)v);
             }
             dic.Clear();
-            foreach(var obs in attrObsDic.Values)
-            {
-                obs.Clear();
-                attrObsPool.Release(obs);
-            }
-            attrObsDic.Clear();
+            buffList.Clear();
             role = null;
             pool.Release(this);
         }

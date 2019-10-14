@@ -97,7 +97,7 @@ NavMeshSettings:
   m_BuildSettings:
     serializedVersion: 2
     agentTypeID: 0
-    agentRadius: 0.3
+    agentRadius: 0.5
     agentHeight: 1
     agentSlope: 45
     agentClimb: 0.4
@@ -105,7 +105,7 @@ NavMeshSettings:
     maxJumpAcrossDistance: 0
     minRegionArea: 2
     manualCellSize: 0
-    cellSize: 0.1
+    cellSize: 0.16666667
     manualTileSize: 0
     tileSize: 256
     accuratePlacement: 0
@@ -7777,6 +7777,7 @@ GameObject:
   - component: {fileID: 957698801}
   - component: {fileID: 957698800}
   - component: {fileID: 957698799}
+  - component: {fileID: 957698802}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -7848,6 +7849,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 32.1, y: 0, z: 0}
+--- !u!114 &957698802
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 957698798}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7f862a76e11485c4e9945f20d4b1834e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  IsShow: 1
 --- !u!1 &960672347
 GameObject:
   m_ObjectHideFlags: 0
@@ -14480,8 +14494,10 @@ MonoBehaviour:
   - {fileID: 1433113768}
   - {fileID: 801018025}
   Count: 100
-  rang: 100
+  rang: 50
+  rang2: 20
   root: {fileID: 0}
+  itemRoot: {fileID: 1097964349}
   loopNames:
   - run
   - wait_1

@@ -50,7 +50,7 @@ namespace highlight.tl
             keyList.Clear();
             for (int i = 0; i < keys.Count; i++)
             {
-                GlobalData data = keys[i] as GlobalData;
+                IGlobalData data = keys[i] as IGlobalData;
                     if (data.key == k)
                     {
                         idx = i;

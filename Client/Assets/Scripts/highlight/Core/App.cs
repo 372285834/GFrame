@@ -76,13 +76,6 @@ namespace highlight
                     UpdateLogic(detalFrame);
                 }
             }
-            if(interpolationTime <= 1f || excFrame)
-            {
-                interpolationTime = (render_time + logicDeltaTime - nextLogicTime) / logicDeltaTime;
-                if (interpolationTime < 0f || interpolationTime > 1f)
-                    interpolationTime = 1f;
-                UpdateRender(interpolationTime);
-            }
            // Debug.Log(interpolationTime + "," + excFrame);
             //  LabelRoll.UpdateMaterila();
             Timer.update();
@@ -103,6 +96,13 @@ namespace highlight
                 keyMove.Update();
                 if (Events.Length == 0)
                     Events.Enqueue();
+            }
+            if (interpolationTime <= 1f || excFrame)
+            {
+                interpolationTime = (render_time + logicDeltaTime - nextLogicTime) / logicDeltaTime;
+                if (interpolationTime < 0f || interpolationTime > 1f)
+                    interpolationTime = 1f;
+                UpdateRender(interpolationTime);
             }
         }
         public static float ShaderTime = 0f;

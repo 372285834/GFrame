@@ -20,13 +20,12 @@ namespace highlight.tl
             this.attrType = (AttrType)EditorGUILayout.EnumPopup("类型：", this.attrType);
             this.value = EditorGUILayout.Toggle("value：", this.value);
             this.level = EditorGUILayout.IntField("level：", this.level);
-            this.time = EditorGUILayout.IntField("level：", this.time);
+            this.time = EditorGUILayout.IntField("time：", this.time);
         }
 #endif
     }
-    public class AttrBoolData : ComponentData
+    public class AttrBoolData : ComponentData<AttrBoolStyle>
     {
-        public AttrBoolStyle mStyle { get { return GetStyle<AttrBoolStyle>(); } }
         public BoolValue value;
         public AttrType attrType { get { return mStyle.attrType; } }
         public override bool OnTrigger()

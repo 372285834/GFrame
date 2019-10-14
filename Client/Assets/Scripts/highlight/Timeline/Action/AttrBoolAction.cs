@@ -26,9 +26,16 @@ namespace highlight.tl
             //}
             return TriggerStatus.Success;
         }
+        public bool IsFinishRemove
+        {
+            get
+            {
+                return data.value.cd == CDData.Min;
+            }
+        }
         public override void OnFinish()
         {
-            if(data.value.cd == CDData.Min)
+            if(IsFinishRemove)
                 role.attrs.RemoveBool(this.data.attrType, this.data.value.id);
         }
         //public BoolValue GetValue()

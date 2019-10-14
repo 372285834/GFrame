@@ -18,23 +18,24 @@ namespace highlight.tl
             base.OnInspectorGUI();
             this.interval = EditorGUILayout.IntField("interval:", this.interval);
             this.count = EditorGUILayout.IntField("count:", this.count);
-            this.defValue = EditorGUILayout.IntField("defValue:", this.defValue);
+            this.defValue = EditorGUILayout.IntField("delay:", this.defValue);
         }
 #endif
     }
-    public class IntervalData : ConditionData
+    public class IntervalData : ComponentData<IntervalStyle>, IConditionData
     {
+        public LogicType logicType { get { return mStyle.logicType; } }
         public CDData cd;
-        public int count { get { return GetStyle<IntervalStyle>().count; } }
+        public int count { get { return mStyle.count; } }
         public int curCount = 0;
         public override bool OnTrigger()
         {
-            IntervalStyle s = GetStyle<IntervalStyle>();
-            cd = new CDData(App.time - s.defValue,s.interval);
+            IntervalStyle s = mStyle;
+            cd = new CDData(App.time - s.interval + s.defValue, s.interval);
             curCount = 0;
             return true;
         }
-        public override bool OnCheck()
+        public bool OnCheck()
         {
             if (cd.IsComplete && curCount < this.count)
             {

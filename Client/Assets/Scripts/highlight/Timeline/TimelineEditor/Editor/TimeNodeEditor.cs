@@ -58,7 +58,7 @@ namespace highlight.tl
             {
                 for (int i = 0; i < comps.Count; i++)
                 {
-                    drawTitle(comps[i].style.Attr.name, comps[i], comps.Count - 1);
+                    drawTitle((comps[i] as IComponentData).style.Attr.name, comps[i], comps.Count - 1);
                     if (i >= comps.Count)
                         return;
                     GUILayout.BeginHorizontal();
@@ -216,16 +216,19 @@ namespace highlight.tl
             EditorGUI.BeginChangeCheck();
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label("Range    ");
+
             GUILayout.Label("S:", EditorStyles.label);
             GUI.SetNextControlName(FRAMERANGE_START_FIELD_ID);
             rang.Start = EditorGUILayout.IntField(style.x);
             GUILayout.Label("E:", EditorStyles.label);
             rang.End = EditorGUILayout.IntField(style.y);
+
             EditorGUILayout.EndHorizontal();
             EditorGUI.BeginChangeCheck();
+            //
+            GUILayout.Label("t:" + mScript.obj.LengthTime + "s" + ",(" + mScript.obj.StartTime + "-" + mScript.obj.EndTime + ")");
+            // GUILayout.Space(20f);//EditorGUIUtility.labelWidth
             EditorGUILayout.BeginHorizontal();
-            GUILayout.Label("t:" + mScript.obj.LengthTime + "s", GUILayout.Width(30f));
-            GUILayout.Space(20f);//EditorGUIUtility.labelWidth
             GUILayout.Label(validRange.Start.ToString(), GUILayout.Width(30f));
             float sliderStartFrame = rang.Start;
             float sliderEndFrame = rang.End;
@@ -249,7 +252,7 @@ namespace highlight.tl
         void drawComponent(object obj)
         {
             ComponentData data = obj as ComponentData;
-            ComponentStyle comp = data.style;
+            ComponentStyle comp = (data as IComponentData).style;
             MethodInfo method = comp.GetType().GetMethod("OnInspectorGUI");
             if (method != null)
             {
@@ -288,7 +291,7 @@ namespace highlight.tl
                     //    if(fls[i].FieldType.IsInstanceOfType(data))
                     //if (fls[i].FieldType.IsSubclassOf(data.GetType()))
                     {
-                        tempStrList.Add(data.style.Attr.name + " " + j);
+                        tempStrList.Add((data as IComponentData).style.Attr.name + " " + j);
                         tempList.Add(j);
                     }
                 }

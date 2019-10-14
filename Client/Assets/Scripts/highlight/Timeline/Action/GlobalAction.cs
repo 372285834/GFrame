@@ -7,7 +7,7 @@ namespace highlight.tl
     public class GlobalAction : TimeAction
     {
         [Desc("全局属性")]
-        public GlobalData data;
+        public IGlobalData data;
         public override TriggerStatus OnTrigger()
         {
             if(data is GlobalIntData)

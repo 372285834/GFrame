@@ -62,7 +62,6 @@ public class MapItemMgr : MonoBehaviour
         //}
     }
     public LuaChunkPool luaPool;
-#if UNITY_EDITOR
    // [XLua.BlackList]
     public Color itemAOI = Color.magenta;
     private void OnDrawGizmos()
@@ -73,7 +72,8 @@ public class MapItemMgr : MonoBehaviour
         }
         if (!drowLine)
             return;
+#if UNITY_EDITOR
         mStyle.OnDrawGizmos();
-    }
 #endif
+    }
 }

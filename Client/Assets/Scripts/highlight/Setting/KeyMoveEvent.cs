@@ -38,27 +38,28 @@ namespace highlight
                 isKey = true;
             }
             Role role = RoleManager.Chief;
-            if (isKey)
+            if (role.attrs.GetBoolV(AttrType.non_control))
+                return;
+            if (isKey && !role.non_move)
             {
                 dir.Normalize();
-                Events.AddDir(RoleManager.ChiefId, dir);
-                float speed = role.attrs.GetFloat(AttrType.move_speed, true);
-                Vector3 to = role.position + new Vector3(dir.x, 0f, dir.y) * speed * App.logicDeltaTime;
+                
+                float speed = role.move_speed;
+                Vector3 to = role.position + new Vector3(dir.x, 0f, dir.y) * speed;
                 NavMeshHit hit;
                 if(NavMesh.SamplePosition(to, out hit, 1f,UnityEngine.AI.NavMesh.AllAreas))
                 {
-                    Events.AddMove(RoleManager.ChiefId, hit.position);
+                    //Events.AddMove(RoleManager.ChiefId, hit.position);
+                    Events.AddDir(RoleManager.ChiefId, (hit.position  - role.position).ToVector2());
                 }
             }
             if(Input.GetKeyDown(KeyCode.R))
             {
                 SkillData data = role.skills.GetData(1);
-              //  Debug.Log(data.cd.ToString());
-                if (data.cd.IsComplete)
-                {
-                    data.cd.Reset();
-                    Events.AddSkill(RoleManager.ChiefId, data.id, role.position);
-                }
+                if (!role.skills.CanPlaySkill(data))
+                    return;
+                //  Debug.Log(data.cd.ToString());
+                Events.AddSkill(RoleManager.ChiefId, data.id, role.position);
             }
         }
     }

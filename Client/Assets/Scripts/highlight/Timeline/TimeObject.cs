@@ -121,8 +121,10 @@ namespace highlight.tl
                 action.index = i;
                 obj._actions.Add(action);
                 action.SetData(obj._components);
-                if (!string.IsNullOrEmpty(style.key))
-                    root.actionDic[style.key] = action;
+                string k = style.key;
+                if (string.IsNullOrEmpty(k))
+                    k = data.name;
+                root.actionDic[k] = action;
             }
             for (int i = 0; i < data.Childs.Length; i++)
             {
@@ -207,7 +209,7 @@ namespace highlight.tl
         public void RemoveComponent(ComponentData data)
         {
             data.OnStop();
-            RemoveArray<ComponentStyle>(ref this.timeStyle.Components, data.style);
+            RemoveArray<ComponentStyle>(ref this.timeStyle.Components, (data as IComponentData).style);
             this._components.Remove(data);
             for(int i=0;i<this.timeStyle.Actions.Length;i++)
             {
@@ -428,21 +430,28 @@ namespace highlight.tl
             else
                 progress = (float)mFrameSinceTrigger / this.Length;
         }
+        public virtual void UpdateFrame(int frame)
+        {
+            _UpdateFrame(frame);
+        }
         protected void _UpdateFrame(int frame)
         {
             if (HasFinished)
                 return;
-            setProgress(frame);
+            if (!root.forever)
+                setProgress(frame);
 #if UNITY_EDITOR
             PreEvent();
 #endif
             if (!Trigger())
                 return;
+          //  ProfilerTest.BeginSample("OnUpdate");
             OnUpdate();
+            //ProfilerTest.EndSample();
             if (this.HasFinished)
                 return;
             UpdateChilds(frame);
-            if (!this.root.lStyle.forever && frame >= Length)
+            if (!this.root.forever && frame >= Length)
             {
                 Finish();
             }
@@ -457,11 +466,13 @@ namespace highlight.tl
         public virtual void UpdateChilds(int frame)
         {
             int limit = _childs.Count;
-            if (root.lStyle.forever)
+            if (root.forever)
             {
                 for (int i = 0; i < limit; i++)
                 {
+                    //ProfilerTest.BeginSample("_UpdateFrame");
                     _childs[i]._UpdateFrame(frame);
+                   // ProfilerTest.EndSample();
                 }
                 return;
             }
@@ -491,10 +502,12 @@ namespace highlight.tl
         }
         public bool Trigger()
         {
-          //  if(_status == TriggerStatus.InActive || _status == TriggerStatus.Running)
-         //   {
-                _status = OnTrigger();
-                if (_status == TriggerStatus.Failure)
+            //  if(_status == TriggerStatus.InActive || _status == TriggerStatus.Running)
+            //   {
+           // ProfilerTest.BeginSample("OnTrigger");
+            _status = OnTrigger();
+           // ProfilerTest.EndSample();
+            if (_status == TriggerStatus.Failure)
                     this.Stop();
        //     }
             return this.Status == TriggerStatus.Success;
@@ -526,6 +539,7 @@ namespace highlight.tl
                 _childs[i].OnDrawGizmos();
             }
         }
+        /*
         protected void UpdateEditor(int frame)
         {
             setProgress(frame);
@@ -536,7 +550,7 @@ namespace highlight.tl
 
             OnUpdateEditor();
             UpdateChildsEditor(frame);
-            if (!root.lStyle.forever && frame == Length)
+            if (!root.forever && frame == Length)
                 Finish();
 
             PostEvent();
@@ -547,7 +561,7 @@ namespace highlight.tl
 
             if (limit == 0)
                 return;
-            if (root.lStyle.forever)
+            if (root.forever)
             {
                 for (int i = 0; i < limit; i++)
                 {
@@ -592,6 +606,7 @@ namespace highlight.tl
         {
             OnUpdate();
         }
+        */
         protected virtual void PreEvent()
         {
             //Owner.gameObject.hideFlags = HideFlags.DontSave;
@@ -689,9 +704,10 @@ namespace highlight.tl
         }
         protected TriggerStatus OnTrigger()
         {
-            for (int i = 0; i < _components.Count; i++)
+            if (_status == TriggerStatus.InActive)
             {
-                if(_components[i].status == TriggerStatus.InActive)
+                int acount = _components.Count;
+                for (int i = 0; i < acount; i++)
                 {
                     bool b = _components[i].OnTrigger();
                     _components[i].status = b ? TriggerStatus.Success : TriggerStatus.Failure;
@@ -699,13 +715,15 @@ namespace highlight.tl
                         return TriggerStatus.Failure;
                 }
             }
-            TriggerStatus s = TriggerStatus.Success;
-            for (int i = 0; i < _actions.Count; i++)
+            int count = _actions.Count;
+            for (int i = 0; i < count; i++)
             {
                 TimeAction ac = _actions[i];
                 if (ac.status == TriggerStatus.InActive || ac.status == TriggerStatus.Running)
                 {
+                    ProfilerTest.BeginSample(ac.style.Attr.triggerName);
                     ac.status = ac.OnTrigger();
+                    ProfilerTest.EndSample();
                     if (this.HasFinished)
                         return TriggerStatus.Failure;
                     if (ac.status == TriggerStatus.Failure)
@@ -717,13 +735,14 @@ namespace highlight.tl
                     }
                 }
             }
-            return s;
+            return TriggerStatus.Success;
         }
         protected void OnUpdate()
         {
             //for (int i = 0; i < _components.Count; i++)
             //    _components[i].OnUpdate();
-            for (int i = 0; i < _actions.Count; i++)
+            int count = _actions.Count;
+            for (int i = 0; i < count; i++)
             {
                 if (this.HasFinished)
                     return;

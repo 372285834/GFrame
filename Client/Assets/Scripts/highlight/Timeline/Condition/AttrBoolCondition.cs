@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEngine;
 #endif
+using UnityEngine;
 namespace highlight.tl
 {
     [Time("条件/Bool属性判断", typeof(AttrBoolCondition))]
@@ -22,16 +22,13 @@ namespace highlight.tl
         }
 #endif
     }
-    public class AttrBoolCondition : ConditionData
+    public class AttrBoolCondition : ComponentData<AttrBoolConditionStyle>, IConditionData
     {
-        public AttrType attrType { get { return this.GetStyle<AttrBoolConditionStyle>().attrType; } }
-        public bool value { get { return this.GetStyle<AttrBoolConditionStyle>().value; } }
+        public LogicType logicType { get { return mStyle.logicType; } }
+        public AttrType attrType { get { return mStyle.attrType; } }
+        public bool value { get { return mStyle.value; } }
         //public bool isObs { get { return this.GetStyle<AttrBoolConditionStyle>().isObs; } }
-        public override void OnRegister()
-        {
-                this.owner.attrs.AddObs(attrType, OnAttrChange);
-        }
-        public override bool OnCheck()
+        public bool OnCheck()
         {
             bool v = false;
             if (attrType > AttrType.Extend_Attr)
@@ -68,13 +65,24 @@ namespace highlight.tl
             }
             return false;
         }
-        void OnAttrChange(RoleAttrs attrs)
-        {
-            this.OnChange();
-        }
-        public override void OnRemove()
-        {
-            this.owner.attrs.RemoveObs(attrType, OnAttrChange);
-        }
+        //AcHandler OnChangeFunc;
+        //public void OnRegister(AcHandler _ac)
+        //{
+        //    OnChangeFunc = _ac;
+        //    this.owner.attrs.AddObs(attrType, OnAttrChange);
+        //}
+        //void OnAttrChange(RoleAttrs attrs)
+        //{
+        //    if (OnChangeFunc != null)
+        //        OnChangeFunc();
+        //}
+        //public void OnRemove()
+        //{
+        //    if (OnChangeFunc != null)
+        //    {
+        //        this.owner.attrs.RemoveObs(attrType, OnAttrChange);
+        //        OnChangeFunc = null;
+        //    }
+        //}
     }
 }

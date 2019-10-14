@@ -28,13 +28,8 @@ namespace highlight.tl
            // this.isObs = EditorGUILayout.Toggle("注册事件：", this.isObs);
         }
 #endif
-    }
-    public class IntCondition : ConditionData
-    {
-        public int value { get { return this.GetStyle<IntConditionStyle>().value; } }
-        public AttrCompareType cType { get { return this.GetStyle<IntConditionStyle>().cType; } }
-        public bool isObs { get { return this.GetStyle<IntConditionStyle>().isObs; } }
-        public static bool CompareValue(int v, AttrCompareType cType,int value)
+
+        public static bool CompareValue(int v, AttrCompareType cType, int value)
         {
             bool b = false;
             switch (cType)

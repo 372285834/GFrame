@@ -32,7 +32,9 @@ namespace highlight.tl
         {
             if (obj.ChildList.Count == 0)
             {
+#if UNITY_EDITOR
                 UnityEditor.Selection.activeObject = this;
+#endif
                 return;
             }
             for (int i = 0; i < obj.ChildList.Count; i++)

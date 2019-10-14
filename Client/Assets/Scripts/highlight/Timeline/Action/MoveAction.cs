@@ -22,8 +22,8 @@ namespace highlight.tl
             Vector3 pos;
             if (eva == null)
             {
-                float speed = this.owner.attrs.GetFloat(AttrType.move_speed, false);
-                pos = VectorTools.LerpSpeed(sPos, end.vec3, speed * App.logicDeltaTime);
+                float speed = this.owner.move_speed;
+                pos = VectorTools.LerpSpeed(sPos, end.vec3, speed);
             }
             else
                 pos = eva.Evaluate(this.start.vec3, this.end.vec3, this.timeObject.progress);

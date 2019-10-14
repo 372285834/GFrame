@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using RVO;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
@@ -10,109 +11,116 @@ namespace highlight.tl
     {
         [Desc("目的地")]
         public IVector3 pos;
-      //  Vector3 temp;
-       // bool isTemp = false;
-       // int temLength = 1;
-        public static float RunSpeed = 1;
+        RVO.Vector2 vel;
+        //public static float RunSpeed = 1;
+        bool isTemp = false;
+        Vector3 temp;
+        int tempLength = 2;
+        static float errorDis = 0.03f;
         public override TriggerStatus OnTrigger()
         {
-            this.owner.PlayClip("run",true);
+           // this.owner.PlayClip("run",true);
+            this.owner.Switch(RoleState.Move);
             return pos == null ? TriggerStatus.Failure : TriggerStatus.Success;
         }
         public override void OnUpdate()
         {
-            bool nonMove = this.owner.attrs.GetBoolV(AttrType.non_move);
-            if (nonMove)
+            if (this.owner.non_move)
                 return;
-            float speed = this.owner.attrs.GetFloat(AttrType.move_speed, false);
-            this.owner.SetClipSpeed(speed/RunSpeed);
-            float length = speed * App.logicDeltaTime;
+            bool non_obstacle = this.owner.non_obstacle;
+            if(non_obstacle)
+            {
+                ForceMove();
+                return;
+            }
             Vector3 start = this.owner.position;
             Vector3 end = pos.vec3;
-            //if (isTemp)
-            //{
-            //    if (Vector3.Distance(start, temp) < errorDis)
-            //    {
-            //        temLength = 1;
-            //        isTemp = false;
-            //    }
-            //    else
-            //        end = temp;
-            //}
+            int id = this.owner.onlyId;
+            if (isTemp)
+            {
+                if (Vector3.Distance(start, temp) < errorDis)
+                {
+                    isTemp = false;
+                    //tempLength = 1;
+                }
+                else
+                    end = temp;
+            }
+
+                RVO.Vector2 lastPrefVel = RVO.Simulator.Instance.getAgentPrefVelocity(id);
+                RVO.Vector2 lastVel = Simulator.Instance.getAgentVelocity(id);
+                if (lastPrefVel.IsValid() && !lastVel.IsValid())
+                {
+                    Vector3 newDir = Vector3.Cross((end - start), Vector3.up).normalized;
+                    temp = start + newDir * tempLength;
+                    NavMeshHit hit;
+                    if (NavMesh.SamplePosition(temp, out hit, 0.5f, UnityEngine.AI.NavMesh.AllAreas))
+                    {
+                        isTemp = true;
+                        temp = hit.position;// + hit.normal * 0.5f;
+                        end = temp;
+                    }
+                }
+            
+
+
+            // this.owner.SetClipSpeed(speed/RunSpeed);
+            float length = this.owner.move_speed;
+            Vector3 dir = (end - start).normalized;
+
             float dis = Vector3.Distance(start, end);
             if (length > dis)
                 length = dis;
+            Vector3 to = start + dir * length;
+
+            start.y = to.y;
+            this.owner.SetPos(start, false);
+            vel = new RVO.Vector2(dir.x, dir.z) * length;
+            RVO.Simulator.Instance.setAgentPrefVelocity(id, vel);
+            RVO.Simulator.Instance.setAgentMaxSpeed(id, length);
+        }
+        void ForceMove()
+        {
+            Vector3 start = this.owner.position;
+            Vector3 end = pos.vec3;
+            float length = this.owner.move_speed;
             Vector3 dir = (end - start).normalized;
+
+            float dis = Vector3.Distance(start, end);
+            if (length > dis)
+                length = dis;
+
             Vector3 to = start + dir * length;
             this.owner.SetPos(to, false);
-            /*
-            ProfilerTest.BeginSample("NavMesh.SamplePosition");
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(to, out hit, length, UnityEngine.AI.NavMesh.AllAreas))
+            Simulator.Instance.setAgentPosition(owner.onlyId, new RVO.Vector2(to.x, to.z));
+            RVO.Simulator.Instance.setAgentMaxSpeed(owner.onlyId, 0f);
+            if ((VInt3)dir != this.owner.forward)
             {
-                Vector3 result = hit.position;
-               // result.y = 0f;
-                this.owner.SetPos(result, false);
-
-                float dis2 = Vector3.Distance(result, start);
-                if (dis2 * 2f <= length)
-                {
-                    //Vector3 newDir = Vector3.Cross(dir, Vector3.up);
-                    //if (temLength % 3 == 0)
-                    //    newDir += dir;
-                    //temp = start + newDir.normalized * temLength;
-                    //isTemp = true;
-                    //temLength++;
-                    ProfilerTest.BeginSample("NavMesh.CalculatePath");
-                    if (UnityEngine.AI.NavMesh.CalculatePath(start, pos.vec3, UnityEngine.AI.NavMesh.AllAreas, path))
-                    {
-                        if(path.status == NavMeshPathStatus.PathComplete && path.corners.Length > 0)
-                        {
-                            for(int i=0;i< path.corners.Length;i++)
-                            {
-                                if(Vector3.Distance(path.corners[i], start) > errorDis)
-                                {
-                                    temp = path.corners[i];
-                                    isTemp = true;
-                                    break;
-                                }
-                            }
-                        }
-                        path.ClearCorners();
-                    }
-                    ProfilerTest.EndSample();
-                    //  Debug.Log(dis2 + "," + length + "," + hit.distance);
-                }
-
+                //// Debug.Log(((VInt3)dir).ToString() + "," + this.owner.forward.ToString());
+             //   dir = SetRotationAction.GetForward(start, end, (Vector3)this.owner.forward);
+                this.owner.SetForward(dir,false);
             }
-            else
-                return;
-            ProfilerTest.EndSample();
-            */
-            if ((VInt3)dir == this.owner.forward)
-                return;
-           // Debug.Log(((VInt3)dir).ToString() + "," + this.owner.forward.ToString());
-
-            //Quaternion curQ = Quaternion.LookRotation((Vector3)this.owner.forward);
-            //Quaternion toQ = Quaternion.LookRotation(dir);// Quaternion.LookRotation(end - start);
-            //Quaternion q = Quaternion.RotateTowards(curQ, toQ, App.logicDeltaTime * SetRotationAction.RotateSpeed);
-            Vector3 forward = SetRotationAction.GetForward(start, end, (Vector3)this.owner.forward, speed);
-            // Vector3 fwd = toQ * Vector3.forward;
-            this.owner.SetForward(forward);
         }
-
+        public override void OnFinish()
+        {
+            isTemp = false;
+            RVO.Simulator.Instance.setAgentPrefVelocity(owner.onlyId, RVO.Vector2.Zero);
+            RVO.Simulator.Instance.setAgentMaxSpeed(owner.onlyId, 0f);
+            base.OnFinish();
+        }
         public override void OnDrawGizmos() {
             if(pos != null)
             {
                 Vector3 start = this.owner.position;
-                //if(isTemp)
-                //{
-                //    Gizmos.color = Color.red;
-                //    Gizmos.DrawLine(start, temp);
-                //}
-                //else
+                Gizmos.color = Color.red;
+                if (isTemp)
                 {
-                    Gizmos.color = Color.white;
+                    Gizmos.color = Color.green;
+                    Gizmos.DrawLine(start, temp);
+                }
+                else
+                {
+                    Gizmos.color = Color.red;
                     Gizmos.DrawLine(start, pos.vec3);
                 }
                     

@@ -91,16 +91,27 @@ namespace highlight.tl
             }
             Timeline tl = style.Creat();
             tl.SetOnlyId(mIdGenerator.generateNewId());
-            // mActiveDic.Add(id, tl);
+            mActiveDic.Add(tl.onlyId, tl);
             tl.owner = owner;
             tl.Init();
             return tl;
         }
         public static void Destroy(Timeline tl)
         {
+            if (tl == null)
+                return;
+            mActiveDic.Remove(tl.onlyId);
             tl.Destroy();
         }
-
+        public static void GetByRole(List<Timeline> list,Role role)
+        {
+            list.Clear();
+            foreach (var tl in mActiveDic.Values)
+            {
+                if (tl.owner == role)
+                    list.Add(tl);
+            }
+        }
         public static Type GetType(string name)
         {
             Type t = null;

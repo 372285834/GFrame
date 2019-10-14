@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEngine;
 #endif
+using UnityEngine;
 namespace highlight.tl
 {
     [Time("条件/Int属性判断", typeof(AttrPropCondition))]
@@ -19,18 +19,15 @@ namespace highlight.tl
         }
 #endif
     }
-    public class AttrPropCondition : IntCondition
+    public class AttrPropCondition : ComponentData<AttrPropConditionStyle>, IConditionData
     {
-        public AttrType attrType { get { return GetStyle<AttrPropConditionStyle>().attrType; } }
-        public override void OnRegister()
-        {
-                this.owner.attrs.AddObs(attrType, OnAttrChange);
-        }
-        void OnAttrChange(RoleAttrs attrs)
-        {
-            OnChange();
-        }
-        public override bool OnCheck()
+        public LogicType logicType { get { return mStyle.logicType; } }
+        public int value { get { return mStyle.value; } }
+        public AttrCompareType cType { get { return mStyle.cType; } }
+        public bool isObs { get { return mStyle.isObs; } }
+        public AttrType attrType { get { return mStyle.attrType; } }
+
+        public bool OnCheck()
         {
             int v = 0;
             if(attrType > AttrType.Extend_Attr)
@@ -39,11 +36,7 @@ namespace highlight.tl
             }
             else
                 v = this.owner.attrs.GetInt(attrType, false);
-            return CompareValue(v, this.cType, this.value);
-        }
-        public override void OnRemove()
-        {
-                this.owner.attrs.RemoveObs(attrType, OnAttrChange);
+            return IntConditionStyle.CompareValue(v, this.cType, this.value);
         }
 
         public int GetExtendValue(AttrType t)
@@ -68,40 +61,25 @@ namespace highlight.tl
             }
             return v;
         }
-    }
 
-
-    [Time("条件/全局Int判断", typeof(GlobalIntCondition))]
-    public class GlobalIntConditionStyle : IntConditionStyle
-    {
-        public string global_key;
-#if UNITY_EDITOR
-        public override void OnInspectorGUI()
-        {
-            this.global_key = EditorGUILayout.TextField("key", global_key);
-            base.OnInspectorGUI();
-        }
-#endif
-    }
-    public class GlobalIntCondition : IntCondition
-    {
-        public string global_key { get { return (this.style as GlobalIntConditionStyle).global_key; } }
-        public override void OnRegister()
-        {
-                this.root.globalObs.AddObserver(OnAttrChange);
-        }
-        void OnAttrChange(string k, object v)
-        {
-            this.OnChange();
-        }
-        public override bool OnCheck()
-        {
-            int v = this.root.GetGlobal<int>(this.global_key);
-            return CompareValue(v, this.cType, this.value);
-        }
-        public override void OnRemove()
-        {
-            this.root.globalObs.RemoveObserver(OnAttrChange);
-        }
+        //AcHandler OnChangeFunc;
+        //public void OnRegister(AcHandler _ac)
+        //{
+        //    OnChangeFunc = _ac;
+        //    this.owner.attrs.AddObs(attrType, OnAttrChange);
+        //}
+        //void OnAttrChange(RoleAttrs attrs)
+        //{
+        //    if (OnChangeFunc != null)
+        //        OnChangeFunc();
+        //}
+        //public void OnRemove()
+        //{
+        //    if (OnChangeFunc != null)
+        //    {
+        //        this.owner.attrs.RemoveObs(attrType, OnAttrChange);
+        //        OnChangeFunc = null;
+        //    }
+        //}
     }
 }

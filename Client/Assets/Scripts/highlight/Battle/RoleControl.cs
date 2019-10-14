@@ -29,6 +29,7 @@ namespace highlight
                 Nodes[tfs[i].name] = tfs[i];
             }
         }
+        public Dictionary<string, AnimationClip> aniClipDic = new Dictionary<string, AnimationClip>();
         public virtual void SerializeFieldInfo()
         {
             if (mAnimator == null)
@@ -60,6 +61,33 @@ namespace highlight
             if (tf != null)
                 return tf.GetComponent<Animator>();
             return null;
+        }
+        public void InitClipInfo()
+        {
+            RuntimeAnimatorController ctr = mAnimator.runtimeAnimatorController;
+            if(ctr != null)
+            {
+                for(int i=0;i< ctr.animationClips.Length;i++)
+                {
+                    aniClipDic[ctr.animationClips[i].name] = ctr.animationClips[i];
+                }
+            }
+        }
+        public void SetRuntimeAnimatorController(RuntimeAnimatorController ctr)
+        {
+            mAnimator.runtimeAnimatorController = ctr;
+            InitClipInfo();
+        }
+        public AnimationClip GetClip(string name)
+        {
+            AnimationClip clip = null;
+            aniClipDic.TryGetValue(name, out clip);
+            return clip;
+        }
+        public float GetClipLength(string name)
+        {
+            AnimationClip clip = GetClip(name);
+            return clip.length;
         }
         public void SetVisible(string name, bool b)
         {

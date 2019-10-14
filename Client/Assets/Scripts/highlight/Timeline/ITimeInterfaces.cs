@@ -24,16 +24,20 @@ namespace highlight.tl
         TimelineStyle timelineStyle { get; set; }
     }
 
-    public interface ICondition : ITimeInterface
+    public interface IConditionData : ITimeInterface
     {
-        bool GetBool();
+        LogicType logicType { get; }
+        bool OnCheck();
+        //void OnRegister(AcHandler ac);
+        //void OnRemove();
     }
-    public interface IStateValue: ITimeInterface
+
+    public interface IGlobalData : ITimeInterface
     {
-        int GetCurValue();
-        int value { get; }
         string key { get; }
         void Switch();
-        void Regist(AcHandler ac);
+        object GetValue();
     }
+
+
 }

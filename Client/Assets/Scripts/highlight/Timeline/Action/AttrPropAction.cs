@@ -45,7 +45,7 @@ namespace highlight.tl
 
         public static void Calculation(Role role, AttrPropData data, IntervalData interval)
         {
-            if (interval != null && interval.Check())
+            if (interval != null && interval.OnCheck())
             {
                 if (data.isBuff)
                 {

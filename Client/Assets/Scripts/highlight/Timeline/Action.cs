@@ -18,6 +18,7 @@ namespace highlight.tl
         public string name;
         public string menu;
         public string updateName;
+        public string triggerName;
         public Type type;
         public FieldInfo[] Infos;
         public Dictionary<FieldInfo, string> infoDesDic = new Dictionary<FieldInfo, string>();
@@ -29,6 +30,7 @@ namespace highlight.tl
                 this.name = name.Substring(name.LastIndexOf("/") + 1);
             type = _type;
             this.updateName = type.Name + "_OnUpdate";
+            this.triggerName = type.Name + "_OnTrigger";
             List<FieldInfo> flist = new List<FieldInfo>();
             Type iter = typeof(ComponentData);
             Type inter = typeof(ITimeInterface);

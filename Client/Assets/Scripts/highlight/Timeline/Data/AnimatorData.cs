@@ -12,7 +12,8 @@ namespace highlight.tl
         public string clip;
         public float speed = 1f;
         public bool loop;
-       // public float duration = 0.1f;
+        //public int time;
+        // public float duration = 0.1f;
 #if UNITY_EDITOR
         public override void OnInspectorGUI()
         {
@@ -20,10 +21,11 @@ namespace highlight.tl
             this.clip = EditorGUILayout.TextField("动画名:", this.clip);
             this.speed = EditorGUILayout.FloatField("速度：", this.speed);
             this.loop = EditorGUILayout.Toggle("loop：", this.loop);
+            //this.time = EditorGUILayout.IntField("time：", this.time);
         }
 #endif
     }
-    public class AnimatorData : ComponentData
+    public class AnimatorData : ComponentData<AnimatorStyle>
     {
 
     }

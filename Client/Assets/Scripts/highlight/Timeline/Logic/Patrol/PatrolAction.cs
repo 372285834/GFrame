@@ -6,7 +6,7 @@ namespace highlight.tl
     [Action("自定义/行为/巡逻", typeof(PatrolAction))]
     public class PatrolAction : TimeAction
     {
-        [Desc("当前坐标")]
+        [Desc("目标坐标")]
         public IVector3 cur;
         public int curIdx;
         public int dirValue = 1;
@@ -37,7 +37,6 @@ namespace highlight.tl
         {
             if (curIdx >= data.Path.Length || curIdx < 0)
                 return;
-            cur.vec3 = data.Path[curIdx];
             if(Vector3.Distance(this.owner.position, cur.vec3) < 0.1f)
             {
                 curIdx += dirValue;
@@ -52,6 +51,7 @@ namespace highlight.tl
                     curIdx = 1;
                 }
             }
+            cur.vec3 = data.Path[curIdx];
         }
         public override void OnStop()
         {

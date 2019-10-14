@@ -27,7 +27,7 @@ namespace highlight.tl
     [Action("条件/条件_执行", typeof(ConditionAction))]
     public class ConditionAction : ConditionBase
     {
-        public List<ConditionData> cList = new List<ConditionData>();
+        public List<IConditionData> cList = new List<IConditionData>();
         public override void OnInit()
         {
             base.OnInit();
@@ -35,27 +35,27 @@ namespace highlight.tl
             List<ComponentData> comps = this.timeObject.ComponentList;
             for (int i = 0; i < comps.Count; i++)
             {
-                if (comps[i] is ConditionData)
+                if (comps[i] is IConditionData)
                 {
-                    ConditionData db = comps[i] as ConditionData;
-                    cList.Add((ConditionData)comps[i]);
-                    if (data != null && data.isObs)
-                    {
-                        db.Register(this.OnChange);
-                    }
+                    IConditionData db = comps[i] as IConditionData;
+                    cList.Add(db);
+                    //if (data != null && data.isObs)
+                    //{
+                    //    db.Register(this.OnChange);
+                    //}
                 }
             }
         }
         public override void OnDestroy()
         {
             base.OnDestroy();
-            if(data != null && data.isObs)
-            {
-                for(int i=0;i<cList.Count;i++)
-                {
-                    cList[i].Remove();
-                }
-            }
+            //if(data != null && data.isObs)
+            //{
+            //    for(int i=0;i<cList.Count;i++)
+            //    {
+            //        cList[i].Remove();
+            //    }
+            //}
             cList.Clear();
         }
         void OnChange()

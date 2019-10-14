@@ -37,7 +37,10 @@ public struct VInt
 	{
 		return this.i.GetHashCode();
 	}
-
+    public static int Round(float f)
+    {
+        return (int)Math.Round((double)(f * 1000f));
+    }
 	public static VInt Min(VInt a, VInt b)
 	{
 		return new VInt(Math.Min(a.i, b.i));

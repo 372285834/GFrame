@@ -17,11 +17,11 @@ namespace highlight.tl
         }
 #endif
     }
-    public class TrailData : ComponentData, IEvaluateV3
+    public class TrailData : ComponentData<TrailStyle>, IEvaluateV3
     {
         public Vector3 Evaluate(Vector3 start, Vector3 end, float time)
         {
-            MTweenEase.EaseType type = (this.style as TrailStyle).type;
+            MTweenEase.EaseType type = this.mStyle.type;
             Vector3 pos = Vector3.zero;
             float p = MTweenEase.ease(type, 0f, 1f, time);
             //      pos = Vector3.Lerp(start, end, p);

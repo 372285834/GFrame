@@ -7,10 +7,6 @@ namespace highlight.tl
     {
         [Desc("目标")]
         public TargetData targetData;
-        public Role targetRole
-        {
-            get { return targetData.obj; }
-        }
         public Role role
         {
             get

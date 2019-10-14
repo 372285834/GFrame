@@ -17,20 +17,6 @@ namespace highlight.tl
         }
 #endif
     }
-    public class GlobalData : ComponentData
-    {
-        public string key { get { return (this.style as GlobalStyle).name; } }
-        public virtual void Switch()
-        {
-
-        }
-        public virtual object GetValue()
-        {
-            return null;
-        }
-    }
-
-
     [Time("全局/全局Int", typeof(GlobalIntData))]
     public class GlobalIntStyle: GlobalStyle
     {
@@ -43,14 +29,15 @@ namespace highlight.tl
         }
 #endif
     }
-    public class GlobalIntData : GlobalData//, IStateValue
+    public class GlobalIntData : ComponentData<GlobalIntStyle>, IGlobalData//, IStateValue
     {
-        public int value { get { return GetStyle<GlobalIntStyle>().value; } }
-        public override void Switch()
+        public int value { get { return mStyle.value; } }
+        public string key { get { return mStyle.name; } }
+        public virtual void Switch()
         {
             this.root.SetGlobalValue(this.key, this.value);
         }
-        public override object GetValue()
+        public virtual object GetValue()
         {
             return value;
         }
@@ -73,14 +60,15 @@ namespace highlight.tl
         }
 #endif
     }
-    public class GlobalStringData : GlobalData
+    public class GlobalStringData : ComponentData<GlobalStringStyle>, IGlobalData
     {
-        public string value { get { return (this.style as GlobalStringStyle).value; } }
-        public override void Switch()
+        public string value { get { return mStyle.value; } }
+        public string key { get { return mStyle.name; } }
+        public virtual void Switch()
         {
             this.root.SetGlobalValue(this.key, this.value);
         }
-        public override object GetValue()
+        public virtual object GetValue()
         {
             return value;
         }

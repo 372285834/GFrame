@@ -17,9 +17,9 @@ namespace highlight.tl
         }
 #endif
     }
-    public class CountData : ComponentData
+    public class CountData : ComponentData<CountStyle>
     {
-        public int value { get { return GetStyle<CountStyle>().count; } }
+        public int value { get { return mStyle.count; } }
        // public int cur;
      //   public override void OnInit()
      //   {
